@@ -545,6 +545,47 @@ img { max-width: 100%; display: block; }
   color: var(--accent);
 }
 
+/* ---------- Arcana Toggle ---------- */
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.toggle-switch {
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--accent-light);
+  position: relative;
+  transition: background var(--transition);
+  cursor: pointer;
+}
+
+.toggle-switch.on {
+  background: var(--accent-dark);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transition: transform var(--transition);
+}
+
+.toggle-switch.on .toggle-knob {
+  transform: translateX(22px);
+}
+
 /* ---------- Shuffle Button ---------- */
 .shuffle-area {
   text-align: center;

@@ -6,11 +6,12 @@
 const state = {
   selectedSpread: null,
   gridCards: [],
-  selectedCards: [],     // Indices into gridCards
+  selectedCards: [],
   isShuffling: false,
   divinationResult: null,
   noisePlaying: false,
-  noiseSound: 'rain'
+  noiseSound: 'rain',
+  includeMinorArcana: true
 };
 
 // ---------- Initialization ----------
@@ -125,6 +126,12 @@ function selectSubSpread(spreadId, el) {
   }
 }
 
+function toggleMinorArcana() {
+  state.includeMinorArcana = !state.includeMinorArcana;
+  const sw = document.getElementById('toggle-minor-arcana');
+  if (sw) sw.classList.toggle('on', state.includeMinorArcana);
+}
+
 function showShuffleReady() {
   if (!state.selectedSpread) return;
   document.getElementById('card-count-display').textContent = state.selectedSpread.card_count;
@@ -146,8 +153,8 @@ async function startShuffle() {
   document.getElementById('btn-shuffle').disabled = true;
   document.getElementById('btn-shuffle').textContent = '🃏 洗牌中...';
 
-  // Prepare grid
-  state.gridCards = getShuffledGrid();
+  // Prepare grid — respect Minor Arcana toggle
+  state.gridCards = getShuffledGrid(state.includeMinorArcana);
   const grid = document.getElementById('card-grid');
   grid.innerHTML = state.gridCards.map((card, i) => `
     <div class="card-cell" data-index="${i}" onclick="selectCard(${i}, this)">

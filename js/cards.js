@@ -66,8 +66,9 @@ function getSpreadById(spreadId) {
 }
 
 // ---------- Shuffle Cards for Grid Display ----------
-function getShuffledGrid() {
-  return shuffleArray([...allCards]);
+function getShuffledGrid(includeMinor = true) {
+  const pool = includeMinor ? [...allCards] : allCards.filter(c => c.arcana === 'major');
+  return shuffleArray(pool);
 }
 
 // ---------- Get Card By ID ----------
@@ -155,36 +156,69 @@ function mostFrequent(arr) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 }
 
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
 function generateSummary(result, mood, element, spreadDef) {
   const parts = [];
   const spreadId = (spreadDef && spreadDef.id) || '';
   const cardNames = result.map(r => (r.isReversed ? '逆位' : '正位') + r.name_zh).join('、');
+  const spreadName = spreadDef ? spreadDef.name_zh : '';
 
-  // ---- Opening ----
-  parts.push(`本次${spreadDef ? spreadDef.name_zh : ''}占卜抽到了${cardNames}。`);
+  // ---- Opening (multiple variants) ----
+  const openings = [
+    `✨ 本次${spreadName}占卜为你抽到了${cardNames}。让我们一起来看看宇宙通过这些牌想对你说什么——`,
+    `🔮 ${spreadName}的牌面已经揭晓：${cardNames}。每一张牌都是一面镜子，照见你当下的处境与可能的前路。`,
+    `🌟 命运之轮转动，${spreadName}占卜抽出了${cardNames}。这些牌汇聚成一份独特的讯息，只为你而来。`,
+    `💫 在${spreadName}的指引下，${cardNames}来到了你的面前。牌已展开，答案就藏在每一张牌的细节之中——`
+  ];
+  parts.push(pick(openings));
 
-  // ---- Card-by-card position analysis ----
+  // ---- Card-by-card position analysis (varied phrasing) ----
+  const revLabels_u = ['正位指引', '光明面的提示', '牌面在说', '这份能量告诉你'];
+  const revLabels_r = ['逆位提醒', '阴影面的低语', '牌面在警示', '这份能量提醒你'];
   result.forEach((c, i) => {
-    const revLabel = c.isReversed ? '逆位提醒' : '正位指引';
-    parts.push(`【${c.positionName}】${c.emoji} ${c.name_zh}（${c.isReversed ? '逆位' : '正位'}）——${revLabel}：${c.interpretation.slice(0, 80)}…`);
+    const revLabel = c.isReversed ? pick(revLabels_r) : pick(revLabels_u);
+    const emoji = c.isReversed ? '🔄' : '✨';
+    const txt = c.interpretation.length > 90 ? c.interpretation.slice(0, 90) + '…' : c.interpretation;
+    parts.push(`${emoji}【${c.positionName}】${c.name_zh} —— ${revLabel}：${txt}`);
   });
 
-  // ---- Major Arcana insight ----
+  // ---- Major Arcana insight (varied) ----
   const majorCards = result.filter(r => r.arcana === 'major');
   if (majorCards.length >= 2) {
-    parts.push(`🌟 ${majorCards.length}张大阿卡纳同时出现，说明本次占卜触及了你人生中较为深层的议题。这些牌的能量影响深远，值得你花时间细细体会。`);
+    const majorMsgs = [
+      `🌟 ${majorCards.length}张大阿卡纳齐聚，这不是偶然。这些牌触及了你灵魂深处的重要课题，请认真品味它们在各自位置上的含义——它们之间的联系或许比你想的更深。`,
+      `🔮 大阿卡纳的力量在本次占卜中格外凸显——${majorCards.length}张大牌同时出现，意味着你正站在一个重要的人生路口。每一个位置都是拼图的一块，合起来才能看到完整的画面。`
+    ];
+    parts.push(pick(majorMsgs));
   } else if (majorCards.length === 1) {
-    parts.push(`🌟 大阿卡纳「${majorCards[0].name_zh}」的出现，为本次占卜注入了重要的灵性指引。请特别关注它在「${majorCards[0].positionName}」位置上的启示。`);
+    const singleMsgs = [
+      `🌟 大阿卡纳「${majorCards[0].name_zh}」的出现尤为关键。请把最多的注意力放在它在「${majorCards[0].positionName}」位置上的信息——那是整场占卜的核心。`,
+      `💡 一张大牌「${majorCards[0].name_zh}」照亮了本次占卜。它在「${majorCards[0].positionName}」的位置上告诉你的事，可能是你今天最需要听见的声音。`
+    ];
+    parts.push(pick(singleMsgs));
   }
 
-  // ---- Reversal insight ----
+  // ---- Reversal insight (varied) ----
   const revCount = result.filter(r => r.isReversed).length;
   if (revCount === 0) {
-    parts.push('✨ 所有牌均以正位呈现，能量流通顺畅。在当前的议题上，你正走在一条积极的道路上。');
+    const allUpMsgs = [
+      '✨ 所有牌都以正位敞开——这是宇宙给你的绿灯。当前的道路阻力最小，顺其自然地走下去，你会看到想要的结果。',
+      '🌞 正位全开的牌面非常难得。你的能量场此刻清澈明亮，所做的选择与你内在的方向高度一致。相信这份顺畅，也珍惜这段好时光。'
+    ];
+    parts.push(pick(allUpMsgs));
   } else if (revCount === 1) {
-    parts.push('🔄 有一张牌以逆位出现，提示你在对应领域需要多一分觉察。逆位不是坏事，而是一个温柔的提醒。');
+    const oneRevMsgs = [
+      '🔄 只有一张逆位牌——它像一个小小的路标，提醒你在某个方向多看一眼。不用过度解读，把它当作善意的提醒就好。',
+      '⚡ 一张逆位牌藏在正位的光芒中。它不代表阻碍，而是一个温柔的「慢一点」的信号——在对应的领域多一分辨察，你就能绕开不必要的坑。'
+    ];
+    parts.push(pick(oneRevMsgs));
   } else {
-    parts.push(`🔄 ${revCount}张牌以逆位呈现，建议你在近期放慢节奏，多一些反思和内省。逆位牌是邀请你从不同角度审视当下的处境。`);
+    const multiRevMsgs = [
+      `🔄 ${revCount}张逆位牌在提醒你——当下的节奏可能需要调整。逆位并非厄运，而是邀请你换个姿势看问题。有时候，最大的智慧是知道什么时候该转弯。`,
+      `🌙 ${revCount}张牌以逆位出现，像月光下的影子——它们不是来吓你的，而是来让你看见那些平时被忽略的角落。慢下来，向内看，你会发现答案一直在那里。`
+    ];
+    parts.push(pick(multiRevMsgs));
   }
 
   // ---- Theme-specific actionable guidance ----
@@ -242,19 +276,37 @@ function generateSummary(result, mood, element, spreadDef) {
     }
   }
 
-  // ---- Element guidance ----
+  // ---- Element guidance (varied) ----
   const elMessages = {
-    fire: '🔥 火元素主导：行动力和热情是你的优势，但也注意别让冲动主导了判断。在激情与耐心之间找到平衡。',
-    water: '💧 水元素主导：直觉和情感是这个时期的指南针。相信内心的感受，它们往往比理性思考更早知道答案。',
-    air: '🌬️ 风元素主导：清晰的思维是你的利器。善用分析和沟通能力，但别让过度思考阻碍了行动。想到和做到之间，只差一步。',
-    earth: '🌍 土元素主导：稳扎稳打是当下的关键词。耐心耕耘，不急于求成。你种下的每一颗种子都会在合适的季节发芽。'
+    fire: [
+      '🔥 火元素在牌面中跃动——你的热情和行动力是当下最宝贵的燃料。勇往直前，但别忘了偶尔看看地图。',
+      '🔥 火能量满满！这意味着现在不是犹豫的时候——想到了就去做。只是记得，烈火需要风来助燃，也需要水来调温。'
+    ],
+    water: [
+      '💧 水元素流淌在牌面之间——情绪和直觉是你此刻最可靠的导航。有些事不用想太明白，感觉对了就对了。',
+      '💧 水能量浸润着你的牌阵。倾听内心的潮汐——它比头脑更知道答案在哪里。柔软，但并不脆弱。'
+    ],
+    air: [
+      '🌬️ 风元素吹过你的牌面——思想和沟通的力量被唤醒了。适合做计划、做决定、做交流。但别让思绪飘得太远，忘了脚下的路。',
+      '🌬️ 风能量在牌阵中穿梭——你的头脑此刻格外清晰。善用这份清明去理清那些纠缠已久的问题。一句话：想清楚，然后说清楚。'
+    ],
+    earth: [
+      '🌍 土元素稳稳地托着你的牌阵——现在不需要急。一步一个脚印，你种下的因，会在对的季节结成果。',
+      '🌍 土能量是牌面的底色——务实、耐心、积累。你正在打造的根基，未来会成为最坚实的依靠。慢，但扎实。'
+    ]
   };
   if (elMessages[element]) {
-    parts.push(elMessages[element]);
+    parts.push(pick(elMessages[element]));
   }
 
-  // ---- Closing ----
-  parts.push('每一天都是新的开始。塔罗是镜子，照见当下的你；而未来的笔，始终握在你自己手中。');
+  // ---- Closing (varied) ----
+  const closings = [
+    '🌅 每一天都是崭新的画布。塔罗为你描了第一笔轮廓，而接下来的色彩——由你来决定。',
+    '💫 牌已阅，心已安。记住：塔罗是灯火，照亮眼前几步路；而走向远方的双脚，永远属于你自己。',
+    '🕊️ 解读到此为止，但你的故事还在继续。带着这些启示去生活吧——最好的占卜，是你过好当下的每一天。',
+    '🌿 无论牌面说了什么，请记得：你是自己命运的作者。塔罗只是递了一支笔，怎么写——全在你。'
+  ];
+  parts.push(pick(closings));
 
   return parts.join('\n\n');
 }
