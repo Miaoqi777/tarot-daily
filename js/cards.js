@@ -134,7 +134,7 @@ function generateInterpretation(drawnCards, spreadDef) {
   else if (reversalCount <= 1) overallMood = 'calm';
   else if (reversalCount >= result.length / 2) overallMood = 'anxious';
 
-  const summary = generateSummary(result, overallMood, dominantEl);
+  const summary = generateSummary(result, overallMood, dominantEl, spreadDef);
 
   return {
     cards: result,
@@ -155,34 +155,66 @@ function mostFrequent(arr) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 }
 
-function generateSummary(result, mood, element) {
+function generateSummary(result, mood, element, spreadDef) {
   const parts = [];
+  const spreadId = (spreadDef && spreadDef.id) || '';
   const cardNames = result.map(r => (r.isReversed ? '逆位' : '正位') + r.name_zh).join('、');
 
-  parts.push(`本次占卜抽到了${cardNames}。`);
+  // ---- Opening ----
+  parts.push(`本次${spreadDef ? spreadDef.name_zh : ''}占卜抽到了${cardNames}。`);
 
-  if (result.filter(r => r.arcana === 'major').length > 1) {
-    parts.push('大阿卡纳的出现说明你正处在一个重要的人生转折点上，这些能量将对你的生活产生深远影响。');
+  // ---- Card-by-card position analysis ----
+  result.forEach((c, i) => {
+    const revLabel = c.isReversed ? '逆位提醒' : '正位指引';
+    parts.push(`【${c.positionName}】${c.emoji} ${c.name_zh}（${c.isReversed ? '逆位' : '正位'}）——${revLabel}：${c.interpretation.slice(0, 80)}…`);
+  });
+
+  // ---- Major Arcana insight ----
+  const majorCards = result.filter(r => r.arcana === 'major');
+  if (majorCards.length >= 2) {
+    parts.push(`🌟 ${majorCards.length}张大阿卡纳同时出现，说明本次占卜触及了你人生中较为深层的议题。这些牌的能量影响深远，值得你花时间细细体会。`);
+  } else if (majorCards.length === 1) {
+    parts.push(`🌟 大阿卡纳「${majorCards[0].name_zh}」的出现，为本次占卜注入了重要的灵性指引。请特别关注它在「${majorCards[0].positionName}」位置上的启示。`);
   }
 
-  if (result.filter(r => r.isReversed).length === 0) {
-    parts.push('所有牌均以正位呈现，这是一个能量顺畅、积极向上的时期。保持当下的状态，让事情自然发展。');
-  } else if (result.filter(r => r.isReversed).length >= 2) {
-    parts.push('部分牌以逆位出现，提示你在这些领域可能需要放慢节奏、反思或调整方向。逆位并非坏事，而是一个重新审视的机会。');
+  // ---- Reversal insight ----
+  const revCount = result.filter(r => r.isReversed).length;
+  if (revCount === 0) {
+    parts.push('✨ 所有牌均以正位呈现，能量流通顺畅。在当前的议题上，你正走在一条积极的道路上。');
+  } else if (revCount === 1) {
+    parts.push('🔄 有一张牌以逆位出现，提示你在对应领域需要多一分觉察。逆位不是坏事，而是一个温柔的提醒。');
+  } else {
+    parts.push(`🔄 ${revCount}张牌以逆位呈现，建议你在近期放慢节奏，多一些反思和内省。逆位牌是邀请你从不同角度审视当下的处境。`);
   }
 
+  // ---- Theme-specific guidance ----
+  if (spreadId.startsWith('love')) {
+    parts.push('💕 恋爱方面：感情的道路上，最重要的是真诚地对待自己和对方。无论牌面显示什么，记住——真正的爱情始于自爱。保持开放的心，也守护好自己的边界。');
+  } else if (spreadId.startsWith('study')) {
+    parts.push('📚 学业方面：学习是一场与自己的长跑。找到适合自己的节奏比追求速度更重要。遇到困难时不要气馁，每一次挫折都是成长的养分。相信自己积累的力量。');
+  } else if (spreadId.startsWith('work')) {
+    parts.push('💼 事业方面：职业发展如同下棋，需要策略也需要耐心。关注当下的位置，也别忘了抬头看路。你的专业能力和独特价值终将被看见，时机比速度更重要。');
+  } else if (spreadId.startsWith('travel')) {
+    parts.push('✈️ 旅行方面：每一段旅途都是心灵的延伸。无论是计划已久的远行还是临时起意的短途，重要的是带着好奇心出发。旅途中的意外往往会成为最珍贵的回忆。');
+  } else if (spreadId.startsWith('social')) {
+    parts.push('🎭 社交方面：人际关系如同镜子，照见我们自己的样子。选择与什么样的人同行，就是选择成为什么样的自己。珍惜那些让你感到自在和成长的关系。');
+  } else if (spreadId.startsWith('gaming')) {
+    parts.push('🎮 游戏方面：享受游戏的乐趣是最重要的。运势有好有坏，但真正的高手懂得在顺境中保持冷静、在逆境中寻找机会。记住——心态永远是你最强的装备。');
+  }
+
+  // ---- Element guidance ----
   const elMessages = {
-    fire: '火元素的能量提醒你保持热情和行动力，但也要注意不要过于冲动。找到激情与耐心的平衡点，你会走得更远。',
-    water: '水元素的影响让你更加敏感和富有直觉。在这个时期，情绪和感受是重要的指引，学会倾听内心的声音。',
-    air: '风元素的能量带来清晰的思维和沟通能力。善用你的理性和逻辑，但也别忘了给心灵留一些空间。',
-    earth: '土元素的务实能量帮助你脚踏实地。持续的耐心和努力会带来稳固的收获，一步一个脚印地前进。'
+    fire: '🔥 火元素主导：行动力和热情是你的优势，但也注意别让冲动主导了判断。在激情与耐心之间找到平衡。',
+    water: '💧 水元素主导：直觉和情感是这个时期的指南针。相信内心的感受，它们往往比理性思考更早知道答案。',
+    air: '🌬️ 风元素主导：清晰的思维是你的利器。善用分析和沟通能力，但别让过度思考阻碍了行动。想到和做到之间，只差一步。',
+    earth: '🌍 土元素主导：稳扎稳打是当下的关键词。耐心耕耘，不急于求成。你种下的每一颗种子都会在合适的季节发芽。'
   };
-
   if (elMessages[element]) {
     parts.push(elMessages[element]);
   }
 
-  parts.push('每一天都是新的开始，塔罗的指引帮助你看见当下，而未来的笔掌握在你自己的手中。');
+  // ---- Closing ----
+  parts.push('每一天都是新的开始。塔罗是镜子，照见当下的你；而未来的笔，始终握在你自己手中。');
 
   return parts.join('\n\n');
 }
