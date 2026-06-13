@@ -133,7 +133,7 @@ async function fetchWeatherByGeolocation() {
 }
 
 async function fetchWeatherByWttr() {
-  const url = 'https://wttr.in/?format=j1&lang=zh';
+  const url = 'https://wttr.in/?format=j1';
   const res = await fetch(url);
   const json = await res.json();
 
@@ -143,11 +143,13 @@ async function fetchWeatherByWttr() {
   const city = nearest.areaName[0].value || '当前位置';
   saveCity(city);
 
+  const code = parseInt(current.weatherCode);
+
   return {
     city,
     temp: parseInt(current.temp_C),
-    icon: getWeatherEmojiFromCode(current.weatherCode),
-    desc: current.lang_zh ? current.lang_zh[0].value : current.weatherDesc[0].value,
+    icon: getWeatherEmoji(code),
+    desc: getWeatherDesc(code),
     humidity: current.humidity
   };
 }
@@ -174,10 +176,6 @@ function getWeatherDesc(code) {
   return map[code] || '天气未知';
 }
 
-function getWeatherEmojiFromCode(code) {
-  return getWeatherEmoji(parseInt(code));
-}
-
 function renderWeather(data) {
   document.getElementById('weather-icon').textContent = data.icon;
   document.getElementById('weather-temp').textContent = `${data.temp}°C`;
@@ -195,13 +193,14 @@ function renderWeather(data) {
         const res = await fetch(url);
         const json = await res.json();
         const current = json.current_condition[0];
-        const cityName = json.nearest_area[0].areaName[0].value;
+        const cityName = json.nearest_area[0].areaName[0].value || newCity.trim();
         saveCity(cityName);
+        const code = parseInt(current.weatherCode);
         const newData = {
           city: cityName,
           temp: parseInt(current.temp_C),
-          icon: getWeatherEmojiFromCode(current.weatherCode),
-          desc: current.weatherDesc[0].value,
+          icon: getWeatherEmoji(code),
+          desc: getWeatherDesc(code),
           humidity: current.humidity
         };
         cacheWeather(newData);
