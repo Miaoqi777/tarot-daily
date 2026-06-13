@@ -486,6 +486,59 @@ function renderResults(result) {
   updateBackgroundByMood(result.overallMood);
 }
 
+// ---------- Copy Result ----------
+async function copyDivinationResult() {
+  if (!state.divinationResult) return;
+  const r = state.divinationResult;
+
+  const today = new Date().toLocaleDateString('zh-CN', {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+  });
+
+  let text = `🔮 每日塔罗占卜结果\n`;
+  text += `📅 ${today}\n`;
+  text += `🎴 主题：${r.spreadName}\n`;
+  text += `${'─'.repeat(30)}\n\n`;
+
+  // Cards
+  r.cards.forEach((c, i) => {
+    text += `【${c.positionName}】${c.emoji} ${c.name_zh}（${c.isReversed ? '逆位' : '正位'}）\n`;
+    text += `${c.interpretation}\n\n`;
+  });
+
+  // Summary
+  text += `${'─'.repeat(30)}\n`;
+  text += `📜 总体解读：\n`;
+  text += r.summary.replace(/<br>/g, '\n').replace(/\n\n/g, '\n');
+  text += `\n\n${'─'.repeat(30)}\n`;
+  text += `✨ 由 每日塔罗占卜 生成 · miaoqi777.github.io/tarot-daily`;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('✅ 已复制！可粘贴到任何AI软件中解析');
+  } catch (e) {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ 已复制！可粘贴到任何AI软件中解析');
+  }
+}
+
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2200);
+}
+
 function showSongRecommendation(mood) {
   const song = getSongRecommendation(mood);
   const div = document.getElementById('song-recommendation');
