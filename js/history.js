@@ -232,6 +232,7 @@ function showAuthModal() {
 
 function hideAuthModal() {
   document.getElementById('auth-overlay').classList.add('hidden');
+  dismissAuthToday();
 }
 
 function openMoodFromSidebar() {

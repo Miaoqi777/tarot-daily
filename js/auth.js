@@ -331,6 +331,32 @@ function exportData(username) {
   URL.revokeObjectURL(url);
 }
 
+// ---------- Daily Auth Dismiss ----------
+const AUTH_DISMISS_KEY = 'tarot-auth-dismiss-date';
+
+function authDismissedToday() {
+  const today = new Date().toISOString().split('T')[0];
+  return localStorage.getItem(AUTH_DISMISS_KEY) === today;
+}
+
+function dismissAuthToday() {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem(AUTH_DISMISS_KEY, today);
+}
+
+// ---------- Anonymous Divination Track ----------
+const ANON_DIVINATION_KEY = 'tarot-anon-divination-date';
+
+function divinationDoneToday() {
+  const today = new Date().toISOString().split('T')[0];
+  return localStorage.getItem(ANON_DIVINATION_KEY) === today;
+}
+
+function markDivinationDoneToday() {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem(ANON_DIVINATION_KEY, today);
+}
+
 // ---------- Password Visibility Toggle ----------
 function togglePw(btn) {
   const wrapper = btn.parentElement;

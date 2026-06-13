@@ -340,23 +340,26 @@ function cancelSelection() {
 
 // ---------- Confirm Reading & Curtain ----------
 async function confirmReading() {
-  // Check auth for first daily divination
   const user = getCurrentUser();
-  if (!user) {
-    // Track pending action for after login
-    window._pendingAuthAction = () => confirmReading();
+
+  // Only show auth reminder once per day
+  if (!user && !authDismissedToday()) {
+    window._pendingAuthAction = null; // Don't re-trigger after dismiss
     showAuthModal();
-    document.getElementById('confirm-popup').classList.add('hidden');
-    return;
   }
 
-  // Cache first-time status before updating
-  const isFirstToday = isFirstActionToday(user);
-  if (isFirstToday) {
+  // Allow divination without login
+  document.getElementById('confirm-popup').classList.add('hidden');
+
+  // Track first divination of the day
+  const isFirstToday = user ? isFirstActionToday(user) : !divinationDoneToday();
+  if (user && isFirstToday) {
     setLastActionDate(user, 'divination');
   }
-
-  document.getElementById('confirm-popup').classList.add('hidden');
+  // Track anonymous divination for the day
+  if (!user) {
+    markDivinationDoneToday();
+  }
 
   // Draw cards with reversal chance
   const drawnCards = state.selectedCards.map(s => {
@@ -368,17 +371,19 @@ async function confirmReading() {
   const result = generateInterpretation(drawnCards, state.selectedSpread);
   state.divinationResult = result;
 
-  // Save fortune
-  const fortuneData = {
-    date: new Date().toISOString().split('T')[0],
-    timestamp: Date.now(),
-    spreadType: state.selectedSpread.id,
-    spreadName: state.selectedSpread.name_zh,
-    cards: result.cards,
-    overallMood: result.overallMood,
-    summary: result.summary
-  };
-  saveFortune(user, fortuneData);
+  // Save fortune only if logged in
+  if (user) {
+    const fortuneData = {
+      date: new Date().toISOString().split('T')[0],
+      timestamp: Date.now(),
+      spreadType: state.selectedSpread.id,
+      spreadName: state.selectedSpread.name_zh,
+      cards: result.cards,
+      overallMood: result.overallMood,
+      summary: result.summary
+    };
+    saveFortune(user, fortuneData);
+  }
 
   // Fade out unselected cards
   const allCells = document.querySelectorAll('.card-cell');
@@ -502,11 +507,13 @@ function showHomePage() {
 
 function openMoodPanel() {
   const user = getCurrentUser();
-  if (!user) {
-    window._pendingAuthAction = () => openMoodPanel();
+
+  // Only show auth reminder once per day
+  if (!user && !authDismissedToday()) {
+    window._pendingAuthAction = null;
     showAuthModal();
-    return;
   }
+  // Allow mood panel without login
 
   const section = document.getElementById('mood-section');
   section.classList.remove('hidden');
@@ -548,9 +555,13 @@ function selectMood(moodId, el) {
 
 async function submitMood() {
   const user = getCurrentUser();
+  // Allow mood recording without login — just don't save
   if (!user) {
-    window._pendingAuthAction = () => { openMoodPanel(); };
-    showAuthModal();
+    if (!authDismissedToday()) {
+      showAuthModal();
+    }
+    document.getElementById('mood-msg').textContent = '💡 登录后可保存心情记录哦~';
+    setTimeout(() => { document.getElementById('mood-msg').textContent = ''; }, 3000);
     return;
   }
 
@@ -626,6 +637,7 @@ function showAuthModal() {
 
 function hideAuthModal() {
   document.getElementById('auth-overlay').classList.add('hidden');
+  dismissAuthToday();
 }
 
 function setupAuthForms() {
