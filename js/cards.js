@@ -46,9 +46,23 @@ function drawRandomCards(count, excludedIds = []) {
   return drawn;
 }
 
-// ---------- Get Spread Definition ----------
-function getSpread(spreadId) {
-  return spreads.find(s => s.id === spreadId) || spreads[0];
+// ---------- Get Spread / Theme ----------
+function getTheme(themeId) {
+  return spreads.find(t => t.theme === themeId) || null;
+}
+
+function getSpread(themeId, spreadId) {
+  const theme = getTheme(themeId);
+  if (!theme) return spreads[0]?.spreads?.[0] || null;
+  return theme.spreads.find(s => s.id === spreadId) || theme.spreads[0];
+}
+
+function getSpreadById(spreadId) {
+  for (const t of spreads) {
+    const s = t.spreads.find(sp => sp.id === spreadId);
+    if (s) return { theme: t, spread: s };
+  }
+  return { theme: spreads[0], spread: spreads[0]?.spreads?.[0] };
 }
 
 // ---------- Shuffle Cards for Grid Display ----------

@@ -69,31 +69,68 @@ function renderSpreadOptions() {
     container.innerHTML = '<p style="color:var(--text-muted);">加载牌型中...</p>';
     return;
   }
-  container.innerHTML = spreads.map(s => `
-    <div class="spread-option glass-card" data-spread="${s.id}" onclick="selectSpread('${s.id}', this)">
-      <span class="spread-icon">${s.icon}</span>
-      <span class="spread-name">${s.name_zh}</span>
-      <span class="spread-count">${s.card_count}张牌</span>
+  container.innerHTML = spreads.map(t => `
+    <div class="spread-option glass-card" data-theme="${t.theme}" onclick="selectTheme('${t.theme}', this)">
+      <span class="spread-icon">${t.icon}</span>
+      <span class="spread-name">${t.name_zh}</span>
+      <span class="spread-count">${t.spreads.length}种牌阵</span>
     </div>
   `).join('');
 }
 
-function selectSpread(spreadId, el) {
+function selectTheme(themeId, el) {
   document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
-  state.selectedSpread = getSpread(spreadId);
+  state.selectedTheme = themeId;
   state.selectedCards = [];
   state.divinationResult = null;
 
-  document.getElementById('card-count-display').textContent = state.selectedSpread.card_count;
-  document.getElementById('required-count').textContent = state.selectedSpread.card_count;
-  document.getElementById('selected-count').textContent = '0';
+  // Render sub-spread options
+  const theme = getTheme(themeId);
+  if (!theme) return;
 
-  document.getElementById('shuffle-area').style.display = 'block';
+  const subContainer = document.getElementById('spread-sub-selector');
+  subContainer.innerHTML = theme.spreads.map(s => `
+    <div class="spread-sub-option glass-card" data-spread-id="${s.id}" onclick="selectSubSpread('${s.id}', this)">
+      <span>${s.name_zh}</span>
+      <span class="sub-count">${s.card_count}张牌 · ${s.description}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('spread-sub-section').classList.add('visible');
+  document.getElementById('shuffle-area').style.display = 'none';
   document.getElementById('card-grid-container').style.display = 'none';
   document.getElementById('result-section').classList.add('hidden');
   document.getElementById('song-recommendation').classList.add('hidden');
   document.getElementById('mood-section').classList.add('hidden');
+
+  // Auto-select first spread
+  const firstSub = subContainer.querySelector('.spread-sub-option');
+  if (firstSub) {
+    firstSub.classList.add('selected');
+    const { spread } = getSpreadById(theme.spreads[0].id);
+    state.selectedSpread = spread;
+    showShuffleReady();
+  }
+}
+
+function selectSubSpread(spreadId, el) {
+  document.querySelectorAll('.spread-sub-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const { spread } = getSpreadById(spreadId);
+  if (spread) {
+    state.selectedSpread = spread;
+    showShuffleReady();
+  }
+}
+
+function showShuffleReady() {
+  if (!state.selectedSpread) return;
+  document.getElementById('card-count-display').textContent = state.selectedSpread.card_count;
+  document.getElementById('required-count').textContent = state.selectedSpread.card_count;
+  document.getElementById('selected-count').textContent = '0';
+  document.getElementById('shuffle-area').style.display = 'block';
 }
 
 // ---------- Shuffle & Card Grid ----------
@@ -437,6 +474,7 @@ function showSongRecommendation(mood) {
 
 // ---------- Reset ----------
 function resetDivination() {
+  state.selectedTheme = null;
   state.selectedSpread = null;
   state.selectedCards = [];
   state.gridCards = [];
@@ -444,6 +482,7 @@ function resetDivination() {
 
   document.getElementById('card-grid-container').style.display = 'none';
   document.getElementById('shuffle-area').style.display = 'none';
+  document.getElementById('spread-sub-section').classList.remove('visible');
   document.getElementById('result-section').classList.add('hidden');
   document.getElementById('song-recommendation').classList.add('hidden');
   document.getElementById('mood-section').classList.add('hidden');
@@ -451,7 +490,6 @@ function resetDivination() {
   document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
   document.body.style.background = '';
 
-  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
