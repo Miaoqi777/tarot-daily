@@ -12,12 +12,23 @@ async function initWeather() {
   const cached = getWeatherCache();
   if (cached) {
     renderWeather(cached);
+    document.getElementById('weather-desc').textContent = cached.desc;
     return;
   }
 
+  // Show loading state
+  const lastCity = getLastCity();
+  if (lastCity) {
+    document.getElementById('weather-city').textContent = '📍 ' + lastCity;
+  }
+
+  // Race with timeout (8s max)
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('timeout')), 8000)
+  );
+
   try {
-    // Try geolocation + Open-Meteo
-    const data = await fetchWeatherByGeolocation();
+    const data = await Promise.race([fetchWeatherByGeolocation(), timeout]);
     if (data) {
       cacheWeather(data);
       renderWeather(data);
@@ -28,8 +39,7 @@ async function initWeather() {
   }
 
   try {
-    // Fallback: wttr.in
-    const data = await fetchWeatherByWttr();
+    const data = await Promise.race([fetchWeatherByWttr(), timeout]);
     if (data) {
       cacheWeather(data);
       renderWeather(data);
@@ -39,13 +49,11 @@ async function initWeather() {
     console.log('wttr.in weather failed');
   }
 
-  // Final fallback
-  renderWeather({
-    city: getLastCity() || '未知城市',
-    temp: '--',
-    icon: '🌤️',
-    desc: '天气加载失败'
-  });
+  // Final fallback — show cached city with neutral display
+  document.getElementById('weather-icon').textContent = '🌤️';
+  document.getElementById('weather-temp').textContent = '--°C';
+  document.getElementById('weather-desc').textContent = '点击📍切换城市';
+  document.getElementById('weather-city').textContent = '📍 ' + (getLastCity() || '选择城市');
 }
 
 function getWeatherCache() {
