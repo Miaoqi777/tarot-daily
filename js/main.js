@@ -11,7 +11,7 @@ const state = {
   divinationResult: null,
   noisePlaying: false,
   noiseSound: 'rain',
-  includeMinorArcana: true
+  includeMinorArcana: false
 };
 
 // ---------- Initialization ----------
