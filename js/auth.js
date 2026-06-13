@@ -330,3 +330,17 @@ function exportData(username) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// ---------- Password Visibility Toggle ----------
+function togglePw(btn) {
+  const wrapper = btn.parentElement;
+  const input = wrapper.querySelector('input');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}

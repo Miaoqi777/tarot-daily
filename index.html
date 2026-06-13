@@ -184,7 +184,10 @@
         </div>
         <div class="auth-field">
           <label>密码</label>
-          <input type="password" id="login-password" placeholder="输入密码" required autocomplete="current-password">
+          <div class="pw-field">
+            <input type="password" id="login-password" placeholder="输入密码" required autocomplete="current-password">
+            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button>
+          </div>
         </div>
         <div class="auth-error" id="login-error"></div>
         <button type="submit" class="auth-submit">登录</button>
@@ -196,11 +199,17 @@
         </div>
         <div class="auth-field">
           <label>密码</label>
-          <input type="password" id="register-password" placeholder="至少6位" required autocomplete="new-password">
+          <div class="pw-field">
+            <input type="password" id="register-password" placeholder="至少6位" required autocomplete="new-password">
+            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button>
+          </div>
         </div>
         <div class="auth-field">
           <label>确认密码</label>
-          <input type="password" id="register-password-confirm" placeholder="再次输入密码" required autocomplete="new-password">
+          <div class="pw-field">
+            <input type="password" id="register-password-confirm" placeholder="再次输入密码" required autocomplete="new-password">
+            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button>
+          </div>
         </div>
         <div class="auth-error" id="register-error"></div>
         <button type="submit" class="auth-submit">注册</button>
