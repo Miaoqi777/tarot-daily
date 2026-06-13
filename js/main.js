@@ -688,15 +688,44 @@ function updateSidebarUser() {
   const usernameEl = document.getElementById('sidebar-username');
   const authLabel = document.getElementById('sidebar-auth-label');
   const avatar = document.querySelector('.sidebar-user-avatar');
+  const exportBtn = document.getElementById('sidebar-export-btn');
 
   if (user) {
     usernameEl.textContent = user;
     authLabel.textContent = '退出登录';
     avatar.textContent = user.charAt(0).toUpperCase();
+    if (exportBtn) exportBtn.style.display = '';
   } else {
     usernameEl.textContent = '未登录';
     authLabel.textContent = '登录 / 注册';
     avatar.textContent = '👤';
+    if (exportBtn) exportBtn.style.display = 'none';
+  }
+}
+
+// ---------- Account Import/Export Handlers ----------
+async function handleImportFile(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const result = await handleAccountImport(file);
+  if (result.success) {
+    showToastMsg('✅ 账号 "' + result.username + '" 导入成功！请使用原密码登录');
+    updateSidebarUser();
+  } else {
+    showToastMsg(result.error || '❌ 导入失败');
+  }
+  input.value = '';
+}
+
+function handleSidebarExport() {
+  const user = getCurrentUser();
+  if (!user) {
+    showToastMsg('⚠️ 请先登录后再导出账号');
+    return;
+  }
+  const result = exportFullAccount(user);
+  if (result.success) {
+    showToastMsg('✅ 账号数据已导出，可导入到其他设备使用');
   }
 }
 

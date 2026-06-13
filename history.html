@@ -53,6 +53,10 @@
       <span class="sidebar-icon">🔑</span>
       <span class="sidebar-label" id="sidebar-auth-label">登录 / 注册</span>
     </button>
+    <button class="sidebar-item" id="sidebar-export-btn" onclick="handleSidebarExport()" style="display:none;">
+      <span class="sidebar-icon">📤</span>
+      <span class="sidebar-label">导出账号</span>
+    </button>
   </aside>
 
   <!-- Main Content -->
@@ -122,7 +126,10 @@
         <div class="auth-error" id="register-error"></div>
         <button type="submit" class="auth-submit">注册</button>
       </form>
-      <p class="auth-hint">🔒 数据仅保存在你的浏览器中</p>
+      <p class="auth-hint">☁️ 账号数据通过 Supabase 云端同步，全设备通用</p>
+      <p class="auth-hint" style="margin-top:4px;font-size:0.75rem;">
+        <a href="#" onclick="triggerAccountImport();return false;" style="color:var(--accent);text-decoration:underline;">📥 从其他设备导入账号</a>
+      </p>
     </div>
   </div>
 
@@ -138,9 +145,13 @@
     </div>
   </div>
 
+  <!-- Hidden File Input for Account Import -->
+  <input type="file" id="account-import-file" accept=".json" style="display:none" onchange="handleImportFile(this)">
+
   <!-- Emoji Float -->
   <div class="emoji-float-container" id="emoji-container"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/white-noise.js"></script>
   <script src="js/cards.js"></script>

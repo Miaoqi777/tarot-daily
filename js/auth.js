@@ -1,5 +1,7 @@
 /* ============================================================
-   auth.js — localStorage 登录/注册系统
+   auth.js — Supabase 云数据库认证（跨设备同步）
+   基于 nijisanji-ponto-nei 同一 Supabase 实例
+   Supabase 优先 → localStorage 兜底
    ============================================================ */
 
 const AUTH_KEYS = {
@@ -10,37 +12,91 @@ const AUTH_KEYS = {
   LAST_ACTION: 'tarot-last-action'
 };
 
-// ---------- Crypto Utilities ----------
+// ── Supabase 初始化（与 nijisanji-ponto-nei 共用实例）──
+var supabase = (function() {
+  if (typeof window.supabase === 'undefined') return null;
+  return window.supabase.createClient(
+    'https://wsqihhpyxgcbtjfhhrvk.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndzcWloaHB5eGdjYnRqZmhocnZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTM4NzYsImV4cCI6MjA5NjQ4OTg3Nn0.rh1RBih_BiraPLhUpWaXjcCcmDXRnS7kGHBBofiSBhk'
+  );
+})();
+
+// ── 密码学工具 ─────────────────────────────────────
+
 function generateSalt() {
   const arr = new Uint8Array(16);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(arr);
+  } else {
+    for (let i = 0; i < 16; i++) arr[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(arr, b => ('0' + b.toString(16)).slice(-2)).join('');
+}
+
+function sha256(message) {
+  if (window.crypto && window.crypto.subtle) {
+    const encoder = new TextEncoder();
+    return window.crypto.subtle.digest('SHA-256', encoder.encode(message)).then(hashBuffer => {
+      return Array.from(new Uint8Array(hashBuffer), b => ('0' + b.toString(16)).slice(-2)).join('');
+    });
+  }
+  // Fallback: simple hash
+  let hash = 0;
+  for (let i = 0; i < message.length; i++) {
+    const chr = message.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  let h = Math.abs(hash).toString(16);
+  while (h.length < 16) h = '0' + h;
+  return Promise.resolve('s' + h);
 }
 
 async function hashPassword(password, salt) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(salt + password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return await sha256(salt + password);
 }
 
-// ---------- User Management ----------
+// ── 本地用户管理（localStorage 兜底）───────────────
+
 function getUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(AUTH_KEYS.USERS) || '[]');
-  } catch (e) {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(AUTH_KEYS.USERS) || '[]'); }
+  catch (e) { return []; }
 }
 
 function saveUsers(users) {
-  localStorage.setItem(AUTH_KEYS.USERS, JSON.stringify(users));
+  try { localStorage.setItem(AUTH_KEYS.USERS, JSON.stringify(users)); }
+  catch (e) { console.warn('saveUsers failed:', e); }
 }
 
-// ---------- Registration ----------
+// ── 会话管理 ──────────────────────────────────────
+
+function saveSession(username) {
+  localStorage.setItem(AUTH_KEYS.SESSION, JSON.stringify({
+    username: username,
+    expiresAt: Date.now() + 7 * 24 * 3600 * 1000  // 7天
+  }));
+}
+
+function getCurrentUser() {
+  try {
+    const s = JSON.parse(localStorage.getItem(AUTH_KEYS.SESSION));
+    if (!s) return null;
+    if (Date.now() > s.expiresAt) {
+      localStorage.removeItem(AUTH_KEYS.SESSION);
+      return null;
+    }
+    return s.username;
+  } catch (e) { return null; }
+}
+
+function logoutUser() {
+  localStorage.removeItem(AUTH_KEYS.SESSION);
+}
+
+// ── 注册 — Supabase 优先，失败则 localStorage 兜底 ─
+
 async function registerUser(username, password) {
-  // Validate
+  username = (username || '').trim();
   if (!username || username.length < 2 || username.length > 20) {
     return { success: false, error: '用户名需2-20个字符' };
   }
@@ -51,65 +107,120 @@ async function registerUser(username, password) {
     return { success: false, error: '密码至少6位' };
   }
 
-  const users = getUsers();
-  if (users.find(u => u.username === username)) {
-    return { success: false, error: '用户名已存在' };
+  const lower = username.toLowerCase();
+  const salt = generateSalt();
+  const hash = await hashPassword(password, salt);
+
+  // 尝试 Supabase
+  if (supabase) {
+    try {
+      const { data: existing } = await supabase.from('users').select('username').eq('username', username).maybeSingle();
+      if (existing) {
+        return { success: false, error: '用户名已存在' };
+      }
+
+      const { error } = await supabase.from('users').insert({
+        username: username,
+        password_hash: hash,
+        salt: salt,
+        is_admin: false
+      });
+
+      if (!error) {
+        saveSession(username);
+        return { success: true, username };
+      }
+      console.warn('Supabase insert failed, falling back to localStorage:', error.message);
+    } catch (e) {
+      console.warn('Supabase unavailable, falling back to localStorage:', e.message);
+    }
   }
 
-  const salt = generateSalt();
-  const passwordHash = await hashPassword(password, salt);
-
+  // localStorage 兜底
+  const users = getUsers();
+  for (let i = 0; i < users.length; i++) {
+    if (users[i].username.toLowerCase() === lower) {
+      return { success: false, error: '用户名已存在' };
+    }
+  }
   users.push({
-    username,
-    passwordHash,
-    salt,
+    username: username,
+    passwordHash: hash,
+    salt: salt,
     createdAt: Date.now()
   });
-
   saveUsers(users);
-  return { success: true };
-}
-
-// ---------- Login ----------
-async function loginUser(username, password) {
-  const users = getUsers();
-  const user = users.find(u => u.username === username);
-  if (!user) {
-    return { success: false, error: '用户名或密码错误' };
-  }
-
-  const hash = await hashPassword(password, user.salt);
-  if (hash !== user.passwordHash) {
-    return { success: false, error: '用户名或密码错误' };
-  }
-
-  // Set session (7 days)
-  const session = {
-    username,
-    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
-  };
-  localStorage.setItem(AUTH_KEYS.SESSION, JSON.stringify(session));
-
+  saveSession(username);
   return { success: true, username };
 }
 
-// ---------- Session ----------
-function getCurrentUser() {
-  try {
-    const session = JSON.parse(localStorage.getItem(AUTH_KEYS.SESSION));
-    if (!session) return null;
-    if (Date.now() > session.expiresAt) {
-      localStorage.removeItem(AUTH_KEYS.SESSION);
-      return null;
-    }
-    return session.username;
-  } catch (e) {
-    return null;
-  }
-}
+// ── 登录 — Supabase 优先，失败则 localStorage 兜底 ─
 
-function logoutUser() {
-  localStorage.removeItem(AUTH_KEYS.SESSION);
+async function loginUser(username, password) {
+  username = (username || '').trim();
+  if (!username || !password) {
+    return { success: false, error: '请输入用户名和密码' };
+  }
+
+  const lower = username.toLowerCase();
+
+  // 尝试 Supabase
+  if (supabase) {
+    try {
+      const { data: user, error } = await supabase.from('users').select('*').eq('username', username).maybeSingle();
+      if (!error && user) {
+        const hash = await hashPassword(password, user.salt);
+        if (hash === user.password_hash) {
+          saveSession(user.username);
+          return { success: true, username: user.username };
+        }
+        return { success: false, error: '密码错误' };
+      }
+      // Supabase 里没找到 → 继续查 localStorage
+    } catch (e) {
+      console.warn('Supabase unavailable, falling back to localStorage:', e.message);
+    }
+  }
+
+  // localStorage 兜底
+  const users = getUsers();
+  let localUser = null;
+  for (let i = 0; i < users.length; i++) {
+    if (users[i].username.toLowerCase() === lower) {
+      localUser = users[i];
+      break;
+    }
+  }
+
+  if (!localUser) {
+    return { success: false, error: '用户名不存在' };
+  }
+
+  const localHash = await hashPassword(password, localUser.salt);
+  if (localHash !== localUser.passwordHash) {
+    return { success: false, error: '密码错误' };
+  }
+
+  saveSession(localUser.username);
+
+  // 自动同步到 Supabase（静默迁移旧用户）
+  if (supabase) {
+    try {
+      const { data: supabaseUser } = await supabase.from('users').select('username').eq('username', localUser.username).maybeSingle();
+      if (!supabaseUser) {
+        await supabase.from('users').insert({
+          username: localUser.username,
+          password_hash: localUser.passwordHash,
+          salt: localUser.salt,
+          is_admin: false
+        });
+      }
+    } catch (e) {
+      // 静默失败 — 下次登录时重试
+    }
+  }
+
+  return { success: true, username: localUser.username };
 }
 
 // ---------- Auth Guard ----------
@@ -314,7 +425,169 @@ function analyzeFortunes(username, period) {
   };
 }
 
-// ---------- Export ----------
+// ---------- Export / Import (Cross-Device Sync) ----------
+
+// Export full account: credentials + fortunes + moods → downloadable JSON
+function exportFullAccount(username) {
+  const users = getUsers();
+  const user = users.find(u => u.username === username);
+  if (!user) {
+    showToastMsg('⚠️ 用户数据异常，请重新登录');
+    return { success: false, error: '用户不存在' };
+  }
+
+  const data = {
+    version: 1,
+    type: 'tarot-account-export',
+    exportedAt: new Date().toISOString(),
+    exportedFrom: navigator.userAgent.slice(0, 100),
+    account: {
+      username: user.username,
+      passwordHash: user.passwordHash,
+      salt: user.salt,
+      createdAt: user.createdAt
+    },
+    fortunes: getFortunes(username),
+    moods: getMoods(username)
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tarot-account-${username}-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  return { success: true };
+}
+
+// Import full account from parsed JSON object
+function importFullAccount(jsonData) {
+  try {
+    // Validate structure
+    if (!jsonData || jsonData.type !== 'tarot-account-export') {
+      return { success: false, error: '❌ 无效的账号数据文件（类型不匹配）' };
+    }
+    if (jsonData.version !== 1) {
+      return { success: false, error: '❌ 数据文件版本不兼容，请从最新版应用导出' };
+    }
+    const acct = jsonData.account;
+    if (!acct || !acct.username || !acct.passwordHash || !acct.salt) {
+      return { success: false, error: '❌ 账号数据不完整，请重新导出' };
+    }
+
+    const users = getUsers();
+    const existingIdx = users.findIndex(u => u.username === acct.username);
+
+    if (existingIdx >= 0) {
+      // Update existing user credentials (keep newest)
+      if ((acct.createdAt || 0) > (users[existingIdx].createdAt || 0)) {
+        users[existingIdx] = {
+          ...users[existingIdx],
+          passwordHash: acct.passwordHash,
+          salt: acct.salt,
+          createdAt: acct.createdAt
+        };
+      }
+    } else {
+      users.push({
+        username: acct.username,
+        passwordHash: acct.passwordHash,
+        salt: acct.salt,
+        createdAt: acct.createdAt || Date.now()
+      });
+    }
+    saveUsers(users);
+
+    // Merge fortunes (deduplicate by id)
+    if (jsonData.fortunes && Array.isArray(jsonData.fortunes)) {
+      const existingFortunes = getFortunes(acct.username);
+      const existingIds = new Set(existingFortunes.map(f => f.id));
+      let newCount = 0;
+      jsonData.fortunes.forEach(f => {
+        if (!existingIds.has(f.id)) {
+          existingFortunes.push(f);
+          existingIds.add(f.id);
+          newCount++;
+        }
+      });
+      existingFortunes.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+      // Keep only last 365 records
+      const trimmed = existingFortunes.slice(0, 365);
+      localStorage.setItem(getFortuneKey(acct.username), JSON.stringify(trimmed));
+    }
+
+    // Merge moods (import overwrites same-date entries)
+    if (jsonData.moods && Array.isArray(jsonData.moods)) {
+      const existingMoods = getMoods(acct.username);
+      const moodMap = {};
+      existingMoods.forEach(m => { moodMap[m.date] = m; });
+      jsonData.moods.forEach(m => {
+        // Imported mood takes precedence if newer or not existing
+        if (!moodMap[m.date] || (m.savedAt || 0) > (moodMap[m.date].savedAt || 0)) {
+          moodMap[m.date] = m;
+        }
+      });
+      const merged = Object.values(moodMap).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+      localStorage.setItem(getMoodKey(acct.username), JSON.stringify(merged));
+    }
+
+    return { success: true, username: acct.username };
+  } catch (e) {
+    return { success: false, error: '❌ 文件解析失败：' + e.message };
+  }
+}
+
+// Handle file input → parse → import
+function handleAccountImport(file) {
+  return new Promise((resolve) => {
+    if (!file) {
+      resolve({ success: false, error: '❌ 未选择文件' });
+      return;
+    }
+    if (!file.name.endsWith('.json')) {
+      resolve({ success: false, error: '❌ 请选择 .json 格式的账号文件' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        const result = importFullAccount(data);
+        resolve(result);
+      } catch (err) {
+        resolve({ success: false, error: '❌ 文件格式错误，无法解析JSON' });
+      }
+    };
+    reader.onerror = () => resolve({ success: false, error: '❌ 文件读取失败，请重试' });
+    reader.readAsText(file);
+  });
+}
+
+// Trigger file picker for account import
+function triggerAccountImport() {
+  const input = document.getElementById('account-import-file');
+  if (input) {
+    input.value = ''; // Reset so same file can be re-selected
+    input.click();
+  }
+}
+
+// Global toast helper (shared across pages)
+function showToastMsg(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// Legacy export (data only, no credentials) — kept for compatibility
 function exportData(username) {
   const data = {
     username,
@@ -327,8 +600,10 @@ function exportData(username) {
   const a = document.createElement('a');
   a.href = url;
   a.download = `tarot-data-${username}-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ---------- Daily Auth Dismiss ----------
