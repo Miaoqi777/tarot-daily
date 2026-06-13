@@ -340,23 +340,35 @@ function cancelSelection() {
 
 // ---------- Confirm Reading & Curtain ----------
 async function confirmReading() {
+  document.getElementById('confirm-popup').classList.add('hidden');
+
   const user = getCurrentUser();
 
-  // Only show auth reminder once per day
+  // If not logged in and not dismissed today → show auth, wait, then proceed
   if (!user && !authDismissedToday()) {
-    window._pendingAuthAction = null; // Don't re-trigger after dismiss
+    // Set callback: after auth resolved (login/dismiss), do the actual divination
+    window._pendingDivination = () => {
+      window._pendingDivination = null;
+      doPerformDivination();
+    };
     showAuthModal();
+    return;
   }
 
-  // Allow divination without login
-  document.getElementById('confirm-popup').classList.add('hidden');
+  // No auth needed → proceed directly
+  doPerformDivination();
+}
+
+async function doPerformDivination() {
+  hideAuthModal(); // Ensure modal is hidden
+
+  const user = getCurrentUser();
 
   // Track first divination of the day
   const isFirstToday = user ? isFirstActionToday(user) : !divinationDoneToday();
   if (user && isFirstToday) {
     setLastActionDate(user, 'divination');
   }
-  // Track anonymous divination for the day
   if (!user) {
     markDivinationDoneToday();
   }
@@ -403,7 +415,7 @@ async function confirmReading() {
   // Show results
   renderResults(result);
 
-  // Show song recommendation if first daily (use cached value)
+  // Show song recommendation if first daily
   if (isFirstToday) {
     showSongRecommendation(result.overallMood);
   }
@@ -638,6 +650,20 @@ function showAuthModal() {
 function hideAuthModal() {
   document.getElementById('auth-overlay').classList.add('hidden');
   dismissAuthToday();
+  // If there's a pending divination, trigger it after modal closes
+  if (window._pendingDivination) {
+    const fn = window._pendingDivination;
+    window._pendingDivination = null;
+    setTimeout(fn, 300); // Small delay for modal close animation
+  }
+}
+
+function triggerPendingAction() {
+  if (window._pendingDivination) {
+    const fn = window._pendingDivination;
+    window._pendingDivination = null;
+    setTimeout(fn, 300);
+  }
 }
 
 function setupAuthForms() {
@@ -667,14 +693,9 @@ function setupAuthForms() {
     if (result.success) {
       hideAuthModal();
       updateSidebarUser();
-      // Clear form
       this.reset();
-      // Continue the action that triggered auth
-      if (window._pendingAuthAction) {
-        const action = window._pendingAuthAction;
-        window._pendingAuthAction = null;
-        action();
-      }
+      // Trigger pending divination or mood action
+      triggerPendingAction();
     } else {
       errorEl.textContent = result.error;
     }
@@ -700,8 +721,8 @@ function setupAuthForms() {
       hideAuthModal();
       updateSidebarUser();
       this.reset();
-      // Switch back to login tab for next time
       document.getElementById('tab-login-btn').click();
+      triggerPendingAction();
     } else {
       errorEl.textContent = result.error;
     }
