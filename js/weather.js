@@ -133,7 +133,7 @@ async function fetchWeatherByGeolocation() {
 }
 
 async function fetchWeatherByWttr() {
-  const url = 'https://wttr.in/?format=j1';
+  const url = 'https://wttr.in/?format=j1&lang=zh';
   const res = await fetch(url);
   const json = await res.json();
 

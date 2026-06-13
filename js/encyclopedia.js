@@ -159,7 +159,111 @@ function hideCardDetail() {
   document.getElementById('card-detail-overlay').classList.add('hidden');
 }
 
+// ---------- Sidebar & Auth ----------
+function updateSidebarUser() {
+  const user = getCurrentUser();
+  const usernameEl = document.getElementById('sidebar-username');
+  const authLabel = document.getElementById('sidebar-auth-label');
+  if (user) {
+    if (usernameEl) usernameEl.textContent = user;
+    if (authLabel) authLabel.textContent = '退出登录';
+  } else {
+    if (usernameEl) usernameEl.textContent = '未登录';
+    if (authLabel) authLabel.textContent = '登录 / 注册';
+  }
+}
+
+function handleSidebarAuth() {
+  const user = getCurrentUser();
+  if (user) {
+    if (confirm(`确定要退出登录吗？${user}`)) {
+      logoutUser();
+      updateSidebarUser();
+    }
+  } else {
+    showAuthModal();
+  }
+}
+
+function showAuthModal() {
+  document.getElementById('auth-overlay').classList.remove('hidden');
+}
+
+function hideAuthModal() {
+  document.getElementById('auth-overlay').classList.add('hidden');
+}
+
+function openMoodFromSidebar() {
+  if (!getCurrentUser()) {
+    showAuthModal();
+    return;
+  }
+  alert('请前往"每日占卜"页面记录心情哦~');
+  window.location.href = 'index.html';
+}
+
+// Sidebar pin
+function setupSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const pinBtn = document.getElementById('sidebar-pin');
+  if (pinBtn) {
+    pinBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('pinned');
+      pinBtn.textContent = sidebar.classList.contains('pinned') ? '📌' : '📍';
+    });
+  }
+}
+
+// Auth forms
+function setupAuthForms() {
+  document.getElementById('tab-login-btn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('tab-register-btn').classList.remove('active');
+    document.getElementById('login-form').classList.add('active');
+    document.getElementById('register-form').classList.remove('active');
+  });
+  document.getElementById('tab-register-btn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('tab-login-btn').classList.remove('active');
+    document.getElementById('register-form').classList.add('active');
+    document.getElementById('login-form').classList.remove('active');
+  });
+  document.getElementById('login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const u = document.getElementById('login-username').value.trim();
+    const p = document.getElementById('login-password').value;
+    const r = await loginUser(u, p);
+    if (r.success) { hideAuthModal(); updateSidebarUser(); this.reset(); }
+    else document.getElementById('login-error').textContent = r.error;
+  });
+  document.getElementById('register-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const u = document.getElementById('register-username').value.trim();
+    const p = document.getElementById('register-password').value;
+    const pc = document.getElementById('register-password-confirm').value;
+    if (p !== pc) { document.getElementById('register-error').textContent = '两次密码不一致'; return; }
+    const r = await registerUser(u, p);
+    if (r.success) { await loginUser(u, p); hideAuthModal(); updateSidebarUser(); this.reset(); document.getElementById('tab-login-btn').click(); }
+    else document.getElementById('register-error').textContent = r.error;
+  });
+  document.getElementById('auth-overlay').addEventListener('click', function(e) {
+    if (e.target === this) hideAuthModal();
+  });
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  updateSidebarUser();
+  setupSidebar();
+  setupAuthForms();
+  initWhiteNoise();
+});
+
 // Keyboard
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') hideCardDetail();
+  if (e.key === 'Escape') {
+    hideCardDetail();
+    hideAuthModal();
+  }
 });
