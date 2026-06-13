@@ -40,7 +40,7 @@ function drawRandomCards(count, excludedIds = []) {
   const shuffled = shuffleArray(available);
   const drawn = shuffled.slice(0, count).map(card => ({
     ...card,
-    reversed: Math.random() < 0.35, // ~35% chance of reversal
+    isReversed: Math.random() < 0.35,
     drawnAt: Date.now()
   }));
   return drawn;
@@ -86,9 +86,11 @@ function generateInterpretation(drawnCards, spreadDef) {
   // Assign positions
   const result = drawnCards.map((card, i) => {
     const posName = spreadDef.positions[i] || `位置${i + 1}`;
-    const interp = card.reversed
-      ? card.reversed.general
-      : card.upright.general;
+    // Use isReversed (boolean) to avoid conflict with card.reversed (object)
+    const isRev = card.isReversed || card._reversed || false;
+    const interp = isRev
+      ? (card.reversed ? card.reversed.general : '逆位解读暂无')
+      : (card.upright ? card.upright.general : '正位解读暂无');
 
     return {
       cardId: card.id,
@@ -97,7 +99,7 @@ function generateInterpretation(drawnCards, spreadDef) {
       emoji: card.emoji,
       position: i,
       positionName: posName,
-      reversed: card.reversed,
+      isReversed: isRev,
       interpretation: interp,
       keywords: card.keywords_zh,
       element: card.element,
@@ -109,7 +111,7 @@ function generateInterpretation(drawnCards, spreadDef) {
   // Generate overall summary based on card elements
   const elements = result.map(r => r.element).filter(Boolean);
   const dominantEl = mostFrequent(elements);
-  const reversalCount = result.filter(r => r.reversed).length;
+  const reversalCount = result.filter(r => r.isReversed).length;
   const majorCount = result.filter(r => r.arcana === 'major').length;
 
   let overallMood = 'neutral';
@@ -141,7 +143,7 @@ function mostFrequent(arr) {
 
 function generateSummary(result, mood, element) {
   const parts = [];
-  const cardNames = result.map(r => (r.reversed ? '逆位' : '正位') + r.name_zh).join('、');
+  const cardNames = result.map(r => (r.isReversed ? '逆位' : '正位') + r.name_zh).join('、');
 
   parts.push(`本次占卜抽到了${cardNames}。`);
 
@@ -149,9 +151,9 @@ function generateSummary(result, mood, element) {
     parts.push('大阿卡纳的出现说明你正处在一个重要的人生转折点上，这些能量将对你的生活产生深远影响。');
   }
 
-  if (result.filter(r => r.reversed).length === 0) {
+  if (result.filter(r => r.isReversed).length === 0) {
     parts.push('所有牌均以正位呈现，这是一个能量顺畅、积极向上的时期。保持当下的状态，让事情自然发展。');
-  } else if (result.filter(r => r.reversed).length >= 2) {
+  } else if (result.filter(r => r.isReversed).length >= 2) {
     parts.push('部分牌以逆位出现，提示你在这些领域可能需要放慢节奏、反思或调整方向。逆位并非坏事，而是一个重新审视的机会。');
   }
 

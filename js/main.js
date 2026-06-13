@@ -146,55 +146,94 @@ async function startShuffle() {
 
 function shuffleAnimation(cells, duration) {
   return new Promise(resolve => {
+    const grid = document.getElementById('card-grid');
+    const gridRect = grid.getBoundingClientRect();
+    const centerX = gridRect.width / 2;
+    const centerY = gridRect.height / 2;
+
+    // Phase 1: Record original positions, then pile to center
+    const origins = [];
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      const rect = cell.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2 - gridRect.left;
+      const cy = rect.top + rect.height / 2 - gridRect.top;
+      origins.push({ el: cell, ox: cx, oy: cy });
+    }
+
+    const totalDuration = duration;
+    const pilePhase = totalDuration * 0.35;   // 35%: pile up
+    const holdPhase = totalDuration * 0.15;    // 15%: hold in pile
+    const spreadPhase = totalDuration * 0.50;  // 50%: spread out
+
     const startTime = performance.now();
 
     function animate(now) {
       const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
 
-      // Ease out
-      const intensity = 1 - progress;
-
-      for (let i = 0; i < cells.length; i++) {
-        const cell = cells[i];
-        if (cell.classList.contains('selected')) continue;
-
-        if (intensity > 0.05) {
-          const x = (Math.random() - 0.5) * 8 * intensity;
-          const y = (Math.random() - 0.5) * 8 * intensity;
-          const rot = (Math.random() - 0.5) * 20 * intensity;
-          cell.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
-          cell.style.zIndex = Math.floor(Math.random() * 10);
-        } else {
-          cell.style.transform = '';
-          cell.style.zIndex = '';
+      if (elapsed < pilePhase) {
+        // Phase 1: Fly to center pile
+        const p = easeInOut(elapsed / pilePhase);
+        for (let i = 0; i < origins.length; i++) {
+          const { el, ox, oy } = origins[i];
+          const tx = (centerX - ox) * p;
+          const ty = (centerY - oy) * p;
+          const rot = (Math.random() - 0.5) * 60 * p;
+          const sc = 1 - p * 0.3;
+          el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sc})`;
+          el.style.zIndex = Math.floor(100 - p * 90);
         }
-
-        // Flip at 50% progress
-        const face = cell.querySelector('.card-face');
-        if (progress > 0.4 && progress < 0.6) {
-          face.classList.add('flipped');
-        } else if (progress >= 0.6) {
-          face.classList.remove('flipped');
+      } else if (elapsed < pilePhase + holdPhase) {
+        // Phase 2: Hold in pile with slight jitter
+        for (let i = 0; i < origins.length; i++) {
+          const { el, ox, oy } = origins[i];
+          const tx = centerX - ox + (Math.random() - 0.5) * 4;
+          const ty = centerY - oy + (Math.random() - 0.5) * 4;
+          const rot = (Math.random() - 0.5) * 15;
+          el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(0.7)`;
+          el.style.zIndex = Math.floor(Math.random() * 10);
         }
-      }
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
+      } else if (elapsed < totalDuration) {
+        // Phase 3: Spread back to positions
+        const spreadElapsed = elapsed - pilePhase - holdPhase;
+        const p = easeOutBack(spreadElapsed / spreadPhase);
+        for (let i = 0; i < origins.length; i++) {
+          const { el, ox, oy } = origins[i];
+          const fromTx = centerX - ox;
+          const fromTy = centerY - oy;
+          const tx = fromTx * (1 - p);
+          const ty = fromTy * (1 - p);
+          const rot = (1 - p) * (Math.random() - 0.5) * 20;
+          const sc = 0.7 + p * 0.3;
+          el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sc})`;
+          el.style.zIndex = Math.floor(10 + p * 90);
+        }
       } else {
-        // Reset all
+        // Done — reset
         for (let i = 0; i < cells.length; i++) {
           cells[i].style.transform = '';
           cells[i].style.zIndex = '';
-          const face = cells[i].querySelector('.card-face');
-          face.classList.remove('flipped');
         }
         resolve();
+        return;
       }
+
+      requestAnimationFrame(animate);
     }
 
     requestAnimationFrame(animate);
   });
+}
+
+// Easing functions
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+function easeOutBack(t) {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
 }
 
 // ---------- Card Selection ----------
@@ -207,16 +246,12 @@ function selectCard(index, el) {
     // Deselect
     state.selectedCards = state.selectedCards.filter(s => s.index !== index);
     el.classList.remove('selected');
-    const face = el.querySelector('.card-face');
-    face.classList.remove('flipped');
   } else {
     if (state.selectedCards.length >= state.selectedSpread.card_count) {
       return; // Already full
     }
     state.selectedCards.push({ index, card: state.gridCards[index] });
     el.classList.add('selected');
-    const face = el.querySelector('.card-face');
-    face.classList.add('flipped');
   }
 
   updateSelectionCounter();
@@ -260,8 +295,6 @@ function cancelSelection() {
     const el = document.querySelector(`.card-cell[data-index="${s.index}"]`);
     if (el) {
       el.classList.remove('selected');
-      const face = el.querySelector('.card-face');
-      face.classList.remove('flipped');
     }
   });
   state.selectedCards = [];
@@ -290,8 +323,8 @@ async function confirmReading() {
 
   // Draw cards with reversal chance
   const drawnCards = state.selectedCards.map(s => {
-    const reversed = Math.random() < 0.35;
-    return { ...s.card, reversed };
+    const isReversed = Math.random() < 0.35;
+    return { ...s.card, isReversed };
   });
 
   // Generate interpretation
@@ -374,8 +407,8 @@ function renderResults(result) {
       <div class="result-card-emoji">${c.emoji}</div>
       <div class="result-card-name">${c.name_zh}</div>
       <div class="result-card-position">${c.positionName}</div>
-      <span class="result-card-reversal ${c.reversed ? 'reversed' : 'upright'}">
-        ${c.reversed ? '🔄 逆位' : '✨ 正位'}
+      <span class="result-card-reversal ${c.isReversed ? 'reversed' : 'upright'}">
+        ${c.isReversed ? '🔄 逆位' : '✨ 正位'}
       </span>
       <p class="result-card-text">${c.interpretation}</p>
     </div>

@@ -253,7 +253,7 @@ function analyzeFortunes(username, period) {
       const key = c.cardId;
       if (!cardFreq[key]) cardFreq[key] = { count: 0, name: c.name_zh, reversed: 0, upright: 0 };
       cardFreq[key].count++;
-      if (c.reversed) cardFreq[key].reversed++;
+      if (c.isReversed) cardFreq[key].reversed++;
       else cardFreq[key].upright++;
     });
   });
@@ -280,7 +280,7 @@ function analyzeFortunes(username, period) {
   periodFortunes.forEach(f => {
     (f.cards || []).forEach(c => {
       totalCards++;
-      if (c.reversed) reversedCards++;
+      if (c.isReversed) reversedCards++;
     });
   });
   const reversalRate = totalCards > 0 ? Math.round((reversedCards / totalCards) * 100) : 0;

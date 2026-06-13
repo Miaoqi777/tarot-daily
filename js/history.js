@@ -174,9 +174,9 @@ function renderHistoryRecords(fortunes) {
       </div>
       <div class="record-cards-mini">
         ${(f.cards || []).map(c => `
-          <span title="${c.positionName}: ${c.reversed ? '逆位' : '正位'}${c.name_zh}" style="cursor:default;">
+          <span title="${c.positionName}: ${c.isReversed ? '逆位' : '正位'}${c.name_zh}" style="cursor:default;">
             <span style="font-size:1.5rem;">${c.emoji || '🃏'}</span>
-            <span style="font-size:0.7rem;color:${c.reversed ? 'var(--macaron-pink)' : 'var(--macaron-mint)'}">${c.reversed ? '逆' : '正'}</span>
+            <span style="font-size:0.7rem;color:${c.isReversed ? 'var(--macaron-pink)' : 'var(--macaron-mint)'}">${c.isReversed ? '逆' : '正'}</span>
           </span>
         `).join('')}
       </div>
