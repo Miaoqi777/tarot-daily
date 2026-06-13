@@ -281,7 +281,7 @@ function showConfirmation() {
 
   preview.innerHTML = state.selectedCards.map(s => `
     <div class="popup-mini-card glass">
-      ${s.card.emoji}
+      🔮
     </div>
   `).join('');
 
