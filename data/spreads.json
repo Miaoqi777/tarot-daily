@@ -1,0 +1,47 @@
+[
+  {
+    "id": "love",
+    "name_zh": "恋爱运势",
+    "icon": "💕",
+    "card_count": 3,
+    "positions": ["你的状态", "对方状态", "关系走向"],
+    "description": "探索爱情与人际关系的奥秘，了解你在感情中的位置和未来发展。",
+    "color": "#F8B4C8"
+  },
+  {
+    "id": "study",
+    "name_zh": "学业运势",
+    "icon": "📚",
+    "card_count": 3,
+    "positions": ["当前基础", "挑战所在", "突破方向"],
+    "description": "学业与知识探索的指引，帮助你找到学习的方向和突破点。",
+    "color": "#B4E7CE"
+  },
+  {
+    "id": "work",
+    "name_zh": "事业运势",
+    "icon": "💼",
+    "card_count": 4,
+    "positions": ["当前状态", "机遇", "挑战", "建议行动"],
+    "description": "职场与事业发展的启示，看清你的职业道路和成长机会。",
+    "color": "#C4B5E0"
+  },
+  {
+    "id": "travel",
+    "name_zh": "旅行运势",
+    "icon": "✈️",
+    "card_count": 3,
+    "positions": ["出行时机", "旅途收获", "注意事项"],
+    "description": "旅行与探索的运势指引，为你的旅途带来更多收获和安全。",
+    "color": "#B5D8EB"
+  },
+  {
+    "id": "social",
+    "name_zh": "社交运势",
+    "icon": "🎭",
+    "card_count": 3,
+    "positions": ["社交能量", "贵人方向", "注意事项"],
+    "description": "人际关系与社交指南，助你在人际交往中游刃有余。",
+    "color": "#FAD4C0"
+  }
+]

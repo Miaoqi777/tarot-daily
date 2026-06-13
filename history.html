@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📊 运势分析 — 每周/月/季/年运势回顾</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Weather Bar -->
+  <div class="weather-bar" id="weather-bar">
+    <span class="weather-icon" id="weather-icon">🌤️</span>
+    <span class="weather-temp" id="weather-temp">--°C</span>
+    <span class="weather-desc" id="weather-desc">加载中...</span>
+    <span class="weather-city" id="weather-city">📍 定位中...</span>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar glass" id="sidebar">
+    <div class="sidebar-handle"></div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item" onclick="window.location.href='index.html'">
+        <span class="sidebar-icon">🔮</span>
+        <span class="sidebar-label">每日占卜</span>
+      </button>
+      <button class="sidebar-item" onclick="window.location.href='encyclopedia.html'">
+        <span class="sidebar-icon">📖</span>
+        <span class="sidebar-label">塔罗百科</span>
+      </button>
+      <button class="sidebar-item active">
+        <span class="sidebar-icon">📊</span>
+        <span class="sidebar-label">运势分析</span>
+      </button>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="sidebar-user-avatar">👤</div>
+      <span id="sidebar-username">未登录</span>
+    </div>
+    <button class="sidebar-item" onclick="window.location.href='index.html'">
+      <span class="sidebar-icon">🔮</span>
+      <span class="sidebar-label">回去占卜</span>
+    </button>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="history-page">
+    <div class="history-header">
+      <h1 class="section-title">📊 运势<span style="color:var(--accent-dark);">分析</span></h1>
+      <p class="section-subtitle" id="history-subtitle">登录后可查看你的运势回顾</p>
+    </div>
+
+    <!-- Period Tabs -->
+    <div class="period-tabs" id="period-tabs">
+      <button class="period-tab active" data-period="weekly" onclick="switchPeriod('weekly', this)">📅 本周</button>
+      <button class="period-tab" data-period="monthly" onclick="switchPeriod('monthly', this)">🗓️ 本月</button>
+      <button class="period-tab" data-period="quarterly" onclick="switchPeriod('quarterly', this)">📆 本季</button>
+      <button class="period-tab" data-period="yearly" onclick="switchPeriod('yearly', this)">📋 全年</button>
+    </div>
+
+    <!-- Analysis Stats -->
+    <div class="analysis-grid" id="analysis-stats">
+      <!-- Filled dynamically -->
+    </div>
+
+    <!-- Mood Calendar -->
+    <h3 style="margin-bottom:12px;">💝 心情日历</h3>
+    <div class="mood-calendar" id="mood-calendar">
+      <!-- Filled dynamically -->
+    </div>
+
+    <!-- Fortune History -->
+    <h3 style="margin:30px 0 12px;">📜 占卜记录</h3>
+    <div class="history-records" id="history-records">
+      <!-- Filled dynamically -->
+    </div>
+
+    <!-- Export -->
+    <button class="btn-action secondary export-btn" id="export-btn" onclick="handleExport()" style="display:none;">
+      💾 导出全部数据 (JSON)
+    </button>
+
+    <!-- Login prompt -->
+    <div class="text-center mt-20" id="login-prompt" style="padding:40px;">
+      <p style="color:var(--text-muted);margin-bottom:16px;">🔒 登录后查看运势分析与历史记录</p>
+      <button class="btn-action primary" onclick="redirectToLogin()">🔑 去登录</button>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/history.js"></script>
+</body>
+</html>

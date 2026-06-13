@@ -1,0 +1,731 @@
+/* ============================================================
+   main.js — 核心占卜流程控制
+   ============================================================ */
+
+// ---------- Global State ----------
+const state = {
+  selectedSpread: null,
+  gridCards: [],
+  selectedCards: [],     // Indices into gridCards
+  isShuffling: false,
+  divinationResult: null,
+  noisePlaying: false,
+  noiseSound: 'rain'
+};
+
+// ---------- Initialization ----------
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadCardData();
+  setupIntro();
+  renderSpreadOptions();
+  setupSidebar();
+  setupAuthForms();
+  updateSidebarUser();
+  initWeather();
+  initWhiteNoise();
+  spawnIntroEmojis();
+});
+
+// ---------- Intro Overlay ----------
+function setupIntro() {
+  const shown = sessionStorage.getItem('tarot-intro-shown');
+  const overlay = document.getElementById('intro-overlay');
+  if (shown) {
+    overlay.classList.add('dismissed');
+    setTimeout(() => overlay.remove(), 600);
+    return;
+  }
+  overlay.addEventListener('click', () => {
+    overlay.classList.add('dismissed');
+    sessionStorage.setItem('tarot-intro-shown', '1');
+    setTimeout(() => overlay.remove(), 600);
+  });
+}
+
+function spawnIntroEmojis() {
+  const container = document.getElementById('intro-stars');
+  if (!container) return;
+  const emojis = ['✨', '⭐', '🌟', '🔮', '💫', '🪐', '🌙', '💖'];
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement('span');
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.cssText = `
+      position:absolute;
+      left:${Math.random() * 100}%;
+      top:${Math.random() * 100}%;
+      font-size:${1 + Math.random() * 2}rem;
+      opacity:${0.2 + Math.random() * 0.4};
+      animation: floatUp ${4 + Math.random() * 6}s linear infinite;
+      animation-delay:${Math.random() * 4}s;
+    `;
+    container.appendChild(el);
+  }
+}
+
+// ---------- Spread Type Selection ----------
+function renderSpreadOptions() {
+  const container = document.getElementById('spread-selector');
+  if (!spreads.length) {
+    container.innerHTML = '<p style="color:var(--text-muted);">加载牌型中...</p>';
+    return;
+  }
+  container.innerHTML = spreads.map(s => `
+    <div class="spread-option glass-card" data-spread="${s.id}" onclick="selectSpread('${s.id}', this)">
+      <span class="spread-icon">${s.icon}</span>
+      <span class="spread-name">${s.name_zh}</span>
+      <span class="spread-count">${s.card_count}张牌</span>
+    </div>
+  `).join('');
+}
+
+function selectSpread(spreadId, el) {
+  document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedSpread = getSpread(spreadId);
+  state.selectedCards = [];
+  state.divinationResult = null;
+
+  document.getElementById('card-count-display').textContent = state.selectedSpread.card_count;
+  document.getElementById('required-count').textContent = state.selectedSpread.card_count;
+  document.getElementById('selected-count').textContent = '0';
+
+  document.getElementById('shuffle-area').style.display = 'block';
+  document.getElementById('card-grid-container').style.display = 'none';
+  document.getElementById('result-section').classList.add('hidden');
+  document.getElementById('song-recommendation').classList.add('hidden');
+  document.getElementById('mood-section').classList.add('hidden');
+}
+
+// ---------- Shuffle & Card Grid ----------
+async function startShuffle() {
+  if (state.isShuffling) return;
+  if (!state.selectedSpread) {
+    alert('请先选择占卜主题');
+    return;
+  }
+
+  state.isShuffling = true;
+  state.selectedCards = [];
+  document.getElementById('btn-shuffle').disabled = true;
+  document.getElementById('btn-shuffle').textContent = '🃏 洗牌中...';
+
+  // Prepare grid
+  state.gridCards = getShuffledGrid();
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = state.gridCards.map((card, i) => `
+    <div class="card-cell" data-index="${i}" onclick="selectCard(${i}, this)">
+      <div class="card-face">
+        <div class="card-back">🔮</div>
+        <div class="card-front">
+          <span class="card-emoji">${card.emoji}</span>
+          <span class="card-mini-name">${card.name_zh}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const container = document.getElementById('card-grid-container');
+  container.style.display = 'block';
+  document.getElementById('selection-counter').style.display = 'inline-flex';
+  updateSelectionCounter();
+
+  // Scroll to grid
+  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Shuffle animation — rapid position swaps
+  const cells = grid.children;
+  const totalCells = cells.length;
+
+  await shuffleAnimation(cells, 1200);
+
+  // Done
+  state.isShuffling = false;
+  document.getElementById('btn-shuffle').disabled = false;
+  document.getElementById('btn-shuffle').textContent = '🔄 重新洗牌';
+}
+
+function shuffleAnimation(cells, duration) {
+  return new Promise(resolve => {
+    const startTime = performance.now();
+
+    function animate(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease out
+      const intensity = 1 - progress;
+
+      for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i];
+        if (cell.classList.contains('selected')) continue;
+
+        if (intensity > 0.05) {
+          const x = (Math.random() - 0.5) * 8 * intensity;
+          const y = (Math.random() - 0.5) * 8 * intensity;
+          const rot = (Math.random() - 0.5) * 20 * intensity;
+          cell.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+          cell.style.zIndex = Math.floor(Math.random() * 10);
+        } else {
+          cell.style.transform = '';
+          cell.style.zIndex = '';
+        }
+
+        // Flip at 50% progress
+        const face = cell.querySelector('.card-face');
+        if (progress > 0.4 && progress < 0.6) {
+          face.classList.add('flipped');
+        } else if (progress >= 0.6) {
+          face.classList.remove('flipped');
+        }
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Reset all
+        for (let i = 0; i < cells.length; i++) {
+          cells[i].style.transform = '';
+          cells[i].style.zIndex = '';
+          const face = cells[i].querySelector('.card-face');
+          face.classList.remove('flipped');
+        }
+        resolve();
+      }
+    }
+
+    requestAnimationFrame(animate);
+  });
+}
+
+// ---------- Card Selection ----------
+function selectCard(index, el) {
+  if (state.isShuffling) return;
+  if (!state.selectedSpread) return;
+
+  const alreadySelected = state.selectedCards.find(s => s.index === index);
+  if (alreadySelected) {
+    // Deselect
+    state.selectedCards = state.selectedCards.filter(s => s.index !== index);
+    el.classList.remove('selected');
+    const face = el.querySelector('.card-face');
+    face.classList.remove('flipped');
+  } else {
+    if (state.selectedCards.length >= state.selectedSpread.card_count) {
+      return; // Already full
+    }
+    state.selectedCards.push({ index, card: state.gridCards[index] });
+    el.classList.add('selected');
+    const face = el.querySelector('.card-face');
+    face.classList.add('flipped');
+  }
+
+  updateSelectionCounter();
+
+  // Check if reached required count
+  if (state.selectedCards.length >= state.selectedSpread.card_count) {
+    setTimeout(showConfirmation, 400);
+  }
+}
+
+function updateSelectionCounter() {
+  document.getElementById('selected-count').textContent = state.selectedCards.length;
+  const remaining = state.selectedSpread
+    ? state.selectedSpread.card_count - state.selectedCards.length
+    : 0;
+  if (remaining <= 0 && state.selectedSpread) {
+    document.getElementById('selection-counter').style.background = 'rgba(180,231,206,0.3)';
+  } else {
+    document.getElementById('selection-counter').style.background = '';
+  }
+}
+
+// ---------- Confirmation Popup ----------
+function showConfirmation() {
+  const popup = document.getElementById('confirm-popup');
+  const preview = document.getElementById('popup-preview');
+
+  preview.innerHTML = state.selectedCards.map(s => `
+    <div class="popup-mini-card glass">
+      ${s.card.emoji}
+    </div>
+  `).join('');
+
+  popup.classList.remove('hidden');
+}
+
+function cancelSelection() {
+  document.getElementById('confirm-popup').classList.add('hidden');
+  // Deselect all
+  state.selectedCards.forEach(s => {
+    const el = document.querySelector(`.card-cell[data-index="${s.index}"]`);
+    if (el) {
+      el.classList.remove('selected');
+      const face = el.querySelector('.card-face');
+      face.classList.remove('flipped');
+    }
+  });
+  state.selectedCards = [];
+  updateSelectionCounter();
+}
+
+// ---------- Confirm Reading & Curtain ----------
+async function confirmReading() {
+  // Check auth for first daily divination
+  const user = getCurrentUser();
+  if (!user) {
+    // Track pending action for after login
+    window._pendingAuthAction = () => confirmReading();
+    showAuthModal();
+    document.getElementById('confirm-popup').classList.add('hidden');
+    return;
+  }
+
+  // Cache first-time status before updating
+  const isFirstToday = isFirstActionToday(user);
+  if (isFirstToday) {
+    setLastActionDate(user, 'divination');
+  }
+
+  document.getElementById('confirm-popup').classList.add('hidden');
+
+  // Draw cards with reversal chance
+  const drawnCards = state.selectedCards.map(s => {
+    const reversed = Math.random() < 0.35;
+    return { ...s.card, reversed };
+  });
+
+  // Generate interpretation
+  const result = generateInterpretation(drawnCards, state.selectedSpread);
+  state.divinationResult = result;
+
+  // Save fortune
+  const fortuneData = {
+    date: new Date().toISOString().split('T')[0],
+    timestamp: Date.now(),
+    spreadType: state.selectedSpread.id,
+    spreadName: state.selectedSpread.name_zh,
+    cards: result.cards,
+    overallMood: result.overallMood,
+    summary: result.summary
+  };
+  saveFortune(user, fortuneData);
+
+  // Fade out unselected cards
+  const allCells = document.querySelectorAll('.card-cell');
+  const selectedIndices = state.selectedCards.map(s => s.index);
+  allCells.forEach(cell => {
+    const idx = parseInt(cell.dataset.index);
+    if (!selectedIndices.includes(idx)) {
+      cell.classList.add('fading');
+    }
+  });
+
+  await sleep(500);
+
+  // Curtain animation
+  await animateCurtain();
+
+  // Show results
+  renderResults(result);
+
+  // Show song recommendation if first daily (use cached value)
+  if (isFirstToday) {
+    showSongRecommendation(result.overallMood);
+  }
+
+  // Trigger white noise based on result mood
+  setNoiseByMood(result.overallMood);
+
+  // Spawn floating emojis
+  spawnFloatingEmojis(result.overallMood);
+}
+
+function animateCurtain() {
+  return new Promise(resolve => {
+    const curtain = document.getElementById('curtain-overlay');
+    curtain.classList.remove('hidden');
+
+    // Render results behind curtain first
+    document.getElementById('card-grid-container').style.display = 'none';
+    document.getElementById('result-section').classList.remove('hidden');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        curtain.classList.add('opening');
+        setTimeout(() => {
+          curtain.classList.add('hidden');
+          curtain.classList.remove('opening');
+          resolve();
+        }, 850);
+      });
+    });
+  });
+}
+
+// ---------- Result Display ----------
+function renderResults(result) {
+  document.getElementById('result-date').textContent =
+    `📅 ${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}`;
+  document.getElementById('result-spread-name').textContent = result.spreadName;
+
+  const cardsContainer = document.getElementById('result-cards');
+  cardsContainer.innerHTML = result.cards.map((c, i) => `
+    <div class="result-card glass-card" style="animation-delay:${0.1 + i * 0.15}s;">
+      <div class="result-card-emoji">${c.emoji}</div>
+      <div class="result-card-name">${c.name_zh}</div>
+      <div class="result-card-position">${c.positionName}</div>
+      <span class="result-card-reversal ${c.reversed ? 'reversed' : 'upright'}">
+        ${c.reversed ? '🔄 逆位' : '✨ 正位'}
+      </span>
+      <p class="result-card-text">${c.interpretation}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('result-summary').innerHTML = `
+    <h3>📜 总体解读</h3>
+    <p>${result.summary.replace(/\n/g, '<br>')}</p>
+  `;
+
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Adjust background based on mood
+  updateBackgroundByMood(result.overallMood);
+}
+
+function showSongRecommendation(mood) {
+  const song = getSongRecommendation(mood);
+  const div = document.getElementById('song-recommendation');
+  document.getElementById('song-emoji').textContent = song.emoji;
+  document.getElementById('song-title').textContent = song.title;
+  document.getElementById('song-artist').textContent = `🎤 ${song.artist}`;
+  document.getElementById('song-reason').textContent = song.reason;
+  div.classList.remove('hidden');
+}
+
+// ---------- Reset ----------
+function resetDivination() {
+  state.selectedSpread = null;
+  state.selectedCards = [];
+  state.gridCards = [];
+  state.divinationResult = null;
+
+  document.getElementById('card-grid-container').style.display = 'none';
+  document.getElementById('shuffle-area').style.display = 'none';
+  document.getElementById('result-section').classList.add('hidden');
+  document.getElementById('song-recommendation').classList.add('hidden');
+  document.getElementById('mood-section').classList.add('hidden');
+
+  document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
+  document.body.style.background = '';
+
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- Mood Panel ----------
+function showHomePage() {
+  // Already on index page, scroll to top and show spread section
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('spread-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function openMoodPanel() {
+  const user = getCurrentUser();
+  if (!user) {
+    window._pendingAuthAction = () => openMoodPanel();
+    showAuthModal();
+    return;
+  }
+
+  const section = document.getElementById('mood-section');
+  section.classList.remove('hidden');
+
+  const grid = document.getElementById('mood-grid');
+  if (!grid.children.length) {
+    const options = getMoodOptions();
+    grid.innerHTML = options.map(o => `
+      <div class="mood-option glass-card" data-mood="${o.id}" onclick="selectMood('${o.id}', this)" title="${o.label}">
+        ${o.emoji}
+      </div>
+    `).join('');
+
+    // Check if already have mood today
+    const todayMood = getTodayMood(user);
+    if (todayMood) {
+      const el = grid.querySelector(`[data-mood="${todayMood.mood}"]`);
+      if (el) el.classList.add('selected');
+      document.getElementById('mood-note').value = todayMood.note || '';
+    }
+  }
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Adjust noise based on last fortune mood if available
+  const fortunes = getFortunes(user);
+  if (fortunes.length > 0) {
+    const lastFortune = fortunes[fortunes.length - 1];
+    setNoiseByMood(lastFortune.overallMood || 'calm');
+  }
+}
+
+let selectedMoodValue = null;
+function selectMood(moodId, el) {
+  document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMoodValue = moodId;
+}
+
+async function submitMood() {
+  const user = getCurrentUser();
+  if (!user) {
+    window._pendingAuthAction = () => { openMoodPanel(); };
+    showAuthModal();
+    return;
+  }
+
+  if (!selectedMoodValue) {
+    const todayMood = getTodayMood(user);
+    if (!todayMood) {
+      document.getElementById('mood-msg').textContent = '请先选择一个心情表情哦~';
+      return;
+    }
+    selectedMoodValue = todayMood.mood;
+  }
+
+  const note = document.getElementById('mood-note').value.trim();
+  saveMood(user, { mood: selectedMoodValue, note });
+
+  document.getElementById('mood-msg').textContent = '✅ 心情已记录！愿你今天一切安好~';
+  setTimeout(() => {
+    document.getElementById('mood-msg').textContent = '';
+  }, 3000);
+
+  // Update white noise based on mood
+  setNoiseByMood(selectedMoodValue);
+}
+
+// ---------- Sidebar ----------
+function setupSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  let hideTimeout;
+
+  sidebar.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimeout);
+  });
+
+  sidebar.addEventListener('mouseleave', () => {
+    if (!sidebar.classList.contains('pinned')) {
+      hideTimeout = setTimeout(() => {
+        // CSS handles collapse
+      }, 300);
+    }
+  });
+
+  document.getElementById('sidebar-pin').addEventListener('click', (e) => {
+    e.stopPropagation();
+    sidebar.classList.toggle('pinned');
+    const btn = document.getElementById('sidebar-pin');
+    btn.textContent = sidebar.classList.contains('pinned') ? '📌' : '📍';
+  });
+}
+
+function updateSidebarUser() {
+  const user = getCurrentUser();
+  const usernameEl = document.getElementById('sidebar-username');
+  const authLabel = document.getElementById('sidebar-auth-label');
+  const avatar = document.querySelector('.sidebar-user-avatar');
+
+  if (user) {
+    usernameEl.textContent = user;
+    authLabel.textContent = '退出登录';
+    avatar.textContent = user.charAt(0).toUpperCase();
+  } else {
+    usernameEl.textContent = '未登录';
+    authLabel.textContent = '登录 / 注册';
+    avatar.textContent = '👤';
+  }
+}
+
+// ---------- Auth Modal ----------
+function showAuthModal() {
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('register-error').textContent = '';
+}
+
+function hideAuthModal() {
+  document.getElementById('auth-overlay').classList.add('hidden');
+}
+
+function setupAuthForms() {
+  // Tab switching
+  document.getElementById('tab-login-btn').addEventListener('click', function () {
+    this.classList.add('active');
+    document.getElementById('tab-register-btn').classList.remove('active');
+    document.getElementById('login-form').classList.add('active');
+    document.getElementById('register-form').classList.remove('active');
+  });
+
+  document.getElementById('tab-register-btn').addEventListener('click', function () {
+    this.classList.add('active');
+    document.getElementById('tab-login-btn').classList.remove('active');
+    document.getElementById('register-form').classList.add('active');
+    document.getElementById('login-form').classList.remove('active');
+  });
+
+  // Login form
+  document.getElementById('login-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+
+    const result = await loginUser(username, password);
+    if (result.success) {
+      hideAuthModal();
+      updateSidebarUser();
+      // Clear form
+      this.reset();
+      // Continue the action that triggered auth
+      if (window._pendingAuthAction) {
+        const action = window._pendingAuthAction;
+        window._pendingAuthAction = null;
+        action();
+      }
+    } else {
+      errorEl.textContent = result.error;
+    }
+  });
+
+  // Register form
+  document.getElementById('register-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const username = document.getElementById('register-username').value.trim();
+    const password = document.getElementById('register-password').value;
+    const confirm = document.getElementById('register-password-confirm').value;
+    const errorEl = document.getElementById('register-error');
+
+    if (password !== confirm) {
+      errorEl.textContent = '两次密码不一致';
+      return;
+    }
+
+    const result = await registerUser(username, password);
+    if (result.success) {
+      // Auto login after register
+      await loginUser(username, password);
+      hideAuthModal();
+      updateSidebarUser();
+      this.reset();
+      // Switch back to login tab for next time
+      document.getElementById('tab-login-btn').click();
+    } else {
+      errorEl.textContent = result.error;
+    }
+  });
+
+  // Auth button in sidebar
+  document.getElementById('sidebar-auth-btn').addEventListener('click', () => {
+    const user = getCurrentUser();
+    if (user) {
+      if (confirm(`确定要退出登录吗？${user}`)) {
+        logoutUser();
+        updateSidebarUser();
+      }
+    } else {
+      showAuthModal();
+    }
+  });
+
+  // Close overlay on background click
+  document.getElementById('auth-overlay').addEventListener('click', function (e) {
+    if (e.target === this) hideAuthModal();
+  });
+
+  // Auth required callback
+  onAuthRequired(() => {
+    showAuthModal();
+  });
+}
+
+// ---------- Background Update ----------
+function updateBackgroundByMood(mood) {
+  const gradients = {
+    excited: 'linear-gradient(135deg, #fef9e7, #fdebd0, #fadbd8)',
+    happy: 'linear-gradient(135deg, #fef9e7, #fdebd0, #fef3c7)',
+    calm: 'linear-gradient(135deg, #e8f8f5, #d5f5e3, #e8e0f5)',
+    neutral: 'linear-gradient(135deg, #f5f0ff, #e8e0f5, #fef9fb)',
+    anxious: 'linear-gradient(135deg, #f5eef8, #e8daef, #d6eaf8)',
+    sad: 'linear-gradient(135deg, #d6eaf8, #aed6f1, #e8f8f5)'
+  };
+  document.body.style.background = gradients[mood] || gradients.neutral;
+}
+
+// ---------- Floating Emojis ----------
+function spawnFloatingEmojis(mood) {
+  const container = document.getElementById('emoji-container');
+  container.innerHTML = '';
+
+  const moodEmojis = {
+    excited: ['✨', '🌟', '🎉', '💫', '🔥', '💖', '🌈'],
+    happy: ['🌸', '🦋', '☀️', '💕', '🍀', '⭐', '🎵'],
+    calm: ['🍃', '🕊️', '🌿', '💧', '🌙', '☁️', '🪷'],
+    neutral: ['💫', '🌻', '🎐', '🪶', '🌤️', '🌾', '🫧'],
+    anxious: ['💜', '🌌', '🕯️', '🌊', '🧘', '☔', '🔮'],
+    sad: ['💙', '🌧️', '🌑', '🫂', '🕊️', '🌊', '☁️']
+  };
+
+  const emojis = moodEmojis[mood] || moodEmojis.neutral;
+
+  for (let i = 0; i < 15; i++) {
+    const el = document.createElement('span');
+    el.className = 'floating-emoji';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.cssText = `
+      left: ${5 + Math.random() * 90}%;
+      animation-duration: ${8 + Math.random() * 12}s;
+      animation-delay: ${Math.random() * 8}s;
+      font-size: ${1 + Math.random() * 2}rem;
+      opacity: ${0.2 + Math.random() * 0.3};
+    `;
+    container.appendChild(el);
+  }
+
+  // Auto-cleanup after longest animation
+  setTimeout(() => {
+    if (container.children.length <= 15) {
+      container.innerHTML = '';
+    }
+  }, 25000);
+}
+
+// ---------- White Noise Integration ----------
+function setNoiseByMood(mood) {
+  const soundMap = {
+    excited: 'forest',
+    happy: 'ocean',
+    calm: 'ocean',
+    neutral: 'wind',
+    anxious: 'rain',
+    sad: 'rain',
+    tired: 'ocean'
+  };
+  const sound = soundMap[mood] || 'rain';
+  selectNoiseSound(sound);
+
+  // Update background colors via emoji container parent
+  updateBackgroundByMood(mood);
+}
+
+// ---------- Utility ----------
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ---------- Keyboard Shortcuts ----------
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    hideAuthModal();
+    document.getElementById('confirm-popup').classList.add('hidden');
+  }
+});

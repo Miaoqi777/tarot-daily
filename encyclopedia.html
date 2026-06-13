@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📖 塔罗百科 — 78张塔罗牌完整解读</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Weather Bar -->
+  <div class="weather-bar" id="weather-bar">
+    <span class="weather-icon" id="weather-icon">🌤️</span>
+    <span class="weather-temp" id="weather-temp">--°C</span>
+    <span class="weather-desc" id="weather-desc">加载中...</span>
+    <span class="weather-city" id="weather-city">📍 定位中...</span>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar glass" id="sidebar">
+    <div class="sidebar-handle"></div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item" onclick="window.location.href='index.html'">
+        <span class="sidebar-icon">🔮</span>
+        <span class="sidebar-label">每日占卜</span>
+      </button>
+      <button class="sidebar-item active">
+        <span class="sidebar-icon">📖</span>
+        <span class="sidebar-label">塔罗百科</span>
+      </button>
+      <button class="sidebar-item" onclick="window.location.href='history.html'">
+        <span class="sidebar-icon">📊</span>
+        <span class="sidebar-label">运势分析</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="encyclopedia-page">
+    <div class="encyclopedia-header">
+      <h1 class="section-title">📖 塔罗<span style="color:var(--accent-dark);">百科</span></h1>
+      <p class="section-subtitle">探索78张标准韦特塔罗的奥秘</p>
+    </div>
+
+    <!-- Search -->
+    <input type="text" class="encyclopedia-search glass" id="encyclo-search"
+           placeholder="🔍 搜索牌名、关键词...（支持中文、英文）" oninput="filterAndRender()">
+
+    <!-- Filters -->
+    <div class="encyclopedia-filters" id="encyclo-filters">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">🃏 全部</button>
+      <button class="filter-btn" data-filter="major" onclick="setFilter('major', this)">🌟 大阿卡纳</button>
+      <button class="filter-btn" data-filter="minor" onclick="setFilter('minor', this)">🎴 小阿卡纳</button>
+      <button class="filter-btn" data-filter="wands" onclick="setFilter('wands', this)">🪄 权杖</button>
+      <button class="filter-btn" data-filter="cups" onclick="setFilter('cups', this)">🏆 圣杯</button>
+      <button class="filter-btn" data-filter="swords" onclick="setFilter('swords', this)">⚔️ 宝剑</button>
+      <button class="filter-btn" data-filter="pentacles" onclick="setFilter('pentacles', this)">🪙 星币</button>
+    </div>
+
+    <!-- Card Grid -->
+    <div class="encyclopedia-grid" id="encyclo-grid">
+      <p style="text-align:center;color:var(--text-muted);grid-column:1/-1;">加载中...</p>
+    </div>
+  </main>
+
+  <!-- Card Detail Modal -->
+  <div class="card-detail-overlay hidden" id="card-detail-overlay">
+    <div class="card-detail glass-strong" id="card-detail"></div>
+  </div>
+
+  <script src="js/weather.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/encyclopedia.js"></script>
+</body>
+</html>

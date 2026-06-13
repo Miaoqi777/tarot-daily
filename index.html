@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✨ 每日塔罗占卜 — 倾听宇宙的低语</title>
+  <meta name="description" content="每日塔罗占卜，探索你的恋爱、学业、事业、旅行、社交运势。马卡龙色系玻璃质感，温柔陪伴每一天。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== Weather Bar ========== -->
+  <div class="weather-bar" id="weather-bar">
+    <span class="weather-icon" id="weather-icon">🌤️</span>
+    <span class="weather-temp" id="weather-temp">--°C</span>
+    <span class="weather-desc" id="weather-desc">加载中...</span>
+    <span class="weather-city" id="weather-city" title="点击切换城市">📍 定位中...</span>
+  </div>
+
+  <!-- ========== Floating Sidebar ========== -->
+  <aside class="sidebar glass" id="sidebar">
+    <div class="sidebar-pin-btn" id="sidebar-pin" title="固定侧边栏">📌</div>
+    <div class="sidebar-handle"></div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item active" data-page="home" onclick="showHomePage()">
+        <span class="sidebar-icon">🔮</span>
+        <span class="sidebar-label">每日占卜</span>
+      </button>
+      <button class="sidebar-item" data-page="encyclopedia" onclick="window.location.href='encyclopedia.html'">
+        <span class="sidebar-icon">📖</span>
+        <span class="sidebar-label">塔罗百科</span>
+      </button>
+      <button class="sidebar-item" data-page="history" onclick="window.location.href='history.html'">
+        <span class="sidebar-icon">📊</span>
+        <span class="sidebar-label">运势分析</span>
+      </button>
+      <div class="sidebar-divider"></div>
+      <button class="sidebar-item" id="sidebar-mood-btn" onclick="openMoodPanel()">
+        <span class="sidebar-icon">💝</span>
+        <span class="sidebar-label">今日心情</span>
+      </button>
+      <button class="sidebar-item" id="sidebar-noise-btn" onclick="toggleWhiteNoise()">
+        <span class="sidebar-icon">🎵</span>
+        <span class="sidebar-label">白噪音</span>
+      </button>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="sidebar-user-avatar">👤</div>
+      <span id="sidebar-username">未登录</span>
+    </div>
+    <button class="sidebar-item" id="sidebar-auth-btn" onclick="showAuthModal()">
+      <span class="sidebar-icon">🔑</span>
+      <span class="sidebar-label" id="sidebar-auth-label">登录 / 注册</span>
+    </button>
+  </aside>
+
+  <!-- ========== Main Content ========== -->
+  <main class="main-content" id="main-content">
+
+    <!-- Intro Overlay -->
+    <div class="intro-overlay" id="intro-overlay">
+      <div class="intro-stars" id="intro-stars"></div>
+      <div class="intro-content">
+        <div class="intro-logo">🔮</div>
+        <h1 class="intro-title">✨ 每日塔罗占卜</h1>
+        <p class="intro-subtitle">
+          倾听宇宙的低语<br>
+          探索你的恋爱、学业、事业、旅行与社交运势<br>
+          每一天都是新的开始，每一张牌都是独特的指引
+        </p>
+        <p class="intro-hint">✨ 点击任意位置开始你的占卜之旅 ✨</p>
+      </div>
+    </div>
+
+    <!-- Spread Type Selector -->
+    <section class="spread-section" id="spread-section">
+      <div class="section-header">
+        <h2 class="section-title">🎴 选择你的占卜主题</h2>
+        <p class="section-subtitle">用心感受，选择一个你最关心的领域</p>
+      </div>
+      <div class="spread-selector" id="spread-selector">
+        <!-- Dynamically filled -->
+      </div>
+      <div class="shuffle-area" id="shuffle-area" style="display:none;">
+        <button class="btn-shuffle" id="btn-shuffle" onclick="startShuffle()">
+          🃏 开始洗牌
+        </button>
+        <p class="section-subtitle" style="margin-top:10px;">点击洗牌后，选择 <span id="card-count-display">3</span> 张牌</p>
+      </div>
+    </section>
+
+    <!-- Card Grid -->
+    <div class="card-grid-container" id="card-grid-container" style="display:none;">
+      <div class="selection-info">
+        <span class="selection-counter glass" id="selection-counter">
+          已选 <span class="current" id="selected-count">0</span> / <span class="total" id="required-count">3</span> 张
+        </span>
+      </div>
+      <div class="card-grid" id="card-grid">
+        <!-- Dynamically filled -->
+      </div>
+    </div>
+
+    <!-- Confirmation Popup -->
+    <div class="popup-overlay hidden" id="confirm-popup">
+      <div class="popup-card glass-strong">
+        <h3 class="popup-title">✨ 确认你的选择</h3>
+        <div class="popup-cards-preview" id="popup-preview">
+          <!-- Preview cards -->
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:8px;">
+          即将开始正式占卜，请确认你已跟随直觉选好了牌
+        </p>
+        <div class="popup-actions">
+          <button class="btn-cancel" onclick="cancelSelection()">🔄 重新选择</button>
+          <button class="btn-confirm" onclick="confirmReading()">✨ 确认占卜</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Curtain Transition -->
+    <div class="curtain-overlay hidden" id="curtain-overlay">
+      <div class="curtain-left"></div>
+      <div class="curtain-right"></div>
+    </div>
+
+    <!-- Result Section -->
+    <section class="result-section hidden" id="result-section">
+      <div class="result-header">
+        <p class="result-date" id="result-date"></p>
+        <h2 class="result-spread-name" id="result-spread-name"></h2>
+      </div>
+      <div class="result-cards" id="result-cards">
+        <!-- Result cards -->
+      </div>
+      <div class="result-summary glass-card" id="result-summary"></div>
+
+      <!-- Song Recommendation -->
+      <div class="song-recommendation glass-card hidden" id="song-recommendation">
+        <div class="song-icon" id="song-emoji">🎵</div>
+        <div class="song-info">
+          <h4 id="song-title"></h4>
+          <p class="song-artist" id="song-artist"></p>
+          <p class="song-reason" id="song-reason"></p>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn-action primary" onclick="resetDivination()">🔮 再来一次</button>
+        <button class="btn-action secondary" onclick="window.location.href='encyclopedia.html'">📖 查看塔罗百科</button>
+        <button class="btn-action secondary" onclick="openMoodPanel()">💝 记录今日心情</button>
+      </div>
+    </section>
+
+    <!-- Mood Panel -->
+    <section class="mood-section hidden" id="mood-section">
+      <h3 class="mood-title">💝 今天的心情如何？</h3>
+      <div class="mood-grid" id="mood-grid">
+        <!-- Dynamically filled -->
+      </div>
+      <textarea class="mood-note glass" id="mood-note" rows="3" placeholder="写下一句想对自己说的话...（可选）"></textarea>
+      <button class="btn-action primary mood-submit" onclick="submitMood()">💾 保存心情</button>
+      <p id="mood-msg" style="text-align:center;margin-top:8px;font-size:0.85rem;color:var(--accent-dark);"></p>
+    </section>
+
+  </main>
+
+  <!-- ========== Auth Modal ========== -->
+  <div class="auth-overlay hidden" id="auth-overlay">
+    <div class="auth-card glass-strong">
+      <button class="auth-close" onclick="hideAuthModal()">✕</button>
+      <div class="auth-card-logo">🔮</div>
+      <div class="auth-card-title">欢迎来到 <span style="color:var(--accent-dark);">每日塔罗</span></div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login" id="tab-login-btn">🔑 登录</button>
+        <button class="auth-tab" data-tab="register" id="tab-register-btn">📝 注册</button>
+      </div>
+      <form class="auth-form active" data-tab="login" id="login-form">
+        <div class="auth-field">
+          <label>用户名</label>
+          <input type="text" id="login-username" placeholder="输入用户名" required autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label>密码</label>
+          <input type="password" id="login-password" placeholder="输入密码" required autocomplete="current-password">
+        </div>
+        <div class="auth-error" id="login-error"></div>
+        <button type="submit" class="auth-submit">登录</button>
+      </form>
+      <form class="auth-form" data-tab="register" id="register-form">
+        <div class="auth-field">
+          <label>用户名</label>
+          <input type="text" id="register-username" placeholder="2-20个字符，中文/英文/数字" required autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label>密码</label>
+          <input type="password" id="register-password" placeholder="至少6位" required autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <label>确认密码</label>
+          <input type="password" id="register-password-confirm" placeholder="再次输入密码" required autocomplete="new-password">
+        </div>
+        <div class="auth-error" id="register-error"></div>
+        <button type="submit" class="auth-submit">注册</button>
+      </form>
+      <p class="auth-hint">🔒 数据仅保存在你的浏览器中，不会上传到任何服务器</p>
+    </div>
+  </div>
+
+  <!-- ========== White Noise Panel ========== -->
+  <div class="white-noise-panel" id="white-noise-panel">
+    <button class="wn-toggle glass" id="wn-toggle" onclick="toggleWhiteNoise()" title="白噪音陪伴">🎵</button>
+    <div class="wn-expanded glass" id="wn-expanded">
+      <button class="wn-option active" data-sound="rain" onclick="selectNoiseSound('rain', this)">🌧️ 雨声</button>
+      <button class="wn-option" data-sound="wind" onclick="selectNoiseSound('wind', this)">🍃 风声</button>
+      <button class="wn-option" data-sound="ocean" onclick="selectNoiseSound('ocean', this)">🌊 海浪</button>
+      <button class="wn-option" data-sound="forest" onclick="selectNoiseSound('forest', this)">🌴 雨林</button>
+      <div class="wn-volume">
+        <span>🔈</span>
+        <input type="range" id="wn-volume" min="0" max="100" value="40" oninput="setNoiseVolume(this.value)">
+        <span>🔊</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Floating Emoji Container ========== -->
+  <div class="emoji-float-container" id="emoji-container"></div>
+
+  <!-- ========== Scripts ========== -->
+  <script src="js/auth.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/white-noise.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
