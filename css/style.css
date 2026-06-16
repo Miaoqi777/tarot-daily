@@ -2326,3 +2326,117 @@ img { max-width: 100%; display: block; }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(212, 168, 67, 0.3);
 }
+
+/* ── SVG Icon System ── */
+.svg-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.svg-glow {
+  filter: drop-shadow(0 0 8px rgba(212, 168, 67, 0.4));
+  transition: filter var(--transition);
+}
+
+.svg-glow:hover {
+  filter: drop-shadow(0 0 16px rgba(212, 168, 67, 0.55));
+}
+
+/* Sidebar icon with SVG */
+.sidebar-item .svg-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Intro logo with SVG */
+.intro-logo .svg-icon {
+  width: 56px;
+  height: 56px;
+}
+
+/* Weather icon with SVG */
+.weather-bar .weather-icon .svg-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Card back with SVG */
+.card-back .svg-icon {
+  width: 36px;
+  height: 36px;
+}
+
+/* Close button with SVG */
+.auth-close .svg-icon,
+.card-detail-close .svg-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* White noise toggle with SVG */
+.wn-toggle .svg-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Spread option icon with SVG */
+.spread-option .spread-icon .svg-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* Card mini SVG on grid */
+.card-mini-svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Result card and encyclopedia card SVG */
+.result-card-emoji .svg-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.card-emoji-big .svg-icon,
+.card-detail-emoji .svg-icon {
+  width: 48px;
+  height: 48px;
+}
+
+/* Mood option SVG */
+.mood-option .svg-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* Song icon SVG */
+.song-icon .svg-icon {
+  width: 36px;
+  height: 36px;
+}
+
+/* Weather SVG */
+.weather-svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Pin button SVG */
+.sidebar-pin-btn .svg-icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Floating emoji SVG */
+.floating-emoji .svg-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.5;
+}

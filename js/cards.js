@@ -354,3 +354,83 @@ const MOOD_OPTIONS = [
 function getMoodOptions() {
   return MOOD_OPTIONS;
 }
+
+// ── SVG Icon Generator ──
+// Returns inline SVG HTML string. All icons: fill:none, stroke:currentColor, stroke-width:1.5
+function getIconSVG(name, cls) {
+  const c = cls || 'svg-icon svg-glow';
+  const icons = {
+    diamond: `<svg class="${c}" viewBox="0 0 24 24"><rect x="12" y="2" width="14" height="14" transform="rotate(45 12 2)"/></svg>`,
+    question: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a3.5 3.5 0 015.5 2.5c0 2-2 2.5-2 4"/><circle cx="12" cy="18" r="1" fill="currentColor" stroke="none"/></svg>`,
+    bars: `<svg class="${c}" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
+    heart: `<svg class="${c}" viewBox="0 0 24 24"><path d="M12 20S3 13.5 3 8a5 5 0 019-3 5 5 0 019 3c0 5.5-9 12-9 12z"/></svg>`,
+    music: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="7" cy="17" r="2.5"/><line x1="9.5" y1="17" x2="20" y2="8"/><line x1="9.5" y1="12" x2="20" y2="3"/><circle cx="17.5" cy="5.5" r="1.5"/></svg>`,
+    user: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-8 8-8s8 3.5 8 8"/></svg>`,
+    'arrow-up': `<svg class="${c}" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11, 12 5, 18 11"/></svg>`,
+    pin: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>`,
+    close: `<svg class="${c}" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`,
+    // Weather
+    sun: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.5" y1="4.5" x2="6" y2="6"/><line x1="18" y1="18" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6" y2="18"/><line x1="18" y1="6" x2="19.5" y2="4.5"/></svg>`,
+    'cloud-sun': `<svg class="${c}" viewBox="0 0 24 24"><circle cx="10" cy="9" r="4"/><path d="M4 17a4 4 0 015-3.8 5.5 5.5 0 0110-1A4 4 0 0119 17H4z"/></svg>`,
+    cloud: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-dasharray="2 3"/></svg>`,
+    overcast: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" stroke="none" opacity="0.15"/><circle cx="12" cy="12" r="8"/></svg>`,
+    fog: `<svg class="${c}" viewBox="0 0 24 24"><path d="M3 8h6c2 0 3-2 3-2s1 2 3 2h6"/><path d="M3 12h8c2 0 3-2 3-2s1 2 3 2h4"/><path d="M3 16h6c2 0 3-2 3-2s1 2 3 2h6"/></svg>`,
+    rain: `<svg class="${c}" viewBox="0 0 24 24"><line x1="6" y1="5" x2="5" y2="10"/><line x1="12" y1="5" x2="11" y2="10"/><line x1="18" y1="5" x2="17" y2="10"/><line x1="5" y1="14" x2="4" y2="19"/><line x1="11" y1="14" x2="10" y2="19"/><line x1="17" y1="14" x2="16" y2="19"/></svg>`,
+    snow: `<svg class="${c}" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="22"/><line x1="2" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="22" y2="12"/><line x1="4" y1="4" x2="8" y2="8"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="20" y1="4" x2="16" y2="8"/><line x1="8" y1="16" x2="4" y2="20"/></svg>`,
+    lightning: `<svg class="${c}" viewBox="0 0 24 24"><polygon points="13 2 3 14 11 14 9 22 21 9 13 9 15 2"/></svg>`,
+    // Mood
+    star: `<svg class="${c}" viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5"/></svg>`,
+    circle: `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>`,
+    'circle-dot': `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>`,
+    'cross-circle': `<svg class="${c}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="8" y1="8" x2="16" y2="16"/><line x1="16" y1="8" x2="8" y2="16"/></svg>`,
+    'triangle-down': `<svg class="${c}" viewBox="0 0 24 24"><polygon points="12 20 2 4 22 4"/></svg>`,
+    square: `<svg class="${c}" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="0.5"/></svg>`,
+    triangle: `<svg class="${c}" viewBox="0 0 24 24"><polygon points="12 3 3 20 21 20"/></svg>`,
+    'four-star': `<svg class="${c}" viewBox="0 0 24 24"><polygon points="12 2 14.5 9.5 22 9.5 16 14 18.5 22 12 17 5.5 22 8 14 2 9.5 9.5 9.5"/></svg>`,
+    // Default fallback
+    _default: `<svg class="${c}" viewBox="0 0 24 24"><rect x="12" y="2" width="14" height="14" transform="rotate(45 12 2)"/></svg>`
+  };
+  return icons[name] || icons._default;
+}
+
+// ── Icon symbol to SVG name mapping ──
+// Weather
+const WEATHER_SVG_MAP = {
+  '⊙': 'sun', '◉': 'cloud-sun', '◌': 'cloud', '●': 'overcast',
+  '≋': 'fog', '◌≈': 'rain', '≈': 'rain', '∗': 'snow', '⚡': 'lightning',
+  '--': '__none'
+};
+// Mood
+const MOOD_SVG_MAP = {
+  '◆': 'diamond', '◎': 'circle-dot', '◌': 'cloud', '☆': 'star',
+  '⊗': 'cross-circle', '▽': 'triangle-down', '□': 'square'
+};
+// Theme
+const THEME_SVG_MAP = {
+  '♥': 'heart', '◆': 'diamond', '□': 'square', '△': 'triangle',
+  '◎': 'circle-dot', '◈': 'four-star'
+};
+// Card fallback
+const CARD_FALLBACK_SVG = 'diamond';
+
+// ── Universal Symbol-to-SVG converter ──
+// Auto-detects card symbols (☆◎♁♥△◈★◑◉♡↑⊚ etc.) and converts to SVG
+function symbolToSVG(symbol, cls) {
+  if (!symbol || symbol.length > 2) return symbol; // Pass through non-symbols
+  const c = cls || 'svg-icon svg-glow';
+
+  // Major Arcana specific mappings
+  const majorMap = {
+    '⊚': 'circle-dot', '☆': 'star', '◎': 'circle-dot', '♁': 'circle',
+    '■': 'square', '†': 'close', '⊕': 'circle-dot', '⊙': 'sun',
+    '◈': 'four-star', '≡': 'bars', '∇': 'triangle-down', '※': 'star',
+    '≈': 'rain', '⊗': 'cross-circle', '⬡': 'circle', '★': 'star',
+    '◑': 'circle', '◉': 'cloud-sun', '⨁': 'circle-dot', '♥': 'heart',
+    '△': 'triangle', '◆': 'diamond', '◇': 'diamond', '◎': 'circle-dot',
+    '◌': 'cloud', '☆': 'star', '▽': 'triangle-down', '□': 'square',
+    '♡': 'heart', '↑': 'arrow-up'
+  };
+
+  const name = majorMap[symbol] || CARD_FALLBACK_SVG;
+  return getIconSVG(name, c);
+}

@@ -139,18 +139,23 @@ async function fetchOpenMeteo(lat, lon) {
 // ---------- Weather Code Mapping (WMO 4680) ----------
 function weatherEmoji(code) {
   const c = Number(code);
-  if (c === 0) return '⊙';
-  if (c === 1) return '◉';
-  if (c === 2) return '◌';
-  if (c === 3) return '●';
-  if (c >= 45 && c <= 48) return '≋';
-  if (c >= 51 && c <= 57) return '◌≈';
-  if (c >= 61 && c <= 67) return '≈';
-  if (c >= 71 && c <= 77) return '∗';
-  if (c >= 80 && c <= 82) return '◌≈';
-  if (c >= 85 && c <= 86) return '∗';
-  if (c >= 95 && c <= 99) return '⚡';
-  return '◉';
+  let symbol = '◉';
+  if (c === 0) symbol = '⊙';
+  else if (c === 1) symbol = '◉';
+  else if (c === 2) symbol = '◌';
+  else if (c === 3) symbol = '●';
+  else if (c >= 45 && c <= 48) symbol = '≋';
+  else if (c >= 51 && c <= 57) symbol = '◌≈';
+  else if (c >= 61 && c <= 67) symbol = '≈';
+  else if (c >= 71 && c <= 77) symbol = '∗';
+  else if (c >= 80 && c <= 82) symbol = '◌≈';
+  else if (c >= 85 && c <= 86) symbol = '∗';
+  else if (c >= 95 && c <= 99) symbol = '⚡';
+  const svgName = (typeof WEATHER_SVG_MAP !== 'undefined') ? WEATHER_SVG_MAP[symbol] : null;
+  if (svgName && svgName !== '__none' && typeof getIconSVG === 'function') {
+    return getIconSVG(svgName, 'svg-icon svg-glow weather-svg');
+  }
+  return symbol;
 }
 
 function weatherDesc(code) {
@@ -196,7 +201,7 @@ function weatherDesc(code) {
 
 // ---------- Render ----------
 function renderWeather(data) {
-  document.getElementById('weather-icon').textContent = data.icon;
+  document.getElementById('weather-icon').innerHTML = data.icon;
   document.getElementById('weather-temp').textContent = data.temp + '°C';
   document.getElementById('weather-desc').textContent = data.desc;
   document.getElementById('weather-city').textContent = '[ ' + data.city + ' ]';

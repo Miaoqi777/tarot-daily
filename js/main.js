@@ -72,7 +72,7 @@ function renderSpreadOptions() {
   }
   container.innerHTML = spreads.map(t => `
     <div class="spread-option glass-card" data-theme="${t.theme}" onclick="selectTheme('${t.theme}', this)">
-      <span class="spread-icon">${t.icon}</span>
+      <span class="spread-icon">${symbolToSVG(t.icon)}</span>
       <span class="spread-name">${t.name_zh}</span>
       <span class="spread-count">${t.spreads.length}种牌阵</span>
     </div>
@@ -159,9 +159,9 @@ async function startShuffle() {
   grid.innerHTML = state.gridCards.map((card, i) => `
     <div class="card-cell" data-index="${i}" onclick="selectCard(${i}, this)">
       <div class="card-face">
-        <div class="card-back">◆</div>
+        <div class="card-back">${getIconSVG('diamond', 'svg-icon')}</div>
         <div class="card-front">
-          <span class="card-emoji">${card.emoji}</span>
+          <span class="card-emoji">${symbolToSVG(card.emoji, 'svg-icon card-mini-svg')}</span>
           <span class="card-mini-name">${card.name_zh}</span>
         </div>
       </div>
@@ -325,7 +325,7 @@ function showConfirmation() {
 
   preview.innerHTML = state.selectedCards.map(s => `
     <div class="popup-mini-card glass">
-      [?]
+      ${getIconSVG('diamond', 'svg-icon')}
     </div>
   `).join('');
 
@@ -465,7 +465,7 @@ function renderResults(result) {
   const cardsContainer = document.getElementById('result-cards');
   cardsContainer.innerHTML = result.cards.map((c, i) => `
     <div class="result-card glass-card" style="animation-delay:${0.1 + i * 0.15}s;">
-      <div class="result-card-emoji">${c.emoji}</div>
+      <div class="result-card-emoji">${symbolToSVG(c.emoji)}</div>
       <div class="result-card-name">${c.name_zh}</div>
       <div class="result-card-position">${c.positionName}</div>
       <span class="result-card-reversal ${c.isReversed ? 'reversed' : 'upright'}">
@@ -595,7 +595,7 @@ function openMoodPanel() {
     const options = getMoodOptions();
     grid.innerHTML = options.map(o => `
       <div class="mood-option glass-card" data-mood="${o.id}" onclick="selectMood('${o.id}', this)" title="${o.label}">
-        ${o.emoji}
+        ${symbolToSVG(o.emoji, 'svg-icon svg-glow')}
       </div>
     `).join('');
 

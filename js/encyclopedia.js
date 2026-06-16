@@ -62,7 +62,7 @@ function renderGrid(cards) {
     }
     return `
       <div class="encyclopedia-card glass-card" onclick="showCardDetail('${card.id}')">
-        <div class="card-emoji-big">${card.emoji}</div>
+        <div class="card-emoji-big">${symbolToSVG(card.emoji, 'svg-icon svg-glow')}</div>
         <div class="card-name">${card.name_zh}</div>
         <span class="card-badge ${badgeClass}">
           ${card.arcana === 'major' ? '大阿卡纳' : (card.suit === 'wands' ? '权杖' : card.suit === 'cups' ? '圣杯' : card.suit === 'swords' ? '宝剑' : '星币')}
@@ -99,7 +99,7 @@ function showCardDetail(cardId) {
 
   detail.innerHTML = `
     <button class="card-detail-close" onclick="hideCardDetail()">[X]</button>
-    <div class="card-detail-emoji">${card.emoji}</div>
+    <div class="card-detail-emoji">${symbolToSVG(card.emoji, 'svg-icon svg-glow')}</div>
     <div class="card-detail-name">${card.name_zh} <small style="color:var(--text-muted);">${card.name_en}</small></div>
     <div style="text-align:center;margin-bottom:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
       ${arcanaBadge}

@@ -79,7 +79,7 @@ function renderAnalysis() {
       <div class="stat-label">MAJOR : MINOR</div>
     </div>
     <div class="analysis-stat glass-card">
-      <div class="stat-value">${analysis.topMood ? getMoodOptions().find(m => m.id === analysis.topMood[0])?.emoji || '◆' : '—'}</div>
+      <div class="stat-value">${analysis.topMood ? symbolToSVG(getMoodOptions().find(m => m.id === analysis.topMood[0])?.emoji, 'svg-icon svg-glow') || getIconSVG('diamond', 'svg-icon svg-glow') : '—'}</div>
       <div class="stat-label">TOP MOOD</div>
     </div>
     ${analysis.totalMoods > 0 ? `
@@ -102,7 +102,7 @@ function renderAnalysis() {
       <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
         ${analysis.topCards.map(c => `
           <span style="text-align:center;">
-            <span style="font-size:1.5rem;">${allCards.find(ac => ac.id === c.id)?.emoji || '◆'}</span><br>
+            <span>${symbolToSVG(allCards.find(ac => ac.id === c.id)?.emoji || '◆', 'svg-icon svg-glow')}</span><br>
             <span style="font-size:0.75rem;">${c.name}</span><br>
             <span style="font-size:0.7rem;color:var(--text-muted);">${c.count}次</span>
           </span>
@@ -147,7 +147,7 @@ function renderMoodCalendar(analysis) {
 
   calendar.innerHTML = displayDays.map(d => {
     const moodClass = d.mood ? `mood-${d.mood}` : 'empty';
-    const emoji = d.mood ? getMoodOptions().find(m => m.id === d.mood)?.emoji || '' : '';
+    const emoji = d.mood ? symbolToSVG(getMoodOptions().find(m => m.id === d.mood)?.emoji || '', 'svg-icon') : '';
     return `
       <div class="mood-day ${moodClass}" title="${d.date}: ${d.mood || '无记录'}">
         ${emoji || d.day}
@@ -175,7 +175,7 @@ function renderHistoryRecords(fortunes) {
       <div class="record-cards-mini">
         ${(f.cards || []).map(c => `
           <span title="${c.positionName}: ${c.isReversed ? 'REV' : 'UPR'} · ${c.name_zh}" style="cursor:default;">
-            <span style="font-size:1.5rem;">${c.emoji || '◆'}</span>
+            <span>${symbolToSVG(c.emoji || '◆', 'svg-icon svg-glow')}</span>
             <span style="font-size:0.7rem;color:${c.isReversed ? 'var(--macaron-pink)' : 'var(--macaron-mint)'}">${c.isReversed ? '逆' : '正'}</span>
           </span>
         `).join('')}
