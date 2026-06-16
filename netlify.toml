@@ -1,0 +1,11 @@
+[build]
+  command = ""
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/interpret"
+  to = "/.netlify/functions/interpret"
+  status = 200
