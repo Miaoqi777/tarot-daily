@@ -75,7 +75,7 @@ function startVoiceInput({ onResult, onError, onStateChange } = {}) {
       'no-speech': '未检测到语音，请再试一次。',
       'audio-capture': '无法访问麦克风，请检查权限设置。',
       'not-allowed': '麦克风权限被拒绝，请在浏览器设置中允许。',
-      'network': '网络连接失败，请检查网络。',
+      'network': '语音服务连接失败。Chrome 依赖 Google 服务器（大陆不可用），请换用 Edge 浏览器重试。',
       'aborted': '语音输入已取消。',
       'language-not-supported': '不支持中文语音识别。',
     };
