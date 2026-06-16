@@ -104,6 +104,22 @@
             </div>
           </label>
         </div>
+        <!-- AI 控制区 -->
+        <div class="ai-controls glass-card" id="ai-controls" style="margin-top:14px;">
+          <div class="ai-toggle-row">
+            <span class="ai-label">[AI] 智能深度解读</span>
+            <div class="toggle-switch" id="toggle-ai-switch" onclick="toggleAI()">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <p class="ai-status" id="ai-status-text" style="margin-top:6px;">[AI.OFF] 使用本地模板引擎</p>
+          <textarea id="user-question" class="ai-input glass"
+                    placeholder="输入你的具体问题，AI 将给出个性化解读…&#10;例如：我最近在考虑换工作，但不确定时机是否合适…"
+                    rows="3" style="display:none;"
+                    oninput="handleQuestionInput(this)"></textarea>
+          <button id="btn-voice-input" class="btn-voice" style="display:none;"
+                  onclick="triggerVoiceInput()">🎙️ 语音输入</button>
+        </div>
       </div>
       <div class="shuffle-area" id="shuffle-area" style="display:none;">
         <button class="btn-shuffle" id="btn-shuffle" onclick="startShuffle()">
@@ -270,6 +286,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/cards.js"></script>
+  <script src="js/ai-api.js"></script>
+  <script src="js/voice.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/white-noise.js"></script>
   <script src="js/main.js"></script>

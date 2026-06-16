@@ -97,7 +97,27 @@ function filterCards({ arcana, suit, element } = {}) {
 }
 
 // ---------- Generate Result Interpretation ----------
-function generateInterpretation(drawnCards, spreadDef) {
+/**
+ * 生成解读结果
+ * @param {Array} drawnCards - 抽到的牌
+ * @param {Object} spreadDef - 牌阵定义
+ * @param {Object} opts - 可选参数 { useAI, userQuestion, userMood, history }
+ * @returns {Object|Promise<Object>} AI 模式返回 Promise，模板模式返回 Object
+ */
+function generateInterpretation(drawnCards, spreadDef, opts = {}) {
+  const { useAI = false, userQuestion = '', userMood = '', history = [] } = opts;
+
+  // AI 模式：异步调用
+  if (useAI && typeof callAIInterpretation === 'function') {
+    return generateAIResult(drawnCards, spreadDef, { userQuestion, userMood, history });
+  }
+
+  // 模板模式：同步（原逻辑）
+  return generateInterpretationTemplate(drawnCards, spreadDef);
+}
+
+// ── 原模板引擎（提取为独立函数，供 AI 降级时复用）──
+function generateInterpretationTemplate(drawnCards, spreadDef) {
   // Assign positions
   const result = drawnCards.map((card, i) => {
     const posName = spreadDef.positions[i] || `位置${i + 1}`;
@@ -146,6 +166,116 @@ function generateInterpretation(drawnCards, spreadDef) {
     summary,
     spreadName: spreadDef.name_zh,
     spreadId: spreadDef.id
+  };
+}
+
+// ── AI 解读结果生成 ──
+async function generateAIResult(drawnCards, spreadDef, ctx) {
+  const { userQuestion, userMood, history } = ctx;
+
+  // 构建卡片上下文
+  const cardContext = buildCardContextForAI(drawnCards, spreadDef);
+
+  // 构建历史上下文
+  const historySummary = typeof buildHistoryContext === 'function'
+    ? buildHistoryContext(history)
+    : '';
+
+  // 获取主题名
+  const themeName = spreadDef && spreadDef.theme ? spreadDef.theme : '';
+
+  try {
+    const aiResponse = await callAIInterpretation({
+      userQuestion: userQuestion || '请给我一个综合解读',
+      spreadName: (spreadDef && spreadDef.name_zh) || '通用牌阵',
+      spreadDescription: (spreadDef && spreadDef.description) || '',
+      themeName: themeName,
+      cards: cardContext,
+      userMood: userMood || '',
+      historySummary: historySummary,
+    });
+
+    // 将 AI 响应转换为标准 result 格式
+    return convertAIResponseToResult(aiResponse, drawnCards, spreadDef);
+
+  } catch (err) {
+    console.error('[AI] 解读失败，降级到模板引擎:', err.message);
+    // 降级：返回模板结果 + 错误标记
+    const fallback = fallbackToTemplate(drawnCards, spreadDef);
+    fallback._aiError = err.message;
+    return fallback;
+  }
+}
+
+// ── AI 响应 → 标准 result 格式转换 ──
+function convertAIResponseToResult(aiResponse, drawnCards, spreadDef) {
+  const cards = drawnCards.map((card, i) => {
+    const posName = (spreadDef && spreadDef.positions && spreadDef.positions[i]) || `位置${i + 1}`;
+    const isRev = card.isReversed || card._reversed || false;
+
+    // 尝试从 AI 响应中找到对应牌的解释
+    const aiCard = (aiResponse.cards || []).find(c =>
+      c.name === card.name_zh || c.position === posName
+    );
+
+    const interpretation = aiCard && aiCard.reading
+      ? aiCard.reading
+      : (isRev
+          ? (card.reversed ? card.reversed.general : '逆位解读暂无')
+          : (card.upright ? card.upright.general : '正位解读暂无'));
+
+    return {
+      cardId: card.id,
+      name_zh: card.name_zh,
+      name_en: card.name_en,
+      emoji: card.emoji,
+      position: i,
+      positionName: posName,
+      isReversed: isRev,
+      interpretation,
+      keywords: card.keywords_zh,
+      element: card.element,
+      arcana: card.arcana,
+      suit: card.suit,
+    };
+  });
+
+  const elements = cards.map(r => r.element).filter(Boolean);
+  const dominantEl = mostFrequent(elements);
+  const reversalCount = cards.filter(r => r.isReversed).length;
+  const majorCount = cards.filter(r => r.arcana === 'major').length;
+
+  let overallMood = 'neutral';
+  if (reversalCount === 0 && majorCount >= 2) overallMood = 'excited';
+  else if (reversalCount === 0) overallMood = 'happy';
+  else if (reversalCount <= 1) overallMood = 'calm';
+  else if (reversalCount >= cards.length / 2) overallMood = 'anxious';
+
+  // 组装 summary（AI 风格，不使用模板协议语言）
+  let summary = '';
+  if (aiResponse.overview) {
+    summary += `◆ AI.ORACLE · 智能解读引擎\n\n${aiResponse.overview}`;
+  }
+  if (aiResponse.theme_insight) {
+    summary += `\n\n[THEME.INSIGHT] ${aiResponse.theme_insight}`;
+  }
+  if (aiResponse.advice) {
+    summary += `\n\n[AI.ADVICE] ${aiResponse.advice}`;
+  }
+
+  return {
+    cards,
+    overallMood,
+    dominantElement: dominantEl,
+    reversalCount,
+    majorCount,
+    summary,
+    spreadName: spreadDef ? spreadDef.name_zh : '',
+    spreadId: spreadDef ? spreadDef.id : '',
+    _aiGenerated: true,
+    _aiOverview: aiResponse.overview || '',
+    _aiAdvice: aiResponse.advice || '',
+    _aiThemeInsight: aiResponse.theme_insight || '',
   };
 }
 

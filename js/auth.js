@@ -325,6 +325,31 @@ function getTodayMood(username) {
   return moods.find(m => m.date === today) || null;
 }
 
+// ---------- AI Context: Recent History Summary ----------
+/**
+ * 提取用户近期占卜历史摘要，供 AI Prompt 使用
+ * @param {string} username
+ * @param {number} n - 最近 n 条记录 (默认 5)
+ * @returns {Array} 摘要数组
+ */
+function getRecentHistorySummary(username, n = 5) {
+  const fortunes = getFortunes(username);
+  if (!fortunes.length) return [];
+
+  const recent = fortunes.slice(-n);
+  return recent.map(f => ({
+    date: f.date,
+    spreadName: f.spreadName || '未知牌阵',
+    spreadId: f.spreadType || '',
+    overallMood: f.overallMood || 'neutral',
+    cardCount: (f.cards || []).length,
+    cardsSummary: (f.cards || []).map(c =>
+      `${c.isReversed ? '逆' : '正'}${c.name_zh}`
+    ).join('、'),
+    snippet: (f.summary || '').split('\n')[0].slice(0, 100),
+  }));
+}
+
 // ---------- Analysis ----------
 function analyzeFortunes(username, period) {
   const fortunes = getFortunes(username);

@@ -11,7 +11,11 @@ const state = {
   divinationResult: null,
   noisePlaying: false,
   noiseSound: 'rain',
-  includeMinorArcana: false
+  includeMinorArcana: false,
+  // AI 相关
+  aiEnabled: false,
+  userQuestion: '',
+  selectedMood: null,
 };
 
 // ---------- Initialization ----------
@@ -131,6 +135,76 @@ function toggleMinorArcana() {
   state.includeMinorArcana = !state.includeMinorArcana;
   const sw = document.getElementById('toggle-minor-arcana');
   if (sw) sw.classList.toggle('on', state.includeMinorArcana);
+}
+
+// ── AI Toggle ──
+function toggleAI() {
+  state.aiEnabled = !state.aiEnabled;
+  const sw = document.getElementById('toggle-ai-switch');
+  const questionBox = document.getElementById('user-question');
+  const voiceBtn = document.getElementById('btn-voice-input');
+  const aiStatus = document.getElementById('ai-status-text');
+
+  if (sw) sw.classList.toggle('on', state.aiEnabled);
+  if (questionBox) questionBox.style.display = state.aiEnabled ? 'block' : 'none';
+  if (voiceBtn) voiceBtn.style.display = state.aiEnabled ? 'inline-block' : 'none';
+
+  if (aiStatus) {
+    if (state.aiEnabled) {
+      const quota = typeof getRemainingQuota === 'function' ? getRemainingQuota() : '?';
+      aiStatus.textContent = `[AI.ON] 智能解读已激活 · 剩余 ${quota} 次/小时`;
+      aiStatus.style.color = 'var(--amber-400)';
+    } else {
+      aiStatus.textContent = '[AI.OFF] 使用本地模板引擎';
+      aiStatus.style.color = 'var(--text-muted)';
+    }
+  }
+}
+
+// ── AI 问题输入 ──
+function handleQuestionInput(el) {
+  state.userQuestion = el.value.trim();
+}
+
+// ── 语音输入桥接 ──
+function triggerVoiceInput() {
+  if (typeof startVoiceInput !== 'function') {
+    const status = document.getElementById('ai-status-text');
+    if (status) {
+      status.textContent = '[WARN] 语音模块未加载，请使用文本输入';
+      status.style.color = 'var(--crimson-400)';
+    }
+    return;
+  }
+
+  const textarea = document.getElementById('user-question');
+  const btn = document.getElementById('btn-voice-input');
+
+  startVoiceInput({
+    onResult: (text, isFinal) => {
+      if (textarea) {
+        textarea.value = text;
+        state.userQuestion = text;
+      }
+      if (isFinal && btn) {
+        btn.textContent = '🎙️ 语音输入';
+        btn.classList.remove('listening');
+      }
+    },
+    onError: (msg) => {
+      const status = document.getElementById('ai-status-text');
+      if (status) {
+        status.textContent = `[ERR] ${msg}`;
+        status.style.color = 'var(--crimson-400)';
+      }
+    },
+    onStateChange: (listening) => {
+      if (btn) {
+        btn.textContent = listening ? '⏹ 停止录音' : '🎙️ 语音输入';
+        btn.classList.toggle('listening', listening);
+      }
+    },
+  });
 }
 
 function showShuffleReady() {
@@ -422,8 +496,21 @@ async function doPerformDivination() {
     return { ...s.card, isReversed };
   });
 
-  // Generate interpretation
-  const result = generateInterpretation(drawnCards, state.selectedSpread);
+  // Build AI options
+  const aiOpts = {
+    useAI: state.aiEnabled,
+    userQuestion: state.userQuestion || '',
+    userMood: state.selectedMood || '',
+    history: [],
+  };
+
+  // Fetch history for AI context (only when AI enabled and user logged in)
+  if (state.aiEnabled && user && typeof getRecentHistorySummary === 'function') {
+    aiOpts.history = getRecentHistorySummary(user, 5);
+  }
+
+  // Generate interpretation (may be async when AI mode is on)
+  const result = await generateInterpretation(drawnCards, state.selectedSpread, aiOpts);
   state.divinationResult = result;
 
   // Save fortune only if logged in
@@ -511,10 +598,21 @@ function renderResults(result) {
     </div>
   `).join('');
 
+  // AI badge
+  const isAI = result._aiGenerated;
+  const summaryTitle = isAI ? 'AI ORACLE OUTPUT' : 'ORACLE OUTPUT';
   document.getElementById('result-summary').innerHTML = `
-    <h3>ORACLE OUTPUT</h3>
+    <h3>${summaryTitle} ${isAI ? '<span style="font-size:0.7em;color:var(--amber-400);">◆ AI</span>' : ''}</h3>
     <p>${result.summary.replace(/\n/g, '<br>')}</p>
   `;
+
+  // Show AI error hint if fallback was used
+  if (result._isFallback && result._aiError) {
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color:var(--text-muted);font-size:0.75rem;margin-top:8px;font-family:var(--font-mono);';
+    hint.textContent = `[FALLBACK] AI 暂时不可用 (${result._aiError})，已使用本地模板引擎。`;
+    document.getElementById('result-summary').appendChild(hint);
+  }
 
   document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -660,6 +758,7 @@ function selectMood(moodId, el) {
   document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
   selectedMoodValue = moodId;
+  state.selectedMood = moodId;  // 同步到全局 state 供 AI 上下文使用
 }
 
 async function submitMood() {
