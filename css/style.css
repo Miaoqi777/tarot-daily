@@ -79,9 +79,9 @@
   --transition-curtain: 0.8s cubic-bezier(0.87, 0, 0.13, 1);
 
   /* ── Typography ── */
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
-  --font-sans: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
-  --font-display: 'Noto Serif SC', 'PingFang SC', 'STSong', 'SimSun', serif;
+  --font-mono: 'Consolas', 'Courier New', 'Microsoft YaHei', monospace;
+  --font-sans: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif;
+  --font-display: 'STSong', 'SimSun', 'PingFang SC', 'Noto Serif SC', serif;
   --letter-spacing-mono: 0.08em;
   --letter-spacing-wide: 0.15em;
 
