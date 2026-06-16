@@ -814,14 +814,11 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.card-back {
   background: var(--terminal-bg-surface);
+  background-image: url('../img/card-back.jpg');
+  background-size: cover;
+  background-position: center;
   border: 1px solid var(--border-default);
-  font-family: var(--font-mono);
-  font-size: 1.2rem;
-  color: var(--text-muted);
 }
 
 .card-back::after {
@@ -830,6 +827,7 @@ img { max-width: 100%; display: block; }
   inset: 4px;
   border-radius: 2px;
   border: 1px solid var(--border-subtle);
+  pointer-events: none;
 }
 
 .card-front {
