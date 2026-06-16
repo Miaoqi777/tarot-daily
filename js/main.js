@@ -140,7 +140,26 @@ function showShuffleReady() {
   document.getElementById('shuffle-area').style.display = 'block';
 }
 
-// ---------- Shuffle & Card Grid ----------
+// ---------- Fan Position Calculator ----------
+function calculateFanPositions(count) {
+  const isMobile = window.innerWidth <= 480;
+  const isTablet = window.innerWidth <= 768;
+  const totalAngle = count > 30 ? 75 : 55;
+  const radius = isMobile ? 240 : (isTablet ? 300 : 360);
+  const positions = [];
+  for (let i = 0; i < count; i++) {
+    const angle = -totalAngle / 2 + (totalAngle / Math.max(count - 1, 1)) * i;
+    const rad = (angle * Math.PI) / 180;
+    const x = Math.sin(rad) * radius;
+    const y = -Math.cos(rad) * radius;
+    const rotation = angle * 0.85;
+    const zIdx = i < count / 2 ? i + 1 : count - i;
+    positions.push({ x, y, rotation, zIdx });
+  }
+  return positions;
+}
+
+// ---------- Shuffle & Fan Display ----------
 async function startShuffle() {
   if (state.isShuffling) return;
   if (!state.selectedSpread) {
@@ -153,11 +172,17 @@ async function startShuffle() {
   document.getElementById('btn-shuffle').disabled = true;
   document.getElementById('btn-shuffle').textContent = 'SHUFFLING...';
 
-  // Prepare grid — respect Minor Arcana toggle
   state.gridCards = getShuffledGrid(state.includeMinorArcana);
-  const grid = document.getElementById('card-grid');
-  grid.innerHTML = state.gridCards.map((card, i) => `
-    <div class="card-cell" data-index="${i}" onclick="selectCard(${i}, this)">
+  const container = document.getElementById('card-fan-container');
+  const positions = calculateFanPositions(state.gridCards.length);
+
+  // Render cards at fan positions with initial "pile" state (center, tiny, hidden)
+  container.innerHTML = state.gridCards.map((card, i) => {
+    const pos = positions[i];
+    return `
+    <div class="card-cell" data-index="${i}" data-x="${pos.x}" data-y="${pos.y}" data-rot="${pos.rotation}"
+         style="transform: translateX(0px) translateY(0px) rotate(0deg) scale(0.3); opacity: 0; z-index: ${pos.zIdx};"
+         onclick="selectCard(${i}, this)">
       <div class="card-face">
         <div class="card-back">${getIconSVG('diamond', 'svg-icon')}</div>
         <div class="card-front">
@@ -166,118 +191,78 @@ async function startShuffle() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;}).join('');
 
-  const container = document.getElementById('card-grid-container');
-  container.style.display = 'block';
+  const gridContainer = document.getElementById('card-grid-container');
+  gridContainer.style.display = 'block';
   document.getElementById('selection-counter').style.display = 'inline-flex';
   updateSelectionCounter();
+  gridContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  // Scroll to grid
-  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Animate: pile → fan spread
+  await fanSpreadAnimation(1000);
 
-  // Shuffle animation — rapid position swaps
-  const cells = grid.children;
-  const totalCells = cells.length;
-
-  await shuffleAnimation(cells, 1200);
-
-  // Done
   state.isShuffling = false;
   document.getElementById('btn-shuffle').disabled = false;
   document.getElementById('btn-shuffle').textContent = '⟲ 重新洗牌';
 }
 
-function shuffleAnimation(cells, duration) {
+// Fan spread animation: cards fly from center to fan positions
+function fanSpreadAnimation(duration) {
   return new Promise(resolve => {
-    const grid = document.getElementById('card-grid');
-    const gridRect = grid.getBoundingClientRect();
-    const centerX = gridRect.width / 2;
-    const centerY = gridRect.height / 2;
-
-    // Phase 1: Record original positions, then pile to center
-    const origins = [];
-    for (let i = 0; i < cells.length; i++) {
-      const cell = cells[i];
-      const rect = cell.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2 - gridRect.left;
-      const cy = rect.top + rect.height / 2 - gridRect.top;
-      origins.push({ el: cell, ox: cx, oy: cy });
-    }
-
-    const totalDuration = duration;
-    const pilePhase = totalDuration * 0.35;   // 35%: pile up
-    const holdPhase = totalDuration * 0.15;    // 15%: hold in pile
-    const spreadPhase = totalDuration * 0.50;  // 50%: spread out
-
+    const cells = document.querySelectorAll('.card-cell');
     const startTime = performance.now();
+    const spreadDelay = duration * 0.15; // Short pile phase
 
     function animate(now) {
       const elapsed = now - startTime;
 
-      if (elapsed < pilePhase) {
-        // Phase 1: Fly to center pile
-        const p = easeInOut(elapsed / pilePhase);
-        for (let i = 0; i < origins.length; i++) {
-          const { el, ox, oy } = origins[i];
-          const tx = (centerX - ox) * p;
-          const ty = (centerY - oy) * p;
-          const rot = (Math.random() - 0.5) * 60 * p;
-          const sc = 1 - p * 0.3;
-          el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sc})`;
-          el.style.zIndex = Math.floor(100 - p * 90);
-        }
-      } else if (elapsed < pilePhase + holdPhase) {
-        // Phase 2: Hold in pile with slight jitter
-        for (let i = 0; i < origins.length; i++) {
-          const { el, ox, oy } = origins[i];
-          const tx = centerX - ox + (Math.random() - 0.5) * 4;
-          const ty = centerY - oy + (Math.random() - 0.5) * 4;
-          const rot = (Math.random() - 0.5) * 15;
-          el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(0.7)`;
-          el.style.zIndex = Math.floor(Math.random() * 10);
-        }
-      } else if (elapsed < totalDuration) {
-        // Phase 3: Spread back to positions
-        const spreadElapsed = elapsed - pilePhase - holdPhase;
-        const p = easeOutBack(spreadElapsed / spreadPhase);
-        for (let i = 0; i < origins.length; i++) {
-          const { el, ox, oy } = origins[i];
-          const fromTx = centerX - ox;
-          const fromTy = centerY - oy;
-          const tx = fromTx * (1 - p);
-          const ty = fromTy * (1 - p);
-          const rot = (1 - p) * (Math.random() - 0.5) * 20;
-          const sc = 0.7 + p * 0.3;
-          el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sc})`;
-          el.style.zIndex = Math.floor(10 + p * 90);
-        }
-      } else {
-        // Done — reset
-        for (let i = 0; i < cells.length; i++) {
-          cells[i].style.transform = '';
-          cells[i].style.zIndex = '';
-        }
-        resolve();
-        return;
-      }
+      cells.forEach((cell, i) => {
+        const targetX = parseFloat(cell.dataset.x) || 0;
+        const targetY = parseFloat(cell.dataset.y) || 0;
+        const targetRot = parseFloat(cell.dataset.rot) || 0;
+        const zIdx = parseInt(cell.style.zIndex) || 1;
 
-      requestAnimationFrame(animate);
+        if (elapsed < spreadDelay) {
+          // Brief pile phase
+          cell.style.transform = 'translateX(0px) translateY(0px) rotate(0deg) scale(0.3)';
+          cell.style.opacity = '0.3';
+        } else {
+          const spreadElapsed = elapsed - spreadDelay;
+          const spreadDuration = duration - spreadDelay;
+          const p = Math.min(1, spreadElapsed / spreadDuration);
+          // Ease-out back for satisfying snap
+          const eased = 1 - Math.pow(1 - p, 3);
+          const bounce = p < 1 ? Math.sin(p * Math.PI * 2) * (1 - p) * 0.3 : 0;
+
+          const x = targetX * (eased + bounce);
+          const y = targetY * (eased + bounce);
+          const rot = targetRot * (eased + bounce);
+          const scale = 0.3 + 0.7 * eased;
+
+          cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(${scale})`;
+          cell.style.opacity = Math.min(1, 0.3 + 0.7 * eased);
+          cell.style.zIndex = zIdx;
+        }
+      });
+
+      if (elapsed < duration) {
+        requestAnimationFrame(animate);
+      } else {
+        // Final settle — set exact fan positions
+        cells.forEach(cell => {
+          const tx = parseFloat(cell.dataset.x) || 0;
+          const ty = parseFloat(cell.dataset.y) || 0;
+          const rot = parseFloat(cell.dataset.rot) || 0;
+          cell.style.transform = `translateX(${tx}px) translateY(${ty}px) rotate(${rot}deg) scale(1)`;
+          cell.style.opacity = '1';
+        });
+        resolve();
+      }
     }
 
     requestAnimationFrame(animate);
   });
-}
-
-// Easing functions
-function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-}
-
-function easeOutBack(t) {
-  const c1 = 1.70158;
-  const c3 = c1 + 1;
-  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
 }
 
 // ---------- Card Selection ----------
@@ -558,6 +543,7 @@ function resetDivination() {
   state.divinationResult = null;
 
   document.getElementById('card-grid-container').style.display = 'none';
+  document.getElementById('card-fan-container').innerHTML = '';
   document.getElementById('shuffle-area').style.display = 'none';
   document.getElementById('spread-sub-section').classList.remove('visible');
   document.getElementById('result-section').classList.add('hidden');
