@@ -334,7 +334,7 @@ function updateNoiseUI() {
 
   if (isPlaying) {
     toggle.classList.add('playing');
-    toggle.textContent = '🔊';
+    toggle.textContent = '[+]';
   } else {
     toggle.classList.remove('playing');
     toggle.textContent = '♪';

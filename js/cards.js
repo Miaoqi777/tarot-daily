@@ -314,23 +314,23 @@ function generateSummary(result, mood, element, spreadDef) {
 // ---------- Song Recommendations ----------
 const SONG_RECOMMENDATIONS = {
   excited: [
-    { title: '晴天', artist: '周杰伦', emoji: '☀️', reason: '阳光般温暖的旋律，如同你今天明媚的运势。愿这首歌陪伴你度过活力满满的一天，每一刻都闪耀着光芒。' },
-    { title: '稻香', artist: '周杰伦', emoji: '🌾', reason: '清新的田园气息，配合你今天的好运。闭上眼睛，感受微风拂过麦浪的惬意，生活如此美好。' }
+    { title: '晴天', artist: '周杰伦', emoji: '◆', reason: '阳光般温暖的旋律，如同你今天明媚的运势。愿这首歌陪伴你度过活力满满的一天，每一刻都闪耀着光芒。' },
+    { title: '稻香', artist: '周杰伦', emoji: '≋', reason: '清新的田园气息，配合你今天的好运。闭上眼睛，感受微风拂过麦浪的惬意，生活如此美好。' }
   ],
   happy: [
-    { title: '小幸运', artist: '田馥甄', emoji: '🍀', reason: '甜美的歌声轻轻告诉你——原来你是我最想留住的幸运。今天的小确幸，值得被温柔地记住。' },
-    { title: '起风了', artist: '买辣椒也用券', emoji: '🍃', reason: '轻快的旋律里有风的自由。今天的你就像这首歌一样，轻盈、自在，带着一点点潇洒。' }
+    { title: '小幸运', artist: '田馥甄', emoji: '◈', reason: '甜美的歌声轻轻告诉你——原来你是我最想留住的幸运。今天的小确幸，值得被温柔地记住。' },
+    { title: '起风了', artist: '买辣椒也用券', emoji: '≈', reason: '轻快的旋律里有风的自由。今天的你就像这首歌一样，轻盈、自在，带着一点点潇洒。' }
   ],
   calm: [
-    { title: '追光者', artist: '岑宁儿', emoji: '🌌', reason: '安静的歌声里有温柔的力量。今天的你不需要太用力，像星光一样静静地发光就好。' },
-    { title: '平凡之路', artist: '朴树', emoji: '🛤️', reason: '在宁静中找到力量。走过平凡的路，也能遇见不平凡的风景。今天适合静下心来，感受生活的节奏。' }
+    { title: '追光者', artist: '岑宁儿', emoji: '⊚', reason: '安静的歌声里有温柔的力量。今天的你不需要太用力，像星光一样静静地发光就好。' },
+    { title: '平凡之路', artist: '朴树', emoji: '≡', reason: '在宁静中找到力量。走过平凡的路，也能遇见不平凡的风景。今天适合静下心来，感受生活的节奏。' }
   ],
   neutral: [
-    { title: '后来', artist: '刘若英', emoji: '🌸', reason: '温暖的歌声带着淡淡的感悟。生活的滋味在于品味当下，不急不躁，一切刚刚好。' },
-    { title: '童话', artist: '光良', emoji: '📖', reason: '相信美好，就像相信童话。今天的运势告诉你——保持期待，好事正在路上。' }
+    { title: '后来', artist: '刘若英', emoji: '◉', reason: '温暖的歌声带着淡淡的感悟。生活的滋味在于品味当下，不急不躁，一切刚刚好。' },
+    { title: '童话', artist: '光良', emoji: '□', reason: '相信美好，就像相信童话。今天的运势告诉你——保持期待，好事正在路上。' }
   ],
   anxious: [
-    { title: '隐形的翅膀', artist: '张韶涵', emoji: '🕊️', reason: '每一次跌倒都是为了更好地飞翔。你拥有一双隐形的翅膀，带着你飞过所有不安，抵达平静的港湾。' },
+    { title: '隐形的翅膀', artist: '张韶涵', emoji: '△', reason: '每一次跌倒都是为了更好地飞翔。你拥有一双隐形的翅膀，带着你飞过所有不安，抵达平静的港湾。' },
     { title: '夜空中最亮的星', artist: '逃跑计划', emoji: '⭐', reason: '在不安的时候，抬头看看星空。你是夜空中那颗最亮的星，不需要畏惧黑暗，因为你本身就是光。' }
   ]
 };
@@ -342,13 +342,13 @@ function getSongRecommendation(mood) {
 
 // ---------- Mood Emoji Mapping ----------
 const MOOD_OPTIONS = [
-  { id: 'happy', emoji: '😊', label: '开心' },
-  { id: 'calm', emoji: '😌', label: '平静' },
-  { id: 'neutral', emoji: '😐', label: '一般' },
-  { id: 'excited', emoji: '🤩', label: '兴奋' },
-  { id: 'anxious', emoji: '😰', label: '焦虑' },
-  { id: 'sad', emoji: '😢', label: '难过' },
-  { id: 'tired', emoji: '😴', label: '疲惫' }
+  { id: 'happy', emoji: '◆', label: '开心' },
+  { id: 'calm', emoji: '◎', label: '平静' },
+  { id: 'neutral', emoji: '◌', label: '一般' },
+  { id: 'excited', emoji: '☆', label: '兴奋' },
+  { id: 'anxious', emoji: '⊗', label: '焦虑' },
+  { id: 'sad', emoji: '▽', label: '难过' },
+  { id: 'tired', emoji: '□', label: '疲惫' }
 ];
 
 function getMoodOptions() {

@@ -98,7 +98,7 @@ function showCardDetail(cardId) {
     : '';
 
   detail.innerHTML = `
-    <button class="card-detail-close" onclick="hideCardDetail()">✕</button>
+    <button class="card-detail-close" onclick="hideCardDetail()">[X]</button>
     <div class="card-detail-emoji">${card.emoji}</div>
     <div class="card-detail-name">${card.name_zh} <small style="color:var(--text-muted);">${card.name_en}</small></div>
     <div style="text-align:center;margin-bottom:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
@@ -193,10 +193,10 @@ async function handleImportFile(input) {
   if (!file) return;
   const result = await handleAccountImport(file);
   if (result.success) {
-    showToastMsg('✅ 账号 "' + result.username + '" 导入成功！请使用原密码登录');
+    showToastMsg('[OK] 账号 "' + result.username + '" 导入成功！请使用原密码登录');
     updateSidebarUser();
   } else {
-    showToastMsg(result.error || '❌ 导入失败');
+    showToastMsg(result.error || '[X] 导入失败');
   }
   input.value = '';
 }
@@ -204,12 +204,12 @@ async function handleImportFile(input) {
 function handleSidebarExport() {
   const user = getCurrentUser();
   if (!user) {
-    showToastMsg('⚠️ 请先登录后再导出账号');
+    showToastMsg('[!] 请先登录后再导出账号');
     return;
   }
   const result = exportFullAccount(user);
   if (result.success) {
-    showToastMsg('✅ 账号数据已导出，可导入到其他设备使用');
+    showToastMsg('[OK] 账号数据已导出，可导入到其他设备使用');
   }
 }
 

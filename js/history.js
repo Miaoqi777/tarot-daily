@@ -79,7 +79,7 @@ function renderAnalysis() {
       <div class="stat-label">MAJOR : MINOR</div>
     </div>
     <div class="analysis-stat glass-card">
-      <div class="stat-value">${analysis.topMood ? getMoodOptions().find(m => m.id === analysis.topMood[0])?.emoji || '😊' : '—'}</div>
+      <div class="stat-value">${analysis.topMood ? getMoodOptions().find(m => m.id === analysis.topMood[0])?.emoji || '◆' : '—'}</div>
       <div class="stat-label">TOP MOOD</div>
     </div>
     ${analysis.totalMoods > 0 ? `
@@ -91,8 +91,8 @@ function renderAnalysis() {
     <div class="analysis-stat glass-card" style="grid-column:1/-1;">
       <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
         <span>🪄 权杖: ${analysis.suitDist.wands || 0}</span>
-        <span>🏆 圣杯: ${analysis.suitDist.cups || 0}</span>
-        <span>⚔️ 宝剑: ${analysis.suitDist.swords || 0}</span>
+        <span>♡ 圣杯: ${analysis.suitDist.cups || 0}</span>
+        <span>↑ 宝剑: ${analysis.suitDist.swords || 0}</span>
         <span>🪙 星币: ${analysis.suitDist.pentacles || 0}</span>
       </div>
       <div class="stat-label">SUIT DISTRIBUTION</div>
@@ -102,7 +102,7 @@ function renderAnalysis() {
       <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
         ${analysis.topCards.map(c => `
           <span style="text-align:center;">
-            <span style="font-size:1.5rem;">${allCards.find(ac => ac.id === c.id)?.emoji || '🃏'}</span><br>
+            <span style="font-size:1.5rem;">${allCards.find(ac => ac.id === c.id)?.emoji || '◆'}</span><br>
             <span style="font-size:0.75rem;">${c.name}</span><br>
             <span style="font-size:0.7rem;color:var(--text-muted);">${c.count}次</span>
           </span>
@@ -175,7 +175,7 @@ function renderHistoryRecords(fortunes) {
       <div class="record-cards-mini">
         ${(f.cards || []).map(c => `
           <span title="${c.positionName}: ${c.isReversed ? 'REV' : 'UPR'} · ${c.name_zh}" style="cursor:default;">
-            <span style="font-size:1.5rem;">${c.emoji || '🃏'}</span>
+            <span style="font-size:1.5rem;">${c.emoji || '◆'}</span>
             <span style="font-size:0.7rem;color:${c.isReversed ? 'var(--macaron-pink)' : 'var(--macaron-mint)'}">${c.isReversed ? '逆' : '正'}</span>
           </span>
         `).join('')}
@@ -196,7 +196,7 @@ function handleExport() {
     return;
   }
   exportData(currentUser);
-  alert('✅ 数据已导出！');
+  alert('[OK] 数据已导出！');
 }
 
 // ---------- Sidebar & Auth ----------
@@ -238,7 +238,7 @@ async function handleImportFile(input) {
     showToastMsg('[OK] IMPORT.SUCCESS · 账号 "' + result.username + '" 导入完成');
     updateSidebarUser();
   } else {
-    showToastMsg(result.error || '❌ 导入失败');
+    showToastMsg(result.error || '[X] 导入失败');
   }
   input.value = '';
 }
@@ -251,7 +251,7 @@ function handleSidebarExport() {
   }
   const result = exportFullAccount(user);
   if (result.success) {
-    showToastMsg('✅ 账号数据已导出，可导入到其他设备使用');
+    showToastMsg('[OK] 账号数据已导出，可导入到其他设备使用');
   }
 }
 

@@ -432,7 +432,7 @@ function exportFullAccount(username) {
   const users = getUsers();
   const user = users.find(u => u.username === username);
   if (!user) {
-    showToastMsg('⚠️ 用户数据异常，请重新登录');
+    showToastMsg('[!] 用户数据异常，请重新登录');
     return { success: false, error: '用户不存在' };
   }
 
@@ -469,14 +469,14 @@ function importFullAccount(jsonData) {
   try {
     // Validate structure
     if (!jsonData || jsonData.type !== 'tarot-account-export') {
-      return { success: false, error: '❌ 无效的账号数据文件（类型不匹配）' };
+      return { success: false, error: '[X] 无效的账号数据文件（类型不匹配）' };
     }
     if (jsonData.version !== 1) {
-      return { success: false, error: '❌ 数据文件版本不兼容，请从最新版应用导出' };
+      return { success: false, error: '[X] 数据文件版本不兼容，请从最新版应用导出' };
     }
     const acct = jsonData.account;
     if (!acct || !acct.username || !acct.passwordHash || !acct.salt) {
-      return { success: false, error: '❌ 账号数据不完整，请重新导出' };
+      return { success: false, error: '[X] 账号数据不完整，请重新导出' };
     }
 
     const users = getUsers();
@@ -537,7 +537,7 @@ function importFullAccount(jsonData) {
 
     return { success: true, username: acct.username };
   } catch (e) {
-    return { success: false, error: '❌ 文件解析失败：' + e.message };
+    return { success: false, error: '[X] 文件解析失败：' + e.message };
   }
 }
 
@@ -545,11 +545,11 @@ function importFullAccount(jsonData) {
 function handleAccountImport(file) {
   return new Promise((resolve) => {
     if (!file) {
-      resolve({ success: false, error: '❌ 未选择文件' });
+      resolve({ success: false, error: '[X] 未选择文件' });
       return;
     }
     if (!file.name.endsWith('.json')) {
-      resolve({ success: false, error: '❌ 请选择 .json 格式的账号文件' });
+      resolve({ success: false, error: '[X] 请选择 .json 格式的账号文件' });
       return;
     }
     const reader = new FileReader();
@@ -559,10 +559,10 @@ function handleAccountImport(file) {
         const result = importFullAccount(data);
         resolve(result);
       } catch (err) {
-        resolve({ success: false, error: '❌ 文件格式错误，无法解析JSON' });
+        resolve({ success: false, error: '[X] 文件格式错误，无法解析JSON' });
       }
     };
-    reader.onerror = () => resolve({ success: false, error: '❌ 文件读取失败，请重试' });
+    reader.onerror = () => resolve({ success: false, error: '[X] 文件读取失败，请重试' });
     reader.readAsText(file);
   });
 }
@@ -639,9 +639,9 @@ function togglePw(btn) {
   if (!input) return;
   if (input.type === 'password') {
     input.type = 'text';
-    btn.textContent = '🙈';
+    btn.textContent = '⊗';
   } else {
     input.type = 'password';
-    btn.textContent = '👁️';
+    btn.textContent = '⊙';
   }
 }

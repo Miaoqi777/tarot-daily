@@ -1,74 +1,226 @@
 [
   {
-    "theme": "love", "name_zh": "恋爱运势", "icon": "💕", "color": "#F8B4C8",
+    "theme": "love",
+    "name_zh": "恋爱运势",
+    "icon": "♥",
+    "color": "#F8B4C8",
     "spreads": [
-      { "id": "love-3", "name_zh": "三张牌阵", "card_count": 3,
-        "positions": ["你的状态", "对方状态", "关系走向"],
-        "description": "经典三张牌阵，快速了解感情全貌" },
-      { "id": "love-5", "name_zh": "五张关系阵", "card_count": 5,
-        "positions": ["你的内心", "对方内心", "关系现状", "潜在障碍", "未来发展"],
-        "description": "深入探索关系中的双方状态与未来发展" },
-      { "id": "love-celtic", "name_zh": "凯尔特十字", "card_count": 10,
-        "positions": ["当前状况", "挑战", "过去", "未来", "上方", "下方", "建议", "环境", "希望", "结果"],
-        "description": "最全面的感情分析牌阵，深度解读关系全貌" }
+      {
+        "id": "love-3",
+        "name_zh": "三张牌阵",
+        "card_count": 3,
+        "positions": [
+          "你的状态",
+          "对方状态",
+          "关系走向"
+        ],
+        "description": "经典三张牌阵，快速了解感情全貌"
+      },
+      {
+        "id": "love-5",
+        "name_zh": "五张关系阵",
+        "card_count": 5,
+        "positions": [
+          "你的内心",
+          "对方内心",
+          "关系现状",
+          "潜在障碍",
+          "未来发展"
+        ],
+        "description": "深入探索关系中的双方状态与未来发展"
+      },
+      {
+        "id": "love-celtic",
+        "name_zh": "凯尔特十字",
+        "card_count": 10,
+        "positions": [
+          "当前状况",
+          "挑战",
+          "过去",
+          "未来",
+          "上方",
+          "下方",
+          "建议",
+          "环境",
+          "希望",
+          "结果"
+        ],
+        "description": "最全面的感情分析牌阵，深度解读关系全貌"
+      }
     ]
   },
   {
-    "theme": "study", "name_zh": "学业运势", "icon": "📚", "color": "#B4E7CE",
+    "theme": "study",
+    "name_zh": "学业运势",
+    "icon": "◆",
+    "color": "#B4E7CE",
     "spreads": [
-      { "id": "study-3", "name_zh": "三张牌阵", "card_count": 3,
-        "positions": ["当前基础", "挑战所在", "突破方向"],
-        "description": "快速了解学习状态和突破点" },
-      { "id": "study-5", "name_zh": "五张学业阵", "card_count": 5,
-        "positions": ["知识储备", "学习方法", "外部助力", "内在动力", "考试运势"],
-        "description": "全方位分析学业进展与考试运势" }
+      {
+        "id": "study-3",
+        "name_zh": "三张牌阵",
+        "card_count": 3,
+        "positions": [
+          "当前基础",
+          "挑战所在",
+          "突破方向"
+        ],
+        "description": "快速了解学习状态和突破点"
+      },
+      {
+        "id": "study-5",
+        "name_zh": "五张学业阵",
+        "card_count": 5,
+        "positions": [
+          "知识储备",
+          "学习方法",
+          "外部助力",
+          "内在动力",
+          "考试运势"
+        ],
+        "description": "全方位分析学业进展与考试运势"
+      }
     ]
   },
   {
-    "theme": "work", "name_zh": "事业运势", "icon": "💼", "color": "#C4B5E0",
+    "theme": "work",
+    "name_zh": "事业运势",
+    "icon": "□",
+    "color": "#C4B5E0",
     "spreads": [
-      { "id": "work-3", "name_zh": "三张牌阵", "card_count": 3,
-        "positions": ["当前状态", "机遇", "挑战"],
-        "description": "快速把握职场现状与机会" },
-      { "id": "work-4", "name_zh": "四张决策阵", "card_count": 4,
-        "positions": ["当前状态", "机遇", "挑战", "建议行动"],
-        "description": "清晰的职业决策指引" },
-      { "id": "work-7", "name_zh": "七张事业阵", "card_count": 7,
-        "positions": ["现状", "优势", "劣势", "机遇", "威胁", "贵人", "结果"],
-        "description": "全面的职业发展SWOT分析牌阵" }
+      {
+        "id": "work-3",
+        "name_zh": "三张牌阵",
+        "card_count": 3,
+        "positions": [
+          "当前状态",
+          "机遇",
+          "挑战"
+        ],
+        "description": "快速把握职场现状与机会"
+      },
+      {
+        "id": "work-4",
+        "name_zh": "四张决策阵",
+        "card_count": 4,
+        "positions": [
+          "当前状态",
+          "机遇",
+          "挑战",
+          "建议行动"
+        ],
+        "description": "清晰的职业决策指引"
+      },
+      {
+        "id": "work-7",
+        "name_zh": "七张事业阵",
+        "card_count": 7,
+        "positions": [
+          "现状",
+          "优势",
+          "劣势",
+          "机遇",
+          "威胁",
+          "贵人",
+          "结果"
+        ],
+        "description": "全面的职业发展SWOT分析牌阵"
+      }
     ]
   },
   {
-    "theme": "travel", "name_zh": "旅行运势", "icon": "✈️", "color": "#B5D8EB",
+    "theme": "travel",
+    "name_zh": "旅行运势",
+    "icon": "△",
+    "color": "#B5D8EB",
     "spreads": [
-      { "id": "travel-3", "name_zh": "三张牌阵", "card_count": 3,
-        "positions": ["出行时机", "旅途收获", "注意事项"],
-        "description": "快速了解旅行运程" },
-      { "id": "travel-5", "name_zh": "五张旅途阵", "card_count": 5,
-        "positions": ["出行时机", "目的地能量", "旅途收获", "潜在风险", "归途运势"],
-        "description": "完整的旅行运势分析，从出发到归来" }
+      {
+        "id": "travel-3",
+        "name_zh": "三张牌阵",
+        "card_count": 3,
+        "positions": [
+          "出行时机",
+          "旅途收获",
+          "注意事项"
+        ],
+        "description": "快速了解旅行运程"
+      },
+      {
+        "id": "travel-5",
+        "name_zh": "五张旅途阵",
+        "card_count": 5,
+        "positions": [
+          "出行时机",
+          "目的地能量",
+          "旅途收获",
+          "潜在风险",
+          "归途运势"
+        ],
+        "description": "完整的旅行运势分析，从出发到归来"
+      }
     ]
   },
   {
-    "theme": "social", "name_zh": "社交运势", "icon": "🎭", "color": "#FAD4C0",
+    "theme": "social",
+    "name_zh": "社交运势",
+    "icon": "◎",
+    "color": "#FAD4C0",
     "spreads": [
-      { "id": "social-3", "name_zh": "三张牌阵", "card_count": 3,
-        "positions": ["社交能量", "贵人方向", "注意事项"],
-        "description": "快速把握社交方向" },
-      { "id": "social-5", "name_zh": "五张人际阵", "card_count": 5,
-        "positions": ["你的社交状态", "他人眼中的你", "贵人所在", "潜在冲突", "社交建议"],
-        "description": "深入分析人际关系与社交策略" }
+      {
+        "id": "social-3",
+        "name_zh": "三张牌阵",
+        "card_count": 3,
+        "positions": [
+          "社交能量",
+          "贵人方向",
+          "注意事项"
+        ],
+        "description": "快速把握社交方向"
+      },
+      {
+        "id": "social-5",
+        "name_zh": "五张人际阵",
+        "card_count": 5,
+        "positions": [
+          "你的社交状态",
+          "他人眼中的你",
+          "贵人所在",
+          "潜在冲突",
+          "社交建议"
+        ],
+        "description": "深入分析人际关系与社交策略"
+      }
     ]
   },
   {
-    "theme": "gaming", "name_zh": "游戏运势", "icon": "🎮", "color": "#FEF3C7",
+    "theme": "gaming",
+    "name_zh": "游戏运势",
+    "icon": "◈",
+    "color": "#FEF3C7",
     "spreads": [
-      { "id": "gaming-3", "name_zh": "三张牌阵", "card_count": 3,
-        "positions": ["今日手气", "最佳时段", "制胜策略"],
-        "description": "快速了解今日游戏运势" },
-      { "id": "gaming-5", "name_zh": "五张竞技阵", "card_count": 5,
-        "positions": ["状态评估", "优势领域", "潜在风险", "队友运势", "战绩预测"],
-        "description": "全面分析竞技状态与战绩走向" }
+      {
+        "id": "gaming-3",
+        "name_zh": "三张牌阵",
+        "card_count": 3,
+        "positions": [
+          "今日手气",
+          "最佳时段",
+          "制胜策略"
+        ],
+        "description": "快速了解今日游戏运势"
+      },
+      {
+        "id": "gaming-5",
+        "name_zh": "五张竞技阵",
+        "card_count": 5,
+        "positions": [
+          "状态评估",
+          "优势领域",
+          "潜在风险",
+          "队友运势",
+          "战绩预测"
+        ],
+        "description": "全面分析竞技状态与战绩走向"
+      }
     ]
   }
 ]
