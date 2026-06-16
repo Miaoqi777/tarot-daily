@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupIntro();
   renderSpreadOptions();
   setupSidebar();
+  setupFanHover();
   setupAuthForms();
   updateSidebarUser();
   initWeather();
@@ -140,6 +141,70 @@ function showShuffleReady() {
   document.getElementById('shuffle-area').style.display = 'block';
 }
 
+// ── Fan hover delegation (preserves rotation) ──
+function setupFanHover() {
+  const container = document.getElementById('card-fan-container');
+  if (!container) return;
+
+  const LIFT_Y = -95;
+  const LIFT_SCALE = 1.18;
+
+  function applyLift(cell) {
+    if (cell.classList.contains('selected')) return;
+    const x = parseFloat(cell.dataset.x) || 0;
+    const y = (parseFloat(cell.dataset.y) || 0) + LIFT_Y;
+    const rot = parseFloat(cell.dataset.rot) || 0;
+    cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(${LIFT_SCALE})`;
+    cell.classList.add('lifted');
+  }
+
+  function removeLift(cell) {
+    if (cell.classList.contains('selected')) return;
+    const x = parseFloat(cell.dataset.x) || 0;
+    const y = parseFloat(cell.dataset.y) || 0;
+    const rot = parseFloat(cell.dataset.rot) || 0;
+    cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(1)`;
+    cell.classList.remove('lifted');
+  }
+
+  // Mouse hover
+  container.addEventListener('mouseover', e => {
+    const cell = e.target.closest('.card-cell');
+    if (cell && !state.isShuffling) applyLift(cell);
+  });
+  container.addEventListener('mouseout', e => {
+    const cell = e.target.closest('.card-cell');
+    if (cell) removeLift(cell);
+  });
+
+  // Touch for mobile
+  container.addEventListener('touchstart', e => {
+    const cell = e.target.closest('.card-cell');
+    if (cell && !state.isShuffling) applyLift(cell);
+  }, { passive: true });
+  container.addEventListener('touchend', e => {
+    // Find all lifted non-selected cards and restore them
+    container.querySelectorAll('.card-cell.lifted:not(.selected)').forEach(c => removeLift(c));
+  });
+}
+
+// ── Apply selected lift (called by selectCard) ──
+function applySelectedLift(cell) {
+  const x = parseFloat(cell.dataset.x) || 0;
+  const y = (parseFloat(cell.dataset.y) || 0) - 95;
+  const rot = parseFloat(cell.dataset.rot) || 0;
+  cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(1.18)`;
+}
+
+// ── Restore fan position (called by cancelSelection) ──
+function restoreFanPosition(cell) {
+  const x = parseFloat(cell.dataset.x) || 0;
+  const y = parseFloat(cell.dataset.y) || 0;
+  const rot = parseFloat(cell.dataset.rot) || 0;
+  cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(1)`;
+  cell.classList.remove('lifted');
+}
+
 // ---------- Fan Position Calculator ----------
 function calculateFanPositions(count) {
   const isMobile = window.innerWidth <= 480;
@@ -183,13 +248,11 @@ async function startShuffle() {
     <div class="card-cell" data-index="${i}" data-x="${pos.x}" data-y="${pos.y}" data-rot="${pos.rotation}"
          style="transform: translateX(0px) translateY(0px) rotate(0deg) scale(0.3); opacity: 0; z-index: ${pos.zIdx};"
          onclick="selectCard(${i}, this)">
-      <div class="card-inner">
-        <div class="card-face">
-          <div class="card-back">${getIconSVG('diamond', 'svg-icon')}</div>
-          <div class="card-front">
-            <span class="card-emoji">${symbolToSVG(card.emoji, 'svg-icon card-mini-svg')}</span>
-            <span class="card-mini-name">${card.name_zh}</span>
-          </div>
+      <div class="card-face">
+        <div class="card-back">${getIconSVG('diamond', 'svg-icon')}</div>
+        <div class="card-front">
+          <span class="card-emoji">${symbolToSVG(card.emoji, 'svg-icon card-mini-svg')}</span>
+          <span class="card-mini-name">${card.name_zh}</span>
         </div>
       </div>
     </div>
@@ -260,12 +323,14 @@ function selectCard(index, el) {
     // Deselect
     state.selectedCards = state.selectedCards.filter(s => s.index !== index);
     el.classList.remove('selected');
+    restoreFanPosition(el);
   } else {
     if (state.selectedCards.length >= state.selectedSpread.card_count) {
       return; // Already full
     }
     state.selectedCards.push({ index, card: state.gridCards[index] });
     el.classList.add('selected');
+    applySelectedLift(el);
   }
 
   updateSelectionCounter();
@@ -309,6 +374,7 @@ function cancelSelection() {
     const el = document.querySelector(`.card-cell[data-index="${s.index}"]`);
     if (el) {
       el.classList.remove('selected');
+      restoreFanPosition(el);
     }
   });
   state.selectedCards = [];
@@ -536,7 +602,7 @@ function resetDivination() {
   document.getElementById('mood-section').classList.add('hidden');
 
   document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
-  document.body.style.removeProperty('background');
+  document.body.style.background = '';
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }

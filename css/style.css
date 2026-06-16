@@ -759,7 +759,6 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── Fan Card Cell ── */
-/* ── Fan Card Cell (outer: fan position anchor) ── */
 .card-cell {
   position: absolute;
   bottom: -180px;
@@ -768,18 +767,10 @@ img { max-width: 100%; display: block; }
   aspect-ratio: 0.65;
   cursor: pointer;
   transform-origin: bottom center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              z-index 0s;
+  will-change: transform;
   z-index: 1;
-}
-
-/* ── Card Inner (hover lift, separate from fan transform) ── */
-.card-inner {
-  width: 100%;
-  height: 100%;
-  transition: transform 0.18s ease;
-}
-
-.card-cell:hover .card-inner {
-  transform: translateY(-95px);
 }
 
 .card-cell:hover {
@@ -791,11 +782,16 @@ img { max-width: 100%; display: block; }
   box-shadow: 0 0 20px var(--amber-glow), 0 0 40px var(--amber-glow);
 }
 
-/* ── Selected card stays lifted ── */
-.card-cell.selected .card-inner {
-  transform: translateY(-95px);
+.card-cell.lifted {
+  z-index: 998 !important;
 }
 
+.card-cell.lifted .card-face {
+  border-color: var(--amber-400);
+  box-shadow: 0 0 24px var(--amber-glow), 0 0 48px var(--amber-glow);
+}
+
+/* ── Selected card stays lifted ── */
 .card-cell.selected {
   z-index: 998 !important;
 }
@@ -809,6 +805,7 @@ img { max-width: 100%; display: block; }
 /* ── Fading after confirmation ── */
 .card-cell.fading {
   opacity: 0;
+  transform: scale(0.8) rotate(0deg) !important;
   pointer-events: none;
   transition: all 0.5s ease;
 }
@@ -2147,9 +2144,11 @@ img { max-width: 100%; display: block; }
     width: 70px;
     bottom: -150px;
   }
-  .card-cell:hover .card-inner,
-  .card-cell.selected .card-inner {
-    transform: translateY(-80px);
+  .card-cell:hover {
+    transform: translateY(-80px) scale(1.15) rotate(0deg) !important;
+  }
+  .card-cell.selected {
+    transform: translateY(-80px) scale(1.15) rotate(0deg) !important;
   }
 
   .spread-selector {
@@ -2247,9 +2246,11 @@ img { max-width: 100%; display: block; }
     width: 55px;
     bottom: -120px;
   }
-  .card-cell:hover .card-inner,
-  .card-cell.selected .card-inner {
-    transform: translateY(-65px);
+  .card-cell:hover {
+    transform: translateY(-65px) scale(1.12) rotate(0deg) !important;
+  }
+  .card-cell.selected {
+    transform: translateY(-65px) scale(1.12) rotate(0deg) !important;
   }
 
   .card-cell .card-back { font-size: 0.7rem; }
