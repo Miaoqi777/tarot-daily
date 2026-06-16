@@ -143,21 +143,34 @@ function toggleAI() {
   const sw = document.getElementById('toggle-ai-switch');
   const questionBox = document.getElementById('user-question');
   const voiceBtn = document.getElementById('btn-voice-input');
-  const aiStatus = document.getElementById('ai-status-text');
+  const keyBtn = document.getElementById('btn-api-key');
 
   if (sw) sw.classList.toggle('on', state.aiEnabled);
   if (questionBox) questionBox.style.display = state.aiEnabled ? 'block' : 'none';
   if (voiceBtn) voiceBtn.style.display = state.aiEnabled ? 'inline-block' : 'none';
+  if (keyBtn) keyBtn.style.display = state.aiEnabled ? 'inline-block' : 'none';
 
-  if (aiStatus) {
-    if (state.aiEnabled) {
-      const quota = typeof getRemainingQuota === 'function' ? getRemainingQuota() : '?';
-      aiStatus.textContent = `[AI.ON] 智能解读已激活 · 剩余 ${quota} 次/小时`;
-      aiStatus.style.color = 'var(--amber-400)';
-    } else {
-      aiStatus.textContent = '[AI.OFF] 使用本地模板引擎';
-      aiStatus.style.color = 'var(--text-muted)';
-    }
+  updateAIStatusUI();
+}
+
+// ── 更新 AI 状态 UI ──
+function updateAIStatusUI() {
+  const status = document.getElementById('ai-status-text');
+  if (!status) return;
+
+  if (!state.aiEnabled) {
+    status.textContent = '[AI.OFF] 使用本地模板引擎';
+    status.style.color = 'var(--text-muted)';
+    return;
+  }
+
+  if (typeof hasAPIKey === 'function' && hasAPIKey()) {
+    const quota = typeof getRemainingQuota === 'function' ? getRemainingQuota() : '?';
+    status.innerHTML = `[AI.ON] <span style="color:var(--emerald-400);">真实 API 模式</span> · DeepSeek · 剩余 ${quota} 次/小时`;
+    status.style.color = 'var(--amber-400)';
+  } else {
+    status.innerHTML = `[AI.ON] <span style="color:var(--cyan-400);">增强本地模式</span> · 智能拼装解读 · <a href="#" onclick="showAPIKeyPrompt();return false;" style="color:var(--amber-400);text-decoration:underline;">配置 API Key</a> 获得真实 AI`;
+    status.style.color = 'var(--text-secondary)';
   }
 }
 

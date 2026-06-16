@@ -185,7 +185,8 @@ async function generateAIResult(drawnCards, spreadDef, ctx) {
   const themeName = spreadDef && spreadDef.theme ? spreadDef.theme : '';
 
   try {
-    const aiResponse = await callAIInterpretation({
+    // 先确定模式
+    const modeResult = await callAIInterpretation({
       userQuestion: userQuestion || '请给我一个综合解读',
       spreadName: (spreadDef && spreadDef.name_zh) || '通用牌阵',
       spreadDescription: (spreadDef && spreadDef.description) || '',
@@ -195,15 +196,56 @@ async function generateAIResult(drawnCards, spreadDef, ctx) {
       historySummary: historySummary,
     });
 
-    // 将 AI 响应转换为标准 result 格式
-    return convertAIResponseToResult(aiResponse, drawnCards, spreadDef);
+    let aiResponse;
+
+    if (modeResult._enhancedLocal) {
+      // ── 增强本地模式（无 API Key）──
+      console.log('[cards.js] 增强本地模式');
+      aiResponse = generateEnhancedLocal(drawnCards, spreadDef, {
+        userQuestion: userQuestion || '',
+        userMood: userMood || '',
+      });
+      // 直接返回（generateEnhancedLocal 已返回标准 result 格式）
+      return aiResponse;
+    }
+
+    if (modeResult._fallbackFromAPI) {
+      // ── API 调用失败，降级到增强本地 ──
+      console.log('[cards.js] API 失败，使用增强本地');
+      aiResponse = generateEnhancedLocal(drawnCards, spreadDef, {
+        userQuestion: userQuestion || '',
+        userMood: userMood || '',
+      });
+      aiResponse._apiError = modeResult._apiError;
+      return aiResponse;
+    }
+
+    // ── 真实 API 模式 ──
+    // modeResult 就是 API 返回的解析结果
+    return convertAIResponseToResult(modeResult, drawnCards, spreadDef);
 
   } catch (err) {
-    console.error('[AI] 解读失败，降级到模板引擎:', err.message);
-    // 降级：返回模板结果 + 错误标记
+    console.error('[AI] 所有 AI 模式失败，降级模板引擎:', err.message);
+
+    // 再尝试增强本地（如果还没试过）
+    try {
+      if (typeof generateEnhancedLocal === 'function') {
+        const enhanced = generateEnhancedLocal(drawnCards, spreadDef, {
+          userQuestion: userQuestion || '',
+          userMood: userMood || '',
+        });
+        enhanced._aiError = err.message;
+        return enhanced;
+      }
+    } catch (e2) { /* ignore */ }
+
+    // 最后回退原始模板
     const fallback = fallbackToTemplate(drawnCards, spreadDef);
-    fallback._aiError = err.message;
-    return fallback;
+    if (fallback) {
+      fallback._aiError = err.message;
+      return fallback;
+    }
+    throw err;
   }
 }
 

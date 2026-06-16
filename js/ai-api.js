@@ -1,29 +1,39 @@
 /* ============================================================
-   ai-api.js — AI 解读引擎 · LLM 调用 · Prompt 工程 · 降级策略
-   依赖: cards.js (loadCardData, allCards), auth.js (getRecentHistorySummary)
+   ai-api.js — AI 解读引擎 · LLM 调用 · 增强本地模式 · 降级策略
+   依赖: cards.js (allCards), auth.js (getRecentHistorySummary)
+
+   三种工作模式（自动降级）：
+   1. API Key 已配置 → 调用 DeepSeek / OpenAI 兼容 API（真实 AI）
+   2. 无 API Key → 增强本地模式（智能拼装，输出自然语言风格）
+   3. 出错 → 回退原始模板引擎
    ============================================================ */
 
-// ── AI 配置 ──
+// ── 配置 ──
 const AI_CONFIG = {
-  // 代理 API 端点（Vercel Edge Function），隐藏真实 API Key
-  proxyEndpoint: '/api/interpret',
-
-  // 模型选择
-  models: {
-    premium: 'claude-opus-4-8',     // 付费用户 · 深度推理
-    free: 'claude-haiku-4-5',       // 免费层级 · 快速低成本
-    fallback: 'deepseek-v3',        // 国内备用
-  },
+  // API 端点（OpenAI 兼容格式，DeepSeek 支持浏览器 CORS）
+  apiEndpoint: 'https://api.deepseek.com/chat/completions',
+  model: 'deepseek-chat',
 
   // 速率限制
-  rateLimit: {
-    freePerHour: 3,
-    premiumPerHour: 50,
-  },
-
-  // 超时
-  timeout: 30000,  // 30s
+  rateLimit: { freePerHour: 5, premiumPerHour: 50 },
+  timeout: 30000,
 };
+
+// ── API Key 管理（localStorage）──
+const AI_KEY_STORAGE = 'tarot-ai-api-key';
+
+function getAPIKey() {
+  return localStorage.getItem(AI_KEY_STORAGE) || '';
+}
+
+function setAPIKey(key) {
+  if (key) localStorage.setItem(AI_KEY_STORAGE, key.trim());
+  else localStorage.removeItem(AI_KEY_STORAGE);
+}
+
+function hasAPIKey() {
+  return !!getAPIKey();
+}
 
 // ── 运行时状态 ──
 let aiCallCount = 0;
@@ -42,216 +52,214 @@ function checkRateLimit() {
   return aiCallCount < getHourlyLimit();
 }
 
+function getRemainingQuota() {
+  if (Date.now() > aiCallResetTime) {
+    aiCallCount = 0;
+    aiCallResetTime = Date.now() + 3600000;
+  }
+  return Math.max(0, getHourlyLimit() - aiCallCount);
+}
+
 // ═══════════════════════════════════════════════════════
 // Prompt 构建
 // ═══════════════════════════════════════════════════════
 
 function buildSystemPrompt() {
-  // 动态注入 78 张牌知识库摘要（从已加载的 allCards 中提取）
-  const cards = (typeof allCards !== 'undefined' && allCards.length) ? allCards : [];
-  const majorCards = cards.filter(c => c.arcana === 'major');
-  const minorCards = cards.filter(c => c.arcana === 'minor');
+  return `你是一位资深塔罗解读师。你的解读平实、有洞察力、贴近现代生活，不使用"业力""因果"等玄学术语。
 
-  // 大阿卡纳摘要
-  const majorSummary = majorCards.slice(0, 22).map(c =>
-    `${c.name_zh}(${c.name_en})：${c.keywords_zh ? c.keywords_zh.join('、') : ''}。${(c.description || '').slice(0, 80)}`
-  ).join('\n');
+解读原则：
+1. 以用户的具体问题为核心
+2. 结合牌阵位置理解每张牌的含义
+3. 正位代表顺势能量，逆位代表需要关注的课题
+4. 找到牌与牌之间的关联，给出连贯叙事
+5. 即使牌面有挑战，也要给出建设性的行动建议
 
-  // 小阿卡纳按花色分组摘要
-  const suits = ['wands', 'cups', 'swords', 'pentacles'];
-  const suitNames = { wands: '权杖', cups: '圣杯', swords: '宝剑', pentacles: '星币' };
-  const suitElements = { wands: '火', cups: '水', swords: '风', pentacles: '土' };
-  const minorSummary = suits.map(s => {
-    const suitCards = minorCards.filter(c => c.suit === s).slice(0, 4);
-    return `${suitNames[s]}(${suitElements[s]}元素)：` + suitCards.map(c => c.name_zh).join('、');
-  }).join('\n');
-
-  return `你是一位资深的塔罗解读师，精通韦特塔罗 78 张牌体系。你的解读风格兼具洞察力与温度——既不回避牌面的警示，也不渲染恐惧；用平实而富有智慧的语言帮助用户理解当下处境。
-
-## 你的知识库
-
-### 22 张大阿卡纳
-${majorSummary}
-
-### 56 张小阿卡纳（按花色）
-${minorSummary}
-
-## 解读原则
-
-1. **以用户的具体问题为核心**：不要泛泛而谈，紧扣用户提出的困惑和选择的领域。
-2. **结合牌阵位置**：每张牌在不同位置（过去/现在/未来/阻碍/建议等）有不同含义。
-3. **正逆位区分**：正位代表顺势能量，逆位代表需要关注的阴影面或内在课题。
-4. **综合叙事**：不要孤立解读每张牌，要找到牌与牌之间的关联，给出一个连贯的故事。
-5. **建设性导向**：即使牌面显示挑战，也要给出可行动的建议，帮助用户找到方向。
-6. **避免玄学术语**：用现代人能理解的语言表达，不使用"业力""因果"等宗教化表述。
-7. **控制长度**：每张牌解读 80-150 字，总结 150-250 字，总输出不超过 1500 字。
-
-## 输出格式
-
-你必须严格返回以下 JSON 格式（不要包含 markdown 代码块标记）：
-
+必须返回 JSON 格式（不含 markdown 代码块标记）：
 {
-  "overview": "整体解读，结合所有牌给出一个连贯的叙事（150-250字）",
-  "cards": [
-    {
-      "name": "牌名",
-      "position": "牌阵位置名",
-      "isReversed": true或false,
-      "reading": "针对该位置+用户问题的具体解读（80-150字）"
-    }
-  ],
-  "advice": "给用户的具体行动建议（50-100字）",
-  "theme_insight": "结合用户所选领域（爱情/学业/事业/旅行/社交/游戏）的针对性洞察（50-100字）"
+  "overview": "整体解读，150-250字",
+  "cards": [{"name":"牌名","position":"位置","isReversed":true或false,"reading":"80-150字解读"}],
+  "advice": "具体行动建议，50-100字"
 }`;
 }
 
 function buildUserPrompt(opts) {
-  const {
-    userQuestion = '未提供具体问题',
-    spreadName = '',
-    spreadDescription = '',
-    themeName = '',
-    cards = [],
-    userMood = '',
-    historySummary = '',
-  } = opts;
-
-  let prompt = '';
-
-  // 用户问题
-  prompt += `【用户的问题】${userQuestion}\n\n`;
-
-  // 生活领域
-  if (themeName) {
-    prompt += `【关注领域】${themeName}\n\n`;
-  }
-
-  // 牌阵信息
-  prompt += `【使用牌阵】${spreadName}`;
-  if (spreadDescription) prompt += ` — ${spreadDescription}`;
-  prompt += '\n\n';
-
-  // 用户心情
-  if (userMood) {
-    const moodLabels = {
-      happy: '开心', calm: '平静', neutral: '一般',
-      excited: '兴奋', anxious: '焦虑', sad: '难过', tired: '疲惫'
-    };
-    prompt += `【用户当前心情】${moodLabels[userMood] || userMood}\n\n`;
-  }
-
-  // 历史摘要
-  if (historySummary) {
-    prompt += `【用户近期占卜趋势】\n${historySummary}\n\n`;
-  }
-
-  // 抽牌结果
-  prompt += `【抽牌结果】\n`;
+  const { userQuestion, spreadName, themeName, cards, userMood, historySummary } = opts;
+  const moodLabels = { happy:'开心', calm:'平静', neutral:'一般', excited:'兴奋', anxious:'焦虑', sad:'难过', tired:'疲惫' };
+  let p = '';
+  p += `【用户问题】${userQuestion || '请给我一个综合解读'}\n`;
+  if (themeName) p += `【关注领域】${themeName}\n`;
+  p += `【牌阵】${spreadName || '通用'}\n`;
+  if (userMood) p += `【心情】${moodLabels[userMood] || userMood}\n`;
+  if (historySummary) p += `【近期占卜趋势】\n${historySummary}\n`;
+  p += `\n【抽牌结果】\n`;
   cards.forEach((c, i) => {
-    const status = c.isReversed ? '逆位' : '正位';
-    prompt += `${i + 1}. [${status}] ${c.name_zh}(${c.name_en || ''}) — 位置: ${c.positionName}\n`;
-    prompt += `   元素: ${c.element || '未知'} | 阿卡纳: ${c.arcana === 'major' ? '大' : '小'}\n`;
-    if (c.keywords_zh && c.keywords_zh.length) {
-      prompt += `   关键词: ${c.keywords_zh.join('、')}\n`;
-    }
+    p += `${i+1}. [${c.isReversed?'逆位':'正位'}] ${c.name_zh}(${c.name_en||''}) — ${c.positionName}\n`;
+    p += `   元素:${c.element||'未知'} | ${c.arcana==='major'?'大阿卡纳':'小阿卡纳'} | 关键词:${(c.keywords_zh||[]).join('、')}\n`;
+  });
+  return p;
+}
+
+// ═══════════════════════════════════════════════════════
+// 增强本地模式（无 API Key 时使用）
+// 生成自然语言风格的解读，明显区别于模板引擎的协议语言
+// ═══════════════════════════════════════════════════════
+
+function generateEnhancedLocal(drawnCards, spreadDef, ctx) {
+  const { userQuestion } = ctx;
+  const cards = drawnCards.map((card, i) => {
+    const posName = (spreadDef && spreadDef.positions && spreadDef.positions[i]) || `位置${i+1}`;
+    const isRev = card.isReversed || card._reversed || false;
+    return { ...card, _posName: posName, _isRev: isRev };
   });
 
-  return prompt;
-}
+  const revCount = cards.filter(c => c._isRev).length;
+  const majorCount = cards.filter(c => c.arcana === 'major').length;
 
-// ═══════════════════════════════════════════════════════
-// API 调用
-// ═══════════════════════════════════════════════════════
+  // ── 构建自然语言 overview ──
+  let overview = '';
 
-/**
- * 调用 AI 解读（非流式）
- * @param {Object} opts - 同 buildUserPrompt 的参数
- * @returns {Promise<Object>} 解析后的解读结果
- */
-async function callAIInterpretation(opts) {
-  if (!checkRateLimit()) {
-    throw new Error('RATE_LIMIT: 每小时免费解读次数已用完，请稍后再试或登录获取更多次数。');
+  // 开场：根据用户问题 + 牌面情绪
+  const questionText = userQuestion || '你心中的困惑';
+  if (revCount === 0) {
+    overview = `针对"${questionText}"，牌面显示了一个相当积极的画面。${cards.length}张牌全部以正位出现——这说明你当前的能量状态和你的问题是同频的，你所思考的方向与内在的真实需求是一致的。\n\n`;
+  } else if (revCount <= cards.length / 2) {
+    overview = `关于"${questionText}"，牌面给出了一个既有肯定也有提醒的回应。整体趋势向好，但${revCount}张逆位牌提示你在某些方面可能需要多一些觉察。\n\n`;
+  } else {
+    overview = `"${questionText}"——牌面显示当前可能不是最顺畅的时期。${revCount}张逆位牌表明有些内在的课题正在浮现。这并不意味着事情会变糟，而是邀请你用不同的视角重新审视这个局面。\n\n`;
   }
 
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(opts);
+  // 大阿卡纳提示
+  if (majorCount >= 2) {
+    overview += `${majorCount}张大阿卡纳同时出现，这不是偶然。它们触及的是你人生中较为深层的主题。这些牌之间有一条看不见的线，将你当下的困惑和更长远的人生课题连接在一起。`;
+  } else if (majorCount === 1) {
+    const m = cards.find(c => c.arcana === 'major');
+    overview += `大阿卡纳「${m.name_zh}」是这次解读的核心线索。它在"${m._posName}"位置亮起，你可以将注意力更多地放在这个位置上。`;
+  }
 
-  const model = AI_CONFIG.models.free;  // 默认用免费模型
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), AI_CONFIG.timeout);
+  // ── 每张牌的增强解读 ──
+  const enhancedCards = cards.map(c => {
+    const elNames = { fire:'火', water:'水', air:'风', earth:'土' };
+    const el = elNames[c.element] || c.element || '';
+    const keywords = (c.keywords_zh || []).slice(0, 3).join('、');
+    let reading = '';
 
-  try {
-    aiCallCount++;
-
-    // 优先使用代理 API
-    let response;
-    if (AI_CONFIG.proxyEndpoint && typeof fetch !== 'undefined') {
-      response = await fetch(AI_CONFIG.proxyEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model,
-          system: systemPrompt,
-          user: userPrompt,
-          temperature: 0.8,
-          max_tokens: 2048,
-        }),
-        signal: controller.signal,
-      });
+    if (c._isRev) {
+      // 逆位：从模板中提取核心含义，改写为自然语言
+      const tmpl = (c.reversed && c.reversed.general) || '';
+      const core = tmpl.length > 30 ? tmpl.slice(0, 60) : '需要关注的课题';
+      reading = `逆位的${c.name_zh}出现在"${c._posName}"位置，提醒你注意：${core.replace(/。$/, '')}。${el ? el + '元素的能量在此处可能有所阻滞' : ''}——这并非坏事，而是邀请你在${c._posName}方面多一些向内看的勇气。关键词「${keywords}」的阴影面正在浮现。`;
     } else {
-      // 直接 API 调用（需暴露 Key，不推荐生产环境）
-      throw new Error('NO_PROXY: 未配置 API 代理端点。请设置 AI_CONFIG.proxyEndpoint。');
+      const tmpl = (c.upright && c.upright.general) || '';
+      const core = tmpl.length > 30 ? tmpl.slice(0, 60) : '积极的能量';
+      reading = `正位的${c.name_zh}在"${c._posName}"位置为你带来：${core.replace(/。$/, '')}。${el ? el + '元素在此处流动顺畅' : ''}，表明你在${c._posName}方面正处在顺势而为的阶段。关键词「${keywords}」代表了你此刻的优势。`;
     }
 
-    clearTimeout(timeoutId);
+    return {
+      ...c,
+      interpretation: reading,
+      positionName: c._posName,
+      isReversed: c._isRev,
+      position: c._position !== undefined ? c._position : cards.indexOf(c),
+      cardId: c.id,
+    };
+  });
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => 'Unknown error');
-      throw new Error(`API_ERROR(${response.status}): ${errText}`);
-    }
-
-    const data = await response.json();
-    return parseAIResponse(data);
-
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error('TIMEOUT: AI 解读超时，请稍后重试。');
-    }
-    throw err;
+  // ── 建设性建议 ──
+  const advices = [];
+  if (revCount === 0) {
+    advices.push('当前是你顺势而为的好时机。既然牌面全部正位，不妨大胆一些——想做的事情，现在就是开始的最佳时机。');
+  } else if (revCount <= 2) {
+    advices.push(`牌面整体向好，${revCount}张逆位牌是善意的"慢一点"提示。建议你在行动的同时多留一分觉察，尤其是在逆位牌对应的生活领域。`);
+  } else {
+    advices.push('牌面逆位偏多，这段时间适合"向内看"而非"向外冲"。利用这个阶段重新审视你的方向，积累能量，等待风重新吹起来的时候。');
   }
+
+  // 元素建议
+  const elements = cards.map(c => c.element).filter(Boolean);
+  const dominantEl = mostFrequent(elements);
+  const elAdvice = {
+    fire: '火元素主导——行动力是你的关键词。想到了就去做，但偶尔也记得看看地图，别冲太快。',
+    water: '水元素主导——相信你的直觉和感受。有些答案不在头脑里，而在心里。柔软并非脆弱。',
+    air: '风元素主导——清晰的思考是你的武器。善用这段时间理清思路、做好计划、沟通表达。',
+    earth: '土元素主导——稳扎稳打就是最好的策略。不急于求成，你正在打造的是长久的根基。',
+  };
+  if (elAdvice[dominantEl]) advices.push(elAdvice[dominantEl]);
+
+  // ── 组装 summary（自然语言风格，无协议标签）──
+  const summary = overview + '\n\n' +
+    cards.map((c, i) =>
+      `▸ ${c._posName}：「${c.name_zh}」（${c._isRev ? '逆位' : '正位'}）\n${enhancedCards[i].interpretation}`
+    ).join('\n\n') +
+    '\n\n◆ 给你的建议\n' + advices.map(a => `· ${a}`).join('\n\n');
+
+  // ── 计算整体情绪 ──
+  let overallMood = 'neutral';
+  if (revCount === 0 && majorCount >= 2) overallMood = 'excited';
+  else if (revCount === 0) overallMood = 'happy';
+  else if (revCount <= 1) overallMood = 'calm';
+  else if (revCount >= cards.length / 2) overallMood = 'anxious';
+
+  return {
+    cards: enhancedCards.map(c => ({
+      cardId: c.cardId || c.id,
+      name_zh: c.name_zh,
+      name_en: c.name_en,
+      emoji: c.emoji,
+      position: c.position,
+      positionName: c.positionName,
+      isReversed: c.isReversed,
+      interpretation: c.interpretation,
+      keywords: c.keywords_zh,
+      element: c.element,
+      arcana: c.arcana,
+      suit: c.suit,
+    })),
+    overallMood,
+    dominantElement: dominantEl,
+    reversalCount: revCount,
+    majorCount,
+    summary,
+    spreadName: spreadDef ? spreadDef.name_zh : '',
+    spreadId: spreadDef ? spreadDef.id : '',
+    _aiGenerated: true,
+    _enhancedLocal: true,
+    _aiAdvice: advices.join('\n'),
+  };
 }
 
-/**
- * 调用 AI 解读（流式 SSE）
- * @param {Object} opts
- * @param {Function} onChunk - 每收到一段文本时回调 (partialText, isComplete)
- * @returns {Promise<Object>} 最终完整结果
- */
-async function streamAIInterpretation(opts, onChunk) {
+// ═══════════════════════════════════════════════════════
+// API 调用（有 Key 时）
+// ═══════════════════════════════════════════════════════
+
+async function callRealAPI(opts) {
+  const apiKey = getAPIKey();
+  if (!apiKey) throw new Error('NO_KEY');
+
   if (!checkRateLimit()) {
     throw new Error('RATE_LIMIT: 每小时免费解读次数已用完。');
   }
 
   const systemPrompt = buildSystemPrompt();
   const userPrompt = buildUserPrompt(opts);
-  const model = AI_CONFIG.models.free;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), AI_CONFIG.timeout);
 
   try {
     aiCallCount++;
-
-    const response = await fetch(AI_CONFIG.proxyEndpoint, {
+    const response = await fetch(AI_CONFIG.apiEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        model,
-        system: systemPrompt,
-        user: userPrompt,
+        model: AI_CONFIG.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
         temperature: 0.8,
         max_tokens: 2048,
-        stream: true,
       }),
       signal: controller.signal,
     });
@@ -259,53 +267,46 @@ async function streamAIInterpretation(opts, onChunk) {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`API_ERROR(${response.status})`);
-    }
-
-    // 读取 SSE 流
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';  // 保留不完整的行
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.content || parsed.text || parsed.delta || '';
-            fullText += content;
-            if (onChunk) onChunk(fullText, false);
-          } catch (e) {
-            // 非 JSON 行，当作纯文本追加
-            fullText += data;
-            if (onChunk) onChunk(fullText, false);
-          }
-        }
+      const errText = await response.text().catch(() => '');
+      if (response.status === 401) {
+        setAPIKey(''); // 清除无效 key
+        throw new Error('API Key 无效，已清除。请重新输入有效的 Key。');
       }
+      throw new Error(`API 错误 (${response.status}): ${errText.slice(0, 100)}`);
     }
 
-    // 流结束，解析完整 JSON
-    if (onChunk) onChunk(fullText, true);
-    return parseAIResponse({ content: fullText });
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    return parseAIResponse({ content });
 
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error('TIMEOUT: AI 解读超时。');
-    }
+    if (err.name === 'AbortError') throw new Error('请求超时，请稍后重试。');
     throw err;
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// 主入口：自动选择模式
+// ═══════════════════════════════════════════════════════
+
+async function callAIInterpretation(opts) {
+  // 有 API Key → 真实 API
+  if (hasAPIKey()) {
+    try {
+      console.log('[AI] 使用真实 API 模式 (DeepSeek)');
+      return await callRealAPI(opts);
+    } catch (err) {
+      console.warn('[AI] API 调用失败:', err.message);
+      // API 失败 → 增强本地模式（不是原模板）
+      console.log('[AI] 降级到增强本地模式');
+      return { _fallbackFromAPI: true, _apiError: err.message };
+    }
+  }
+
+  // 无 API Key → 直接增强本地模式
+  console.log('[AI] 使用增强本地模式（无 API Key）');
+  return { _enhancedLocal: true };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -314,50 +315,20 @@ async function streamAIInterpretation(opts, onChunk) {
 
 function parseAIResponse(data) {
   let content = data.content || data.text || data.message || '';
-
-  // 如果 content 是对象（某些代理直接返回 JSON），直接使用
   if (typeof content === 'object' && content !== null) {
-    if (content.overview || content.cards) {
-      return content;
-    }
+    if (content.overview || content.cards) return normalizeAIResponse(content);
     content = JSON.stringify(content);
   }
 
-  // 尝试从文本中提取 JSON
+  // 尝试提取 JSON
   let parsed = null;
-
-  // 策略1: 直接解析（如果整个 content 就是 JSON）
-  try {
-    parsed = JSON.parse(content);
-    if (parsed.overview) return normalizeAIResponse(parsed);
-  } catch (e) { /* continue */ }
-
-  // 策略2: 查找 JSON 块（```json ... ``` 或 { ... }）
+  try { parsed = JSON.parse(content); if (parsed.overview) return normalizeAIResponse(parsed); } catch(e) {}
   const jsonBlock = content.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
-  if (jsonBlock) {
-    try {
-      parsed = JSON.parse(jsonBlock[1].trim());
-      if (parsed.overview) return normalizeAIResponse(parsed);
-    } catch (e) { /* continue */ }
-  }
-
-  // 策略3: 查找第一个 { 到最后一个 }
+  if (jsonBlock) { try { parsed = JSON.parse(jsonBlock[1].trim()); if (parsed.overview) return normalizeAIResponse(parsed); } catch(e) {} }
   const braceMatch = content.match(/\{[\s\S]*\}/);
-  if (braceMatch) {
-    try {
-      parsed = JSON.parse(braceMatch[0]);
-      if (parsed.overview) return normalizeAIResponse(parsed);
-    } catch (e) { /* continue */ }
-  }
+  if (braceMatch) { try { parsed = JSON.parse(braceMatch[0]); if (parsed.overview) return normalizeAIResponse(parsed); } catch(e) {} }
 
-  // 策略4: 无法解析，将原始文本作为 overview 返回
-  return {
-    overview: content.slice(0, 500),
-    cards: [],
-    advice: '',
-    theme_insight: '',
-    _parseError: true,
-  };
+  return { overview: content.slice(0, 500), cards: [], advice: '', theme_insight: '', _parseError: true };
 }
 
 function normalizeAIResponse(parsed) {
@@ -375,67 +346,15 @@ function normalizeAIResponse(parsed) {
 }
 
 // ═══════════════════════════════════════════════════════
-// 降级策略
+// 降级（仅在增强模式也失败时回退原模板）
 // ═══════════════════════════════════════════════════════
 
-/**
- * API 不可用时回退到模板引擎
- */
 function fallbackToTemplate(drawnCards, spreadDef) {
-  console.warn('[AI] API 不可用，回退到模板引擎');
-  // 直接调用 cards.js 中的原始模板函数
+  console.warn('[AI] 所有模式失败，回退原始模板引擎');
   if (typeof generateInterpretationTemplate === 'function') {
     return generateInterpretationTemplate(drawnCards, spreadDef);
   }
-  // 如果模板函数不可用，构建基本结果
-  return buildFallbackResult(drawnCards, spreadDef);
-}
-
-function buildFallbackResult(drawnCards, spreadDef) {
-  const result = drawnCards.map((card, i) => {
-    const posName = (spreadDef && spreadDef.positions && spreadDef.positions[i]) || `位置${i + 1}`;
-    const isRev = card.isReversed || false;
-    const interp = isRev
-      ? (card.reversed ? card.reversed.general : '逆位解读暂无')
-      : (card.upright ? card.upright.general : '正位解读暂无');
-    return {
-      cardId: card.id,
-      name_zh: card.name_zh,
-      name_en: card.name_en,
-      emoji: card.emoji,
-      position: i,
-      positionName: posName,
-      isReversed: isRev,
-      interpretation: interp,
-      keywords: card.keywords_zh,
-      element: card.element,
-      arcana: card.arcana,
-      suit: card.suit,
-    };
-  });
-
-  const elements = result.map(r => r.element).filter(Boolean);
-  const dominantEl = mostFrequent(elements);
-  const reversalCount = result.filter(r => r.isReversed).length;
-  const majorCount = result.filter(r => r.arcana === 'major').length;
-
-  let overallMood = 'neutral';
-  if (reversalCount === 0 && majorCount >= 2) overallMood = 'excited';
-  else if (reversalCount === 0) overallMood = 'happy';
-  else if (reversalCount <= 1) overallMood = 'calm';
-  else if (reversalCount >= result.length / 2) overallMood = 'anxious';
-
-  return {
-    cards: result,
-    overallMood,
-    dominantElement: dominantEl,
-    reversalCount,
-    majorCount,
-    summary: `[AI-OFFLINE] 智能解读服务暂时不可用，已切换至本地模板引擎。\n\n◆ SESSION.COMPLETE · 协议执行完成 · 以下为本地解读结果——\n\n系统检测到 ${majorCount} 张大阿卡纳，${reversalCount} 张逆位牌。建议稍后重试 AI 深度解读获得更个性化分析。`,
-    spreadName: spreadDef ? spreadDef.name_zh : '',
-    spreadId: spreadDef ? spreadDef.id : '',
-    _isFallback: true,
-  };
+  return null;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -444,7 +363,7 @@ function buildFallbackResult(drawnCards, spreadDef) {
 
 function buildCardContextForAI(drawnCards, spreadDef) {
   return drawnCards.map((card, i) => {
-    const posName = (spreadDef && spreadDef.positions && spreadDef.positions[i]) || `位置${i + 1}`;
+    const posName = (spreadDef && spreadDef.positions && spreadDef.positions[i]) || `位置${i+1}`;
     const isRev = card.isReversed || card._reversed || false;
     return {
       name_zh: card.name_zh,
@@ -455,7 +374,6 @@ function buildCardContextForAI(drawnCards, spreadDef) {
       arcana: card.arcana,
       suit: card.suit,
       keywords_zh: card.keywords_zh,
-      // 附带 JSON 中的模板解读作为 AI 参考
       templateReading: isRev
         ? (card.reversed ? card.reversed.general : '')
         : (card.upright ? card.upright.general : ''),
@@ -465,41 +383,62 @@ function buildCardContextForAI(drawnCards, spreadDef) {
 
 function buildHistoryContext(historyData) {
   if (!historyData || !historyData.length) return '';
-  const lines = historyData.map((h, i) => {
-    const cards = (h.cards || []).map(c =>
-      `${c.isReversed ? '逆' : '正'}${c.name_zh}`
-    ).join('、');
-    return `${i + 1}. [${h.date}] ${h.spreadName || '占卜'} · ${h.overallMood || '未知'} · ${cards}`;
-  });
-  return lines.join('\n');
+  return historyData.map((h, i) => {
+    const cards = (h.cards || []).map(c => `${c.isReversed?'逆':'正'}${c.name_zh}`).join('、');
+    return `${i+1}. [${h.date}] ${h.spreadName||'占卜'} · ${h.overallMood||'未知'} · ${cards}`;
+  }).join('\n');
 }
 
 // ═══════════════════════════════════════════════════════
 // 工具函数
 // ═══════════════════════════════════════════════════════
 
-function getRemainingQuota() {
-  if (Date.now() > aiCallResetTime) {
-    aiCallCount = 0;
-    aiCallResetTime = Date.now() + 3600000;
-  }
-  return Math.max(0, getHourlyLimit() - aiCallCount);
+function mostFrequent(arr) {
+  if (!arr.length) return 'water';
+  const counts = {};
+  arr.forEach(a => { counts[a] = (counts[a] || 0) + 1; });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 }
 
 function getAIStatus() {
   return {
-    enabled: !!AI_CONFIG.proxyEndpoint,
+    hasKey: hasAPIKey(),
+    mode: hasAPIKey() ? 'real-api' : 'enhanced-local',
     remainingQuota: getRemainingQuota(),
     hourlyLimit: getHourlyLimit(),
-    model: AI_CONFIG.models.free,
+    model: AI_CONFIG.model,
     callsThisHour: aiCallCount,
   };
 }
 
+// ═══════════════════════════════════════════════════════
+// API Key 管理 UI
+// ═══════════════════════════════════════════════════════
+
+function showAPIKeyPrompt() {
+  const existing = getAPIKey();
+  const masked = existing ? existing.slice(0, 6) + '...' + existing.slice(-4) : '';
+  const msg = existing
+    ? `当前 Key: ${masked}\n\n输入新的 Key 替换，或留空清除：`
+    : '需要 DeepSeek API Key 才能使用真实 AI 解读。\n\n获取方式：访问 platform.deepseek.com 注册即可获得免费额度。\n\n请粘贴你的 API Key：';
+
+  const key = prompt(msg, '');
+  if (key === null) return; // 取消
+
+  if (key.trim()) {
+    setAPIKey(key.trim());
+    alert('API Key 已保存！\n\n现在 AI 解读将使用真实的大模型。\n免费额度用完前无需付费。');
+  } else if (existing) {
+    if (confirm('确定要清除已保存的 API Key 吗？\n清除后将使用增强本地模式。')) {
+      setAPIKey('');
+      alert('API Key 已清除。将使用增强本地模式。');
+    }
+  }
+
+  // 更新 UI
+  if (typeof updateAIStatusUI === 'function') updateAIStatusUI();
+}
+
 // 导出到全局
-console.log('[AI] 命运终端 AI 解读引擎已加载');
-console.log('[AI] 配置:', {
-  endpoint: AI_CONFIG.proxyEndpoint,
-  freeModel: AI_CONFIG.models.free,
-  hourlyLimit: AI_CONFIG.rateLimit.freePerHour,
-});
+console.log('[AI] 命运终端 AI 引擎已加载 · 模式:', hasAPIKey() ? '真实API' : '增强本地');
+console.log('[AI] 配置:', { endpoint: AI_CONFIG.apiEndpoint, model: AI_CONFIG.model });
