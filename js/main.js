@@ -16,6 +16,8 @@ const state = {
   aiEnabled: false,
   userQuestion: '',
   selectedMood: null,
+  // 回答模式
+  answerMode: 'simple',  // 'simple' | 'detailed'
 };
 
 // ---------- Initialization ----------
@@ -584,12 +586,43 @@ function animateCurtain() {
   });
 }
 
+// ---------- Answer Mode Toggle ----------
+function setAnswerMode(mode) {
+  state.answerMode = mode;
+  // Update segmented button states
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  // Show/hide appropriate containers
+  const oneliner = document.getElementById('result-oneliner');
+  const detailed = document.getElementById('result-detailed');
+  if (oneliner) oneliner.style.display = mode === 'simple' ? '' : 'none';
+  if (detailed) detailed.style.display = mode === 'detailed' ? '' : 'none';
+}
+
 // ---------- Result Display ----------
 function renderResults(result) {
+  // Store result for mode switching
+  state.divinationResult = result;
+
   document.getElementById('result-date').textContent =
     `[DATE] ${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}`;
   document.getElementById('result-spread-name').textContent = result.spreadName;
 
+  // ── Simple mode: one-liner + card names ──
+  const oneLiner = result.oneLiner || result._aiOverview || '牌面已展开，详情请查看完整解读。';
+  document.getElementById('oneliner-text').textContent = oneLiner;
+
+  const onelinerCardsContainer = document.getElementById('oneliner-cards');
+  onelinerCardsContainer.innerHTML = result.cards.map((c) => `
+    <div class="oneliner-card">
+      <span class="oc-emoji">${symbolToSVG(c.emoji)}</span>
+      <span class="oc-name">${c.name_zh}</span>
+      <span class="oc-status ${c.isReversed ? 'reversed' : 'upright'}">${c.isReversed ? '逆位' : '正位'}</span>
+    </div>
+  `).join('');
+
+  // ── Detailed mode: full card-by-card breakdown ──
   const cardsContainer = document.getElementById('result-cards');
   cardsContainer.innerHTML = result.cards.map((c, i) => `
     <div class="result-card glass-card" style="animation-delay:${0.1 + i * 0.15}s;">
@@ -626,6 +659,9 @@ function renderResults(result) {
     hint.textContent = `[FALLBACK] AI 暂时不可用，已使用本地模板引擎。`;
     document.getElementById('result-summary').appendChild(hint);
   }
+
+  // ── Apply current answer mode ──
+  setAnswerMode(state.answerMode);
 
   document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -711,6 +747,7 @@ function resetDivination() {
   state.selectedCards = [];
   state.gridCards = [];
   state.divinationResult = null;
+  state.answerMode = 'simple';  // reset to default
 
   document.getElementById('card-grid-container').style.display = 'none';
   document.getElementById('card-fan-container').innerHTML = '';

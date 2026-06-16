@@ -1260,6 +1260,117 @@ img { max-width: 100%; display: block; }
   font-family: var(--font-display);
 }
 
+/* ── Answer mode toggle (segmented control) ── */
+.answer-mode-toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.segmented-control {
+  display: inline-flex;
+  background: var(--terminal-bg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.seg-btn {
+  padding: 8px 24px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.seg-btn:first-child {
+  border-right: 1px solid var(--border-default);
+}
+
+.seg-btn.active {
+  background: var(--amber-400);
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.seg-btn:not(.active):hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.05);
+}
+
+/* ── Simple answer: one-liner display ── */
+.result-oneliner {
+  padding: 32px 24px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.oneliner-text {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  padding: 0 10px;
+}
+
+.oneliner-text::before {
+  content: '◆ ';
+  color: var(--amber-400);
+}
+
+.oneliner-cards {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.oneliner-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--terminal-bg);
+  border: 1px solid var(--border-default);
+  min-width: 70px;
+}
+
+.oneliner-card .oc-emoji {
+  font-size: 1.5rem;
+}
+
+.oneliner-card .oc-name {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.oneliner-card .oc-status {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.oneliner-card .oc-status.upright { color: var(--cyan-400); background: rgba(0,217,255,0.08); }
+.oneliner-card .oc-status.reversed { color: var(--text-error); background: rgba(255,77,77,0.08); }
+
+/* ── Detailed answer wrapper ── */
+.result-detailed {
+  /* wrapper for result-cards + result-summary in detailed mode */
+}
+
 .result-cards {
   display: flex;
   gap: 20px;

@@ -170,10 +170,28 @@
         <p class="result-date" id="result-date"></p>
         <h2 class="result-spread-name" id="result-spread-name"></h2>
       </div>
-      <div class="result-cards" id="result-cards">
-        <!-- Result cards -->
+
+      <!-- Answer mode toggle -->
+      <div class="answer-mode-toggle" id="answer-mode-toggle">
+        <div class="segmented-control">
+          <button class="seg-btn active" data-mode="simple" onclick="setAnswerMode('simple')">简洁</button>
+          <button class="seg-btn" data-mode="detailed" onclick="setAnswerMode('detailed')">详细</button>
+        </div>
       </div>
-      <div class="result-summary glass-card" id="result-summary"></div>
+
+      <!-- Simple answer: one-liner + card names -->
+      <div class="result-oneliner glass-card" id="result-oneliner">
+        <div class="oneliner-text" id="oneliner-text"></div>
+        <div class="oneliner-cards" id="oneliner-cards"></div>
+      </div>
+
+      <!-- Detailed answer: full card-by-card breakdown -->
+      <div class="result-detailed" id="result-detailed" style="display:none;">
+        <div class="result-cards" id="result-cards">
+          <!-- Result cards -->
+        </div>
+        <div class="result-summary glass-card" id="result-summary"></div>
+      </div>
 
       <!-- Song Recommendation -->
       <div class="song-recommendation glass-card hidden" id="song-recommendation">
