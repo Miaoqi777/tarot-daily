@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📖 塔罗百科 — 78张塔罗牌完整解读</title>
+  <meta name="theme-color" content="#080808">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+  <!-- Particle Canvas Background -->
+  <canvas id="particles"></canvas>
 
   <!-- Weather Bar -->
   <div class="weather-bar" id="weather-bar">
@@ -140,6 +144,7 @@
   <!-- Emoji Float -->
   <div class="emoji-float-container" id="emoji-container"></div>
 
+  <script src="js/particles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/white-noise.js"></script>

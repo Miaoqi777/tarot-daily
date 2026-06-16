@@ -312,7 +312,7 @@ function updateSelectionCounter() {
     ? state.selectedSpread.card_count - state.selectedCards.length
     : 0;
   if (remaining <= 0 && state.selectedSpread) {
-    document.getElementById('selection-counter').style.background = 'rgba(180,231,206,0.3)';
+    document.getElementById('selection-counter').style.background = 'rgba(197,160,89,0.2)';
   } else {
     document.getElementById('selection-counter').style.background = '';
   }
@@ -463,8 +463,12 @@ function renderResults(result) {
   document.getElementById('result-spread-name').textContent = result.spreadName;
 
   const cardsContainer = document.getElementById('result-cards');
-  cardsContainer.innerHTML = result.cards.map((c, i) => `
-    <div class="result-card glass-card" style="animation-delay:${0.1 + i * 0.15}s;">
+  cardsContainer.innerHTML = result.cards.map((c, i) => {
+    const isMajor = c.arcana === 'major';
+    const glowClass = (isMajor && (result.overallMood === 'excited' || result.overallMood === 'happy')) ? ' glow-card' : '';
+    const revClass = c.isReversed ? ' reversed-tone' : '';
+    return `
+    <div class="result-card glass-card${glowClass}${revClass}" style="animation-delay:${0.1 + i * 0.15}s;">
       <div class="result-card-emoji">${c.emoji}</div>
       <div class="result-card-name">${c.name_zh}</div>
       <div class="result-card-position">${c.positionName}</div>
@@ -473,7 +477,7 @@ function renderResults(result) {
       </span>
       <p class="result-card-text">${c.interpretation}</p>
     </div>
-  `).join('');
+  `}).join('');
 
   document.getElementById('result-summary').innerHTML = `
     <h3>📜 总体解读</h3>
@@ -844,12 +848,12 @@ function setupAuthForms() {
 // ---------- Background Update ----------
 function updateBackgroundByMood(mood) {
   const gradients = {
-    excited: 'linear-gradient(135deg, #fef9e7, #fdebd0, #fadbd8)',
-    happy: 'linear-gradient(135deg, #fef9e7, #fdebd0, #fef3c7)',
-    calm: 'linear-gradient(135deg, #e8f8f5, #d5f5e3, #e8e0f5)',
-    neutral: 'linear-gradient(135deg, #f5f0ff, #e8e0f5, #fef9fb)',
-    anxious: 'linear-gradient(135deg, #f5eef8, #e8daef, #d6eaf8)',
-    sad: 'linear-gradient(135deg, #d6eaf8, #aed6f1, #e8f8f5)'
+    excited: 'linear-gradient(135deg, #14100a, #1a1410, #14100a)',
+    happy: 'linear-gradient(135deg, #12100c, #181410, #12100c)',
+    calm: 'linear-gradient(135deg, #0c0e10, #101214, #0c0e10)',
+    neutral: 'linear-gradient(135deg, #0a0a0c, #0e0e10, #0a0a0c)',
+    anxious: 'linear-gradient(135deg, #0e0c10, #121014, #0e0c10)',
+    sad: 'linear-gradient(135deg, #0a0c10, #0e1014, #0a0c10)'
   };
   document.body.style.background = gradients[mood] || gradients.neutral;
 }

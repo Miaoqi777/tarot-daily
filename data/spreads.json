@@ -1,6 +1,6 @@
 [
   {
-    "theme": "love", "name_zh": "恋爱运势", "icon": "💕", "color": "#F8B4C8",
+    "theme": "love", "name_zh": "恋爱运势", "icon": "💕", "color": "#c5a059",
     "spreads": [
       { "id": "love-3", "name_zh": "三张牌阵", "card_count": 3,
         "positions": ["你的状态", "对方状态", "关系走向"],
@@ -14,7 +14,7 @@
     ]
   },
   {
-    "theme": "study", "name_zh": "学业运势", "icon": "📚", "color": "#B4E7CE",
+    "theme": "study", "name_zh": "学业运势", "icon": "📚", "color": "#b8a878",
     "spreads": [
       { "id": "study-3", "name_zh": "三张牌阵", "card_count": 3,
         "positions": ["当前基础", "挑战所在", "突破方向"],
@@ -25,7 +25,7 @@
     ]
   },
   {
-    "theme": "work", "name_zh": "事业运势", "icon": "💼", "color": "#C4B5E0",
+    "theme": "work", "name_zh": "事业运势", "icon": "💼", "color": "#a09060",
     "spreads": [
       { "id": "work-3", "name_zh": "三张牌阵", "card_count": 3,
         "positions": ["当前状态", "机遇", "挑战"],
@@ -39,7 +39,7 @@
     ]
   },
   {
-    "theme": "travel", "name_zh": "旅行运势", "icon": "✈️", "color": "#B5D8EB",
+    "theme": "travel", "name_zh": "旅行运势", "icon": "✈️", "color": "#c0b090",
     "spreads": [
       { "id": "travel-3", "name_zh": "三张牌阵", "card_count": 3,
         "positions": ["出行时机", "旅途收获", "注意事项"],
@@ -50,7 +50,7 @@
     ]
   },
   {
-    "theme": "social", "name_zh": "社交运势", "icon": "🎭", "color": "#FAD4C0",
+    "theme": "social", "name_zh": "社交运势", "icon": "🎭", "color": "#d4b880",
     "spreads": [
       { "id": "social-3", "name_zh": "三张牌阵", "card_count": 3,
         "positions": ["社交能量", "贵人方向", "注意事项"],
@@ -61,7 +61,7 @@
     ]
   },
   {
-    "theme": "gaming", "name_zh": "游戏运势", "icon": "🎮", "color": "#FEF3C7",
+    "theme": "gaming", "name_zh": "游戏运势", "icon": "🎮", "color": "#e0c870",
     "spreads": [
       { "id": "gaming-3", "name_zh": "三张牌阵", "card_count": 3,
         "positions": ["今日手气", "最佳时段", "制胜策略"],
