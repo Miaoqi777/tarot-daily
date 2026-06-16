@@ -1,290 +1,202 @@
 /**
  * Vercel Edge Function — AI 解读代理
- * POST /api/interpret
- *
- * 部署方式: 放入 Vercel 项目的 /api/ 目录，自动作为 Serverless Function 运行。
- * 也兼容 Netlify Functions (/netlify/functions/) 和其他 Edge Runtime。
+ * 部署到 Vercel 后自动生效，处理所有 /api/interpret 请求
  *
  * 功能:
- * - 隐藏 API Key，客户端不可见
- * - CORS 处理
- * - 速率限制（基于 IP）
- * - SSE 流式转发
- * - 错误处理和降级
+ * - 服务端隐藏 API Key（访客不可见）
+ * - 每日 ¥1.00 总预算（所有访客共享）
+ * - 预算耗尽 → 返回 503 → 前端显示"系统繁忙"
+ * - 转发请求到 DeepSeek API，回传 token 用量
  */
 
-// ═════════════════════════════════════════════
-// 配置（部署时修改这里）
-// ═════════════════════════════════════════════
+// ═══════════════════════════════════════
+// 配置（服务端，不会暴露给访客）
+// ═══════════════════════════════════════
 
-const CONFIG = {
-  // Claude API 配置
-  apiEndpoint: 'https://api.anthropic.com/v1/messages',
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
+const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/chat/completions';
+const MODEL = 'deepseek-chat';
 
-  // 备用: OpenAI 兼容 API（DeepSeek 等）
-  fallbackEndpoint: 'https://api.deepseek.com/v1/chat/completions',
-  fallbackKey: process.env.DEEPSEEK_API_KEY || '',
+// 每日预算（元）
+const DAILY_BUDGET = 1.00;
 
-  // CORS
-  allowedOrigins: [
-    'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'https://your-domain.vercel.app',
-    'https://your-github-pages.domain',
-  ],
+// DeepSeek 定价（元/1M tokens）
+const PRICE_INPUT = 1.0;
+const PRICE_OUTPUT = 2.0;
 
-  // 速率限制
-  rateLimitWindow: 3600000,  // 1 小时窗口
-  maxRequestsPerWindow: 100, // 每个 IP 每小时最多 100 次
-};
+// ═══════════════════════════════════════
+// 内存中每日预算追踪
+// Vercel Edge Function 实例间不共享内存，
+// 但对个人项目足够——预算接近 ¥1.00 时自然限流
+// ═══════════════════════════════════════
 
-// ═════════════════════════════════════════════
-// 简易内存速率限制（生产环境建议用 Redis/Upstash）
-// ═════════════════════════════════════════════
+let budgetToday = '';
+let budgetCost = 0;
+let budgetCount = 0;
 
-const ipRequestCounts = new Map();
-
-function checkRateLimit(ip) {
-  const now = Date.now();
-  const record = ipRequestCounts.get(ip);
-
-  if (!record || now - record.windowStart > CONFIG.rateLimitWindow) {
-    ipRequestCounts.set(ip, { windowStart: now, count: 1 });
-    return true;
-  }
-
-  if (record.count >= CONFIG.maxRequestsPerWindow) {
-    return false;
-  }
-
-  record.count++;
-  return true;
+function today() {
+  return new Date().toISOString().split('T')[0];
 }
 
-// ═════════════════════════════════════════════
-// CORS 头
-// ═════════════════════════════════════════════
+function resetBudgetIfNewDay() {
+  const d = today();
+  if (budgetToday !== d) {
+    budgetToday = d;
+    budgetCost = 0;
+    budgetCount = 0;
+  }
+}
+
+function addCost(inputTokens, outputTokens) {
+  const cost = (inputTokens / 1_000_000) * PRICE_INPUT
+             + (outputTokens / 1_000_000) * PRICE_OUTPUT;
+  budgetCost += cost;
+  budgetCount += 1;
+  console.log(`[预算] 本次 ¥${cost.toFixed(6)} | 今日累计 ¥${budgetCost.toFixed(4)} / ¥${DAILY_BUDGET.toFixed(2)} | 调用 ${budgetCount} 次`);
+}
+
+// ═══════════════════════════════════════
+// CORS
+// ═══════════════════════════════════════
+
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'https://miaoqi777.github.io',
+  'https://tarot-daily.vercel.app',
+];
 
 function corsHeaders(origin) {
-  const allowOrigin = CONFIG.allowedOrigins.includes(origin)
-    ? origin
-    : CONFIG.allowedOrigins[0];
-
+  const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '*';
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };
 }
 
-// ═════════════════════════════════════════════
-// 主处理器
-// ═════════════════════════════════════════════
+// ═══════════════════════════════════════
+// 主处理函数
+// ═══════════════════════════════════════
 
 export default async function handler(request) {
   const origin = request.headers.get('origin') || '';
   const headers = corsHeaders(origin);
 
-  // OPTIONS 预检
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
 
-  // 仅允许 POST
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
-      status: 405,
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      status: 405, headers: { ...headers, 'Content-Type': 'application/json' },
     });
   }
 
-  // 速率限制
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-  if (!checkRateLimit(ip)) {
-    return new Response(JSON.stringify({
-      error: 'RATE_LIMITED',
-      message: '请求过于频繁，请稍后再试。',
-    }), {
-      status: 429,
-      headers: { ...headers, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // 解析请求体
+  // 解析请求
   let body;
   try {
     body = await request.json();
   } catch (e) {
-    return new Response(JSON.stringify({
-      error: 'INVALID_JSON',
-      message: '请求体不是有效的 JSON。',
-    }), {
-      status: 400,
-      headers: { ...headers, 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ error: 'INVALID_JSON' }), {
+      status: 400, headers: { ...headers, 'Content-Type': 'application/json' },
     });
   }
 
-  const {
-    model = 'claude-haiku-4-5',
-    system = '',
-    user = '',
-    temperature = 0.8,
-    max_tokens = 2048,
-    stream = false,
-  } = body;
-
+  const { system, user } = body;
   if (!user) {
+    return new Response(JSON.stringify({ error: '缺少 user prompt' }), {
+      status: 400, headers: { ...headers, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // 预算检查
+  resetBudgetIfNewDay();
+  if (budgetCost >= DAILY_BUDGET) {
     return new Response(JSON.stringify({
-      error: 'MISSING_PROMPT',
-      message: '缺少 user prompt。',
+      error: 'BUDGET_EXCEEDED',
+      message: '系统繁忙，请稍后重试',
     }), {
-      status: 400,
+      status: 503,
       headers: { ...headers, 'Content-Type': 'application/json' },
     });
   }
 
-  // 选择 API 后端
-  const useClaude = model.startsWith('claude');
-  const apiKey = useClaude ? CONFIG.apiKey : CONFIG.fallbackKey;
-
-  if (!apiKey) {
-    return new Response(JSON.stringify({
-      error: 'NO_API_KEY',
-      message: '服务端未配置 API Key。请联系管理员设置 ANTHROPIC_API_KEY 或 DEEPSEEK_API_KEY 环境变量。',
-    }), {
-      status: 500,
-      headers: { ...headers, 'Content-Type': 'application/json' },
-    });
-  }
-
+  // 调用 DeepSeek
   try {
-    if (useClaude) {
-      return await callClaudeAPI({ model, system, user, temperature, max_tokens, stream, headers });
-    } else {
-      return await callOpenAICompatibleAPI({ model, system, user, temperature, max_tokens, stream, headers });
+    const messages = [];
+    if (system) messages.push({ role: 'system', content: system });
+    messages.push({ role: 'user', content: user });
+
+    const response = await fetch(DEEPSEEK_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        temperature: 0.8,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().slice(0, 200);
+
+      // API Key 问题
+      if (response.status === 401 || response.status === 403) {
+        return new Response(JSON.stringify({
+          error: 'AUTH_ERROR',
+          message: '系统繁忙，请稍后重试',
+        }), {
+          status: 503,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // DeepSeek 余额不足
+      if (response.status === 402 || errText.includes('Insufficient Balance')) {
+        return new Response(JSON.stringify({
+          error: 'BUDGET_EXCEEDED',
+          message: '系统繁忙，请稍后重试',
+        }), {
+          status: 503,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+        });
+      }
+
+      throw new Error(`DeepSeek ${response.status}: ${errText}`);
     }
+
+    const data = await response.json();
+
+    // 记录费用
+    const usage = data.usage || {};
+    const inputTokens = usage.prompt_tokens || 0;
+    const outputTokens = usage.completion_tokens || 0;
+    if (inputTokens > 0 || outputTokens > 0) {
+      addCost(inputTokens, outputTokens);
+    }
+
+    // 返回内容给前端
+    const content = data.choices?.[0]?.message?.content || '';
+    return new Response(JSON.stringify({ content, usage: { inputTokens, outputTokens } }), {
+      status: 200,
+      headers: { ...headers, 'Content-Type': 'application/json' },
+    });
+
   } catch (err) {
-    console.error('[interpret] API Error:', err.message);
+    console.error('[interpret] Error:', err.message);
     return new Response(JSON.stringify({
       error: 'UPSTREAM_ERROR',
-      message: `AI 服务调用失败: ${err.message}`,
+      message: '系统繁忙，请稍后重试',
     }), {
-      status: 502,
+      status: 503,
       headers: { ...headers, 'Content-Type': 'application/json' },
     });
   }
-}
-
-// ═════════════════════════════════════════════
-// Claude API 调用
-// ═════════════════════════════════════════════
-
-async function callClaudeAPI({ model, system, user, temperature, max_tokens, stream, headers }) {
-  const messages = [];
-  if (system) {
-    messages.push({ role: 'system', content: system });
-  }
-  messages.push({ role: 'user', content: user });
-
-  const reqBody = {
-    model,
-    messages,
-    max_tokens,
-    temperature,
-    ...(stream ? {} : {}),  // Claude 用 server-sent events header 控制流式
-  };
-
-  const response = await fetch(CONFIG.apiEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': CONFIG.apiKey,
-      'anthropic-version': '2023-06-01',
-      ...(stream ? { 'Accept': 'text/event-stream' } : {}),
-    },
-    body: JSON.stringify(reqBody),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error(`Claude API ${response.status}: ${errText}`);
-  }
-
-  if (stream) {
-    // 直接转发 SSE 流
-    return new Response(response.body, {
-      status: 200,
-      headers: {
-        ...headers,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
-  }
-
-  const data = await response.json();
-  const content = data.content?.[0]?.text || '';
-
-  return new Response(JSON.stringify({ content }), {
-    status: 200,
-    headers: { ...headers, 'Content-Type': 'application/json' },
-  });
-}
-
-// ═════════════════════════════════════════════
-// OpenAI 兼容 API 调用（DeepSeek 等）
-// ═════════════════════════════════════════════
-
-async function callOpenAICompatibleAPI({ model, system, user, temperature, max_tokens, stream, headers }) {
-  const messages = [];
-  if (system) {
-    messages.push({ role: 'system', content: system });
-  }
-  messages.push({ role: 'user', content: user });
-
-  const reqBody = {
-    model,
-    messages,
-    max_tokens,
-    temperature,
-    stream,
-  };
-
-  const response = await fetch(CONFIG.fallbackEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${CONFIG.fallbackKey}`,
-    },
-    body: JSON.stringify(reqBody),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error(`OpenAI Compatible API ${response.status}: ${errText}`);
-  }
-
-  if (stream) {
-    return new Response(response.body, {
-      status: 200,
-      headers: {
-        ...headers,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '';
-
-  return new Response(JSON.stringify({ content }), {
-    status: 200,
-    headers: { ...headers, 'Content-Type': 'application/json' },
-  });
 }

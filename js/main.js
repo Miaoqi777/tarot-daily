@@ -143,17 +143,15 @@ function toggleAI() {
   const sw = document.getElementById('toggle-ai-switch');
   const questionBox = document.getElementById('user-question');
   const voiceBtn = document.getElementById('btn-voice-input');
-  const keyBtn = document.getElementById('btn-api-key');
 
   if (sw) sw.classList.toggle('on', state.aiEnabled);
   if (questionBox) questionBox.style.display = state.aiEnabled ? 'block' : 'none';
   if (voiceBtn) voiceBtn.style.display = state.aiEnabled ? 'inline-block' : 'none';
-  if (keyBtn) keyBtn.style.display = state.aiEnabled ? 'inline-block' : 'none';
 
   updateAIStatusUI();
 }
 
-// ── 更新 AI 状态 UI（不显示余额）──
+// ── 更新 AI 状态 UI ──
 function updateAIStatusUI() {
   const status = document.getElementById('ai-status-text');
   if (!status) return;
@@ -164,20 +162,8 @@ function updateAIStatusUI() {
     return;
   }
 
-  // 检查预算状态
-  if (typeof hasAPIKey === 'function' && hasAPIKey()) {
-    const budgetOK = typeof getAIStatus === 'function' ? getAIStatus().budgetOK : true;
-    if (!budgetOK) {
-      status.innerHTML = '[AI.ON] <span style="color:var(--crimson-400);">系统繁忙，请稍后重试</span> · 已切换增强本地模式';
-      status.style.color = 'var(--text-secondary)';
-      return;
-    }
-    status.textContent = '[AI.ON] 智能解读已激活 · 真实 AI 模式';
-    status.style.color = 'var(--amber-400)';
-  } else {
-    status.innerHTML = '[AI.ON] 增强本地模式 · <a href="#" onclick="showAPIKeyPrompt();return false;" style="color:var(--amber-400);text-decoration:underline;">配置 API Key</a>';
-    status.style.color = 'var(--text-secondary)';
-  }
+  status.textContent = '[AI.ON] 智能解读已激活 · 真实 AI 模式';
+  status.style.color = 'var(--amber-400)';
 }
 
 // ── AI 问题输入 ──
