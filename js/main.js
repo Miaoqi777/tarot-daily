@@ -153,23 +153,29 @@ function toggleAI() {
   updateAIStatusUI();
 }
 
-// ── 更新 AI 状态 UI ──
+// ── 更新 AI 状态 UI（不显示余额）──
 function updateAIStatusUI() {
   const status = document.getElementById('ai-status-text');
   if (!status) return;
 
   if (!state.aiEnabled) {
-    status.textContent = '[AI.OFF] 使用本地模板引擎';
+    status.textContent = '[AI.OFF] 使用本地解读模式';
     status.style.color = 'var(--text-muted)';
     return;
   }
 
+  // 检查预算状态
   if (typeof hasAPIKey === 'function' && hasAPIKey()) {
-    const quota = typeof getRemainingQuota === 'function' ? getRemainingQuota() : '?';
-    status.innerHTML = `[AI.ON] <span style="color:var(--emerald-400);">真实 API 模式</span> · DeepSeek · 剩余 ${quota} 次/小时`;
+    const budgetOK = typeof getAIStatus === 'function' ? getAIStatus().budgetOK : true;
+    if (!budgetOK) {
+      status.innerHTML = '[AI.ON] <span style="color:var(--crimson-400);">系统繁忙，请稍后重试</span> · 已切换增强本地模式';
+      status.style.color = 'var(--text-secondary)';
+      return;
+    }
+    status.textContent = '[AI.ON] 智能解读已激活 · 真实 AI 模式';
     status.style.color = 'var(--amber-400)';
   } else {
-    status.innerHTML = `[AI.ON] <span style="color:var(--cyan-400);">增强本地模式</span> · 智能拼装解读 · <a href="#" onclick="showAPIKeyPrompt();return false;" style="color:var(--amber-400);text-decoration:underline;">配置 API Key</a> 获得真实 AI`;
+    status.innerHTML = '[AI.ON] 增强本地模式 · <a href="#" onclick="showAPIKeyPrompt();return false;" style="color:var(--amber-400);text-decoration:underline;">配置 API Key</a>';
     status.style.color = 'var(--text-secondary)';
   }
 }
@@ -611,19 +617,27 @@ function renderResults(result) {
     </div>
   `).join('');
 
-  // AI badge
+  // 结果标题
   const isAI = result._aiGenerated;
   const summaryTitle = isAI ? 'AI ORACLE OUTPUT' : 'ORACLE OUTPUT';
   document.getElementById('result-summary').innerHTML = `
-    <h3>${summaryTitle} ${isAI ? '<span style="font-size:0.7em;color:var(--amber-400);">◆ AI</span>' : ''}</h3>
+    <h3>${summaryTitle}</h3>
     <p>${result.summary.replace(/\n/g, '<br>')}</p>
   `;
 
-  // Show AI error hint if fallback was used
+  // 预算耗尽提示
+  if (result._budgetExceeded) {
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color:var(--crimson-400);font-size:0.8rem;margin-top:12px;font-family:var(--font-mono);text-align:center;';
+    hint.textContent = '⚠ 系统繁忙，请稍后重试 · 已切换增强本地模式';
+    document.getElementById('result-summary').appendChild(hint);
+  }
+
+  // AI 错误提示
   if (result._isFallback && result._aiError) {
     const hint = document.createElement('p');
     hint.style.cssText = 'color:var(--text-muted);font-size:0.75rem;margin-top:8px;font-family:var(--font-mono);';
-    hint.textContent = `[FALLBACK] AI 暂时不可用 (${result._aiError})，已使用本地模板引擎。`;
+    hint.textContent = `[FALLBACK] AI 暂时不可用，已使用本地模板引擎。`;
     document.getElementById('result-summary').appendChild(hint);
   }
 

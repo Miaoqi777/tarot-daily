@@ -199,18 +199,35 @@ async function generateAIResult(drawnCards, spreadDef, ctx) {
     let aiResponse;
 
     if (modeResult._enhancedLocal) {
-      // ── 增强本地模式（无 API Key）──
       console.log('[cards.js] 增强本地模式');
       aiResponse = generateEnhancedLocal(drawnCards, spreadDef, {
         userQuestion: userQuestion || '',
         userMood: userMood || '',
       });
-      // 直接返回（generateEnhancedLocal 已返回标准 result 格式）
+      return aiResponse;
+    }
+
+    if (modeResult._budgetExceeded) {
+      // ── 今日预算耗尽 ──
+      console.log('[cards.js] 今日预算已用完');
+      aiResponse = generateEnhancedLocal(drawnCards, spreadDef, {
+        userQuestion: userQuestion || '',
+        userMood: userMood || '',
+      });
+      aiResponse._budgetExceeded = true;
+      return aiResponse;
+    }
+
+    if (modeResult._authError) {
+      console.log('[cards.js] API Key 无效');
+      aiResponse = generateEnhancedLocal(drawnCards, spreadDef, {
+        userQuestion: userQuestion || '',
+        userMood: userMood || '',
+      });
       return aiResponse;
     }
 
     if (modeResult._fallbackFromAPI) {
-      // ── API 调用失败，降级到增强本地 ──
       console.log('[cards.js] API 失败，使用增强本地');
       aiResponse = generateEnhancedLocal(drawnCards, spreadDef, {
         userQuestion: userQuestion || '',
