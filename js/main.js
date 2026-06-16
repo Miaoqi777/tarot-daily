@@ -46,7 +46,7 @@ function setupIntro() {
 function spawnIntroEmojis() {
   const container = document.getElementById('intro-stars');
   if (!container) return;
-  const emojis = ['✨', '⭐', '🌟', '🔮', '💫', '🪐', '🌙', '💖'];
+  const emojis = ['◆', '◇', '◈', '⟡', '⬥', '◉', '◎', '⬦'];
   for (let i = 0; i < 20; i++) {
     const el = document.createElement('span');
     el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
@@ -144,14 +144,14 @@ function showShuffleReady() {
 async function startShuffle() {
   if (state.isShuffling) return;
   if (!state.selectedSpread) {
-    alert('请先选择占卜主题');
+    alert('[ERROR] 请先选择协议类型');
     return;
   }
 
   state.isShuffling = true;
   state.selectedCards = [];
   document.getElementById('btn-shuffle').disabled = true;
-  document.getElementById('btn-shuffle').textContent = '🃏 洗牌中...';
+  document.getElementById('btn-shuffle').textContent = 'SHUFFLING...';
 
   // Prepare grid — respect Minor Arcana toggle
   state.gridCards = getShuffledGrid(state.includeMinorArcana);
@@ -159,7 +159,7 @@ async function startShuffle() {
   grid.innerHTML = state.gridCards.map((card, i) => `
     <div class="card-cell" data-index="${i}" onclick="selectCard(${i}, this)">
       <div class="card-face">
-        <div class="card-back">🔮</div>
+        <div class="card-back">[?]</div>
         <div class="card-front">
           <span class="card-emoji">${card.emoji}</span>
           <span class="card-mini-name">${card.name_zh}</span>
@@ -185,7 +185,7 @@ async function startShuffle() {
   // Done
   state.isShuffling = false;
   document.getElementById('btn-shuffle').disabled = false;
-  document.getElementById('btn-shuffle').textContent = '🔄 重新洗牌';
+  document.getElementById('btn-shuffle').textContent = '⟲ 重新洗牌';
 }
 
 function shuffleAnimation(cells, duration) {
@@ -312,7 +312,7 @@ function updateSelectionCounter() {
     ? state.selectedSpread.card_count - state.selectedCards.length
     : 0;
   if (remaining <= 0 && state.selectedSpread) {
-    document.getElementById('selection-counter').style.background = 'rgba(197,160,89,0.2)';
+    document.getElementById('selection-counter').style.background = 'rgba(180,231,206,0.3)';
   } else {
     document.getElementById('selection-counter').style.background = '';
   }
@@ -325,7 +325,7 @@ function showConfirmation() {
 
   preview.innerHTML = state.selectedCards.map(s => `
     <div class="popup-mini-card glass">
-      🔮
+      [?]
     </div>
   `).join('');
 
@@ -459,28 +459,24 @@ function animateCurtain() {
 // ---------- Result Display ----------
 function renderResults(result) {
   document.getElementById('result-date').textContent =
-    `📅 ${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}`;
+    `[DATE] ${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}`;
   document.getElementById('result-spread-name').textContent = result.spreadName;
 
   const cardsContainer = document.getElementById('result-cards');
-  cardsContainer.innerHTML = result.cards.map((c, i) => {
-    const isMajor = c.arcana === 'major';
-    const glowClass = (isMajor && (result.overallMood === 'excited' || result.overallMood === 'happy')) ? ' glow-card' : '';
-    const revClass = c.isReversed ? ' reversed-tone' : '';
-    return `
-    <div class="result-card glass-card${glowClass}${revClass}" style="animation-delay:${0.1 + i * 0.15}s;">
+  cardsContainer.innerHTML = result.cards.map((c, i) => `
+    <div class="result-card glass-card" style="animation-delay:${0.1 + i * 0.15}s;">
       <div class="result-card-emoji">${c.emoji}</div>
       <div class="result-card-name">${c.name_zh}</div>
       <div class="result-card-position">${c.positionName}</div>
       <span class="result-card-reversal ${c.isReversed ? 'reversed' : 'upright'}">
-        ${c.isReversed ? '🔄 逆位' : '✨ 正位'}
+        ${c.isReversed ? 'REVERSED' : 'UPRIGHT'}
       </span>
       <p class="result-card-text">${c.interpretation}</p>
     </div>
-  `}).join('');
+  `).join('');
 
   document.getElementById('result-summary').innerHTML = `
-    <h3>📜 总体解读</h3>
+    <h3>ORACLE OUTPUT</h3>
     <p>${result.summary.replace(/\n/g, '<br>')}</p>
   `;
 
@@ -499,27 +495,27 @@ async function copyDivinationResult() {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
   });
 
-  let text = `🔮 每日塔罗占卜结果\n`;
-  text += `📅 ${today}\n`;
-  text += `🎴 主题：${r.spreadName}\n`;
+  let text = `◆ TAROT TERMINAL · 占卜结果\n`;
+  text += `[DATE] ${today}\n`;
+  text += `[PROTOCOL] ${r.spreadName}\n`;
   text += `${'─'.repeat(30)}\n\n`;
 
   // Cards
   r.cards.forEach((c, i) => {
-    text += `【${c.positionName}】${c.emoji} ${c.name_zh}（${c.isReversed ? '逆位' : '正位'}）\n`;
+    text += `[${c.isReversed ? 'REV' : 'UPR'}] ${c.positionName} · ${c.emoji} ${c.name_zh}\n`;
     text += `${c.interpretation}\n\n`;
   });
 
   // Summary
   text += `${'─'.repeat(30)}\n`;
-  text += `📜 总体解读：\n`;
+  text += `[ORACLE OUTPUT]：\n`;
   text += r.summary.replace(/<br>/g, '\n').replace(/\n\n/g, '\n');
   text += `\n\n${'─'.repeat(30)}\n`;
-  text += `✨ 由 每日塔罗占卜 生成 · miaoqi777.github.io/tarot-daily`;
+  text += `◆ TAROT TERMINAL · 命运终端`;
 
   try {
     await navigator.clipboard.writeText(text);
-    showToast('✅ 已复制！可粘贴到任何AI软件中解析');
+    showToast('[OK] DATA.EXPORTED · 协议文本已复制');
   } catch (e) {
     // Fallback for older browsers
     const ta = document.createElement('textarea');
@@ -529,7 +525,7 @@ async function copyDivinationResult() {
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    showToast('✅ 已复制！可粘贴到任何AI软件中解析');
+    showToast('[OK] DATA.EXPORTED · 协议文本已复制');
   }
 }
 
@@ -548,7 +544,7 @@ function showSongRecommendation(mood) {
   const div = document.getElementById('song-recommendation');
   document.getElementById('song-emoji').textContent = song.emoji;
   document.getElementById('song-title').textContent = song.title;
-  document.getElementById('song-artist').textContent = `🎤 ${song.artist}`;
+  document.getElementById('song-artist').textContent = `♪ ${song.artist}`;
   document.getElementById('song-reason').textContent = song.reason;
   div.classList.remove('hidden');
 }
@@ -636,7 +632,7 @@ async function submitMood() {
     if (!authDismissedToday()) {
       showAuthModal();
     }
-    document.getElementById('mood-msg').textContent = '💡 登录后可保存心情记录哦~';
+    document.getElementById('mood-msg').textContent = '[INFO] 登录后可保存心情记录';
     setTimeout(() => { document.getElementById('mood-msg').textContent = ''; }, 3000);
     return;
   }
@@ -644,7 +640,7 @@ async function submitMood() {
   if (!selectedMoodValue) {
     const todayMood = getTodayMood(user);
     if (!todayMood) {
-      document.getElementById('mood-msg').textContent = '请先选择一个心情表情哦~';
+      document.getElementById('mood-msg').textContent = '[WARN] 请先选择一个心情状态';
       return;
     }
     selectedMoodValue = todayMood.mood;
@@ -653,7 +649,7 @@ async function submitMood() {
   const note = document.getElementById('mood-note').value.trim();
   saveMood(user, { mood: selectedMoodValue, note });
 
-  document.getElementById('mood-msg').textContent = '✅ 心情已记录！愿你今天一切安好~';
+  document.getElementById('mood-msg').textContent = '[OK] STATE.SAVED · 状态已写入日志';
   setTimeout(() => {
     document.getElementById('mood-msg').textContent = '';
   }, 3000);
@@ -683,7 +679,7 @@ function setupSidebar() {
     e.stopPropagation();
     sidebar.classList.toggle('pinned');
     const btn = document.getElementById('sidebar-pin');
-    btn.textContent = sidebar.classList.contains('pinned') ? '📌' : '📍';
+    btn.textContent = sidebar.classList.contains('pinned') ? '[·]' : '[.]';
   });
 }
 
@@ -702,7 +698,7 @@ function updateSidebarUser() {
   } else {
     usernameEl.textContent = '未登录';
     authLabel.textContent = '登录 / 注册';
-    avatar.textContent = '👤';
+    avatar.textContent = '?';
     if (exportBtn) exportBtn.style.display = 'none';
   }
 }
@@ -713,10 +709,10 @@ async function handleImportFile(input) {
   if (!file) return;
   const result = await handleAccountImport(file);
   if (result.success) {
-    showToastMsg('✅ 账号 "' + result.username + '" 导入成功！请使用原密码登录');
+    showToastMsg('[OK] IMPORT.SUCCESS · 账号 "' + result.username + '" 导入完成');
     updateSidebarUser();
   } else {
-    showToastMsg(result.error || '❌ 导入失败');
+    showToastMsg(result.error || '[ERROR] 导入失败');
   }
   input.value = '';
 }
@@ -724,12 +720,12 @@ async function handleImportFile(input) {
 function handleSidebarExport() {
   const user = getCurrentUser();
   if (!user) {
-    showToastMsg('⚠️ 请先登录后再导出账号');
+    showToastMsg('[WARN] 请先登录后再导出账号');
     return;
   }
   const result = exportFullAccount(user);
   if (result.success) {
-    showToastMsg('✅ 账号数据已导出，可导入到其他设备使用');
+    showToastMsg('[OK] EXPORT.COMPLETE · 账号数据已导出');
   }
 }
 
@@ -825,7 +821,7 @@ function setupAuthForms() {
   document.getElementById('sidebar-auth-btn').addEventListener('click', () => {
     const user = getCurrentUser();
     if (user) {
-      if (confirm(`确定要退出登录吗？${user}`)) {
+      if (confirm(`[LOGOUT] 确定要退出登录吗？${user}`)) {
         logoutUser();
         updateSidebarUser();
       }
@@ -848,12 +844,12 @@ function setupAuthForms() {
 // ---------- Background Update ----------
 function updateBackgroundByMood(mood) {
   const gradients = {
-    excited: 'linear-gradient(135deg, #14100a, #1a1410, #14100a)',
-    happy: 'linear-gradient(135deg, #12100c, #181410, #12100c)',
-    calm: 'linear-gradient(135deg, #0c0e10, #101214, #0c0e10)',
-    neutral: 'linear-gradient(135deg, #0a0a0c, #0e0e10, #0a0a0c)',
-    anxious: 'linear-gradient(135deg, #0e0c10, #121014, #0e0c10)',
-    sad: 'linear-gradient(135deg, #0a0c10, #0e1014, #0a0c10)'
+    excited: 'radial-gradient(ellipse at center, rgba(212,168,67,0.06) 0%, var(--terminal-bg) 70%)',
+    happy: 'radial-gradient(ellipse at center, rgba(0,229,255,0.04) 0%, var(--terminal-bg) 70%)',
+    calm: 'var(--terminal-bg)',
+    neutral: 'var(--terminal-bg)',
+    anxious: 'radial-gradient(ellipse at center, rgba(255,71,87,0.04) 0%, var(--terminal-bg) 70%)',
+    sad: 'radial-gradient(ellipse at center, rgba(100,150,200,0.04) 0%, var(--terminal-bg) 70%)'
   };
   document.body.style.background = gradients[mood] || gradients.neutral;
 }
@@ -864,12 +860,12 @@ function spawnFloatingEmojis(mood) {
   container.innerHTML = '';
 
   const moodEmojis = {
-    excited: ['✨', '🌟', '🎉', '💫', '🔥', '💖', '🌈'],
-    happy: ['🌸', '🦋', '☀️', '💕', '🍀', '⭐', '🎵'],
-    calm: ['🍃', '🕊️', '🌿', '💧', '🌙', '☁️', '🪷'],
-    neutral: ['💫', '🌻', '🎐', '🪶', '🌤️', '🌾', '🫧'],
-    anxious: ['💜', '🌌', '🕯️', '🌊', '🧘', '☔', '🔮'],
-    sad: ['💙', '🌧️', '🌑', '🫂', '🕊️', '🌊', '☁️']
+    excited: ['◆', '◇', '◈', '⟡', '⬥', '◉', '◎'],
+    happy: ['◆', '◇', '◈', '⟡', '⬥', '◉', '◎'],
+    calm: ['○', '◌', '◎', '◇', '◈', '⟡', '⬥'],
+    neutral: ['○', '◌', '◎', '◇', '◈', '⟡', '⬥'],
+    anxious: ['◈', '◆', '◇', '⟡', '⬥', '◉', '◎'],
+    sad: ['○', '◌', '◎', '◇', '◈', '⟡', '⬥']
   };
 
   const emojis = moodEmojis[mood] || moodEmojis.neutral;

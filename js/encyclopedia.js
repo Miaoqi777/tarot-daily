@@ -51,7 +51,7 @@ function renderGrid(cards) {
   const grid = document.getElementById('encyclo-grid');
 
   if (!cards.length) {
-    grid.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;">未找到匹配的牌 🃏</p>';
+    grid.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;font-family:var(--font-mono);">[0 RESULTS] 未找到匹配的牌</p>';
     return;
   }
 
@@ -85,16 +85,16 @@ function showCardDetail(cardId) {
     : `<span class="card-badge badge-${card.suit}">小阿卡纳 · ${card.suit === 'wands' ? '权杖' : card.suit === 'cups' ? '圣杯' : card.suit === 'swords' ? '宝剑' : '星币'} · 第${card.number}张</span>`;
 
   const scenarios = [
-    { key: 'general', label: '📜 总体' },
-    { key: 'love', label: '💕 恋爱' },
-    { key: 'study', label: '📚 学习' },
-    { key: 'work', label: '💼 工作' },
-    { key: 'travel', label: '✈️ 旅行' },
-    { key: 'social', label: '🎭 社交' }
+    { key: 'general', label: '[GENERAL]' },
+    { key: 'love', label: '[LOVE]' },
+    { key: 'study', label: '[STUDY]' },
+    { key: 'work', label: '[WORK]' },
+    { key: 'travel', label: '[TRAVEL]' },
+    { key: 'social', label: '[SOCIAL]' }
   ];
 
   const elementLabel = card.element
-    ? { fire: '🔥 火', water: '💧 水', air: '🌬️ 风', earth: '🌍 土', spirit: '✨ 灵' }[card.element]
+    ? { fire: 'FIRE 火', water: 'WATER 水', air: 'AIR 风', earth: 'EARTH 土', spirit: 'SPIRIT 灵' }[card.element]
     : '';
 
   detail.innerHTML = `
@@ -114,9 +114,9 @@ function showCardDetail(cardId) {
     </div>
 
     <div class="card-detail-interp" id="detail-interp-content">
-      <h4>✨ 正位解读</h4>
+      <h4>[UPRIGHT] 正位解读</h4>
       <p>${card.upright.general}</p>
-      <h4 style="margin-top:16px;">🔄 逆位解读</h4>
+      <h4 style="margin-top:16px;">[REVERSED] 逆位解读</h4>
       <p>${card.reversed.general}</p>
     </div>
   `;
@@ -148,9 +148,9 @@ function switchDetailTab(key, btn) {
 
   const content = document.getElementById('detail-interp-content');
   content.innerHTML = `
-    <h4>✨ 正位解读</h4>
+    <h4>[UPRIGHT] 正位解读</h4>
     <p>${foundCard.upright[key] || foundCard.upright.general}</p>
-    <h4 style="margin-top:16px;">🔄 逆位解读</h4>
+    <h4 style="margin-top:16px;">[REVERSED] 逆位解读</h4>
     <p>${foundCard.reversed[key] || foundCard.reversed.general}</p>
   `;
 }
@@ -167,11 +167,10 @@ function updateSidebarUser() {
   const exportBtn = document.getElementById('sidebar-export-btn');
   if (user) {
     if (usernameEl) usernameEl.textContent = user;
-    if (authLabel) authLabel.textContent = '退出登录';
-    if (exportBtn) exportBtn.style.display = '';
+    if (authLabel) authLabel.textContent = 'LOGOUT';    if (exportBtn) exportBtn.style.display = '';
   } else {
-    if (usernameEl) usernameEl.textContent = '未登录';
-    if (authLabel) authLabel.textContent = '登录 / 注册';
+    if (usernameEl) usernameEl.textContent = 'GUEST';
+    if (authLabel) authLabel.textContent = 'AUTH';
     if (exportBtn) exportBtn.style.display = 'none';
   }
 }
@@ -240,7 +239,7 @@ function setupSidebar() {
     pinBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       sidebar.classList.toggle('pinned');
-      pinBtn.textContent = sidebar.classList.contains('pinned') ? '📌' : '📍';
+      pinBtn.textContent = sidebar.classList.contains('pinned') ? '[·]' : '[.]';
     });
   }
 }
@@ -272,7 +271,7 @@ function setupAuthForms() {
     const u = document.getElementById('register-username').value.trim();
     const p = document.getElementById('register-password').value;
     const pc = document.getElementById('register-password-confirm').value;
-    if (p !== pc) { document.getElementById('register-error').textContent = '两次密码不一致'; return; }
+    if (p !== pc) { document.getElementById('register-error').textContent = '[ERROR] 两次密码不一致'; return; }
     const r = await registerUser(u, p);
     if (r.success) { await loginUser(u, p); hideAuthModal(); updateSidebarUser(); this.reset(); document.getElementById('tab-login-btn').click(); }
     else document.getElementById('register-error').textContent = r.error;

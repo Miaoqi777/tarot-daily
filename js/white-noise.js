@@ -337,7 +337,7 @@ function updateNoiseUI() {
     toggle.textContent = '🔊';
   } else {
     toggle.classList.remove('playing');
-    toggle.textContent = '🎵';
+    toggle.textContent = '♪';
     if (expanded) expanded.classList.remove('visible');
   }
 }

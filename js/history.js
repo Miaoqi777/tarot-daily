@@ -25,13 +25,13 @@ function updateUI() {
     if (prompt) prompt.style.display = 'none';
     if (exportBtn) exportBtn.style.display = 'block';
     if (usernameEl) usernameEl.textContent = currentUser;
-    if (subtitle) subtitle.textContent = `${currentUser} 的运势回顾`;
+    if (subtitle) subtitle.textContent = `USER: ${currentUser} · 运势回顾`;
     renderAnalysis();
   } else {
     if (prompt) prompt.style.display = 'block';
     if (exportBtn) exportBtn.style.display = 'none';
-    if (usernameEl) usernameEl.textContent = '未登录';
-    if (subtitle) subtitle.textContent = '登录后可查看你的运势回顾';
+    if (usernameEl) usernameEl.textContent = 'GUEST';
+    if (subtitle) subtitle.textContent = '登录后可查看运势分析数据';
     document.getElementById('analysis-stats').innerHTML = '';
     document.getElementById('history-records').innerHTML = '';
     document.getElementById('mood-calendar').innerHTML = '';
@@ -55,7 +55,7 @@ function renderAnalysis() {
   if (analysis.totalReadings === 0) {
     document.getElementById('analysis-stats').innerHTML = `
       <div style="text-align:center;padding:40px;grid-column:1/-1;">
-        <p style="font-size:3rem;">🔮</p>
+        <p style="font-size:3rem;">◆</p>
         <p style="color:var(--text-muted);">${analysis.message}</p>
       </div>
     `;
@@ -68,24 +68,24 @@ function renderAnalysis() {
   document.getElementById('analysis-stats').innerHTML = `
     <div class="analysis-stat glass-card">
       <div class="stat-value">${analysis.totalReadings}</div>
-      <div class="stat-label">总占卜次数</div>
+      <div class="stat-label">TOTAL READINGS</div>
     </div>
     <div class="analysis-stat glass-card">
       <div class="stat-value">${analysis.reversalRate}%</div>
-      <div class="stat-label">逆位比例</div>
+      <div class="stat-label">REVERSAL RATE</div>
     </div>
     <div class="analysis-stat glass-card">
       <div class="stat-value">${analysis.arcanaDist.major} : ${analysis.arcanaDist.minor}</div>
-      <div class="stat-label">大 : 小 阿卡纳</div>
+      <div class="stat-label">MAJOR : MINOR</div>
     </div>
     <div class="analysis-stat glass-card">
       <div class="stat-value">${analysis.topMood ? getMoodOptions().find(m => m.id === analysis.topMood[0])?.emoji || '😊' : '—'}</div>
-      <div class="stat-label">最常见心情</div>
+      <div class="stat-label">TOP MOOD</div>
     </div>
     ${analysis.totalMoods > 0 ? `
     <div class="analysis-stat glass-card">
       <div class="stat-value">${analysis.totalMoods}</div>
-      <div class="stat-label">心情记录天数</div>
+      <div class="stat-label">MOOD DAYS</div>
     </div>
     ` : ''}
     <div class="analysis-stat glass-card" style="grid-column:1/-1;">
@@ -95,7 +95,7 @@ function renderAnalysis() {
         <span>⚔️ 宝剑: ${analysis.suitDist.swords || 0}</span>
         <span>🪙 星币: ${analysis.suitDist.pentacles || 0}</span>
       </div>
-      <div class="stat-label">牌组分布</div>
+      <div class="stat-label">SUIT DISTRIBUTION</div>
     </div>
     ${analysis.topCards.length > 0 ? `
     <div class="analysis-stat glass-card" style="grid-column:1/-1;">
@@ -108,7 +108,7 @@ function renderAnalysis() {
           </span>
         `).join('')}
       </div>
-      <div class="stat-label">最常出现的牌</div>
+      <div class="stat-label">MOST FREQUENT CARD</div>
     </div>
     ` : ''}
   `;
@@ -159,7 +159,7 @@ function renderMoodCalendar(analysis) {
 function renderHistoryRecords(fortunes) {
   const container = document.getElementById('history-records');
   if (!fortunes.length) {
-    container.innerHTML = '<p style="color:var(--text-muted);text-align:center;">暂无占卜记录</p>';
+    container.innerHTML = '<p style="color:var(--text-muted);text-align:center;font-family:var(--font-mono);">[EMPTY] 暂无占卜记录</p>';
     return;
   }
 
@@ -169,14 +169,14 @@ function renderHistoryRecords(fortunes) {
   container.innerHTML = sorted.map(f => `
     <div class="history-record glass-card">
       <div class="record-header">
-        <span class="record-date">📅 ${f.date}</span>
+        <span class="record-date">[DATE] ${f.date}</span>
         <span class="record-spread">${f.spreadName || f.spreadType}</span>
       </div>
       <div class="record-cards-mini">
         ${(f.cards || []).map(c => `
-          <span title="${c.positionName}: ${c.isReversed ? '逆位' : '正位'}${c.name_zh}" style="cursor:default;">
+          <span title="${c.positionName}: ${c.isReversed ? 'REV' : 'UPR'} · ${c.name_zh}" style="cursor:default;">
             <span style="font-size:1.5rem;">${c.emoji || '🃏'}</span>
-            <span style="font-size:0.7rem;color:${c.isReversed ? '#9aa0a6' : 'var(--gold)'}">${c.isReversed ? '逆' : '正'}</span>
+            <span style="font-size:0.7rem;color:${c.isReversed ? 'var(--macaron-pink)' : 'var(--macaron-mint)'}">${c.isReversed ? '逆' : '正'}</span>
           </span>
         `).join('')}
       </div>
@@ -192,7 +192,7 @@ function renderHistoryRecords(fortunes) {
 // ---------- Export ----------
 function handleExport() {
   if (!currentUser) {
-    alert('请先登录');
+    alert('[AUTH] 请先登录');
     return;
   }
   exportData(currentUser);
@@ -207,11 +207,11 @@ function updateSidebarUser() {
   const exportBtn = document.getElementById('sidebar-export-btn');
   if (user) {
     if (usernameEl) usernameEl.textContent = user;
-    if (authLabel) authLabel.textContent = '退出登录';
+    if (authLabel) authLabel.textContent = 'LOGOUT';
     if (exportBtn) exportBtn.style.display = '';
   } else {
-    if (usernameEl) usernameEl.textContent = '未登录';
-    if (authLabel) authLabel.textContent = '登录 / 注册';
+    if (usernameEl) usernameEl.textContent = 'GUEST';
+    if (authLabel) authLabel.textContent = 'AUTH';
     if (exportBtn) exportBtn.style.display = 'none';
   }
 }
@@ -219,7 +219,7 @@ function updateSidebarUser() {
 function handleSidebarAuth() {
   const user = getCurrentUser();
   if (user) {
-    if (confirm(`确定要退出登录吗？${user}`)) {
+    if (confirm(`[LOGOUT] 确定要退出登录吗？${user}`)) {
       logoutUser();
       updateSidebarUser();
       updateUI();
@@ -235,7 +235,7 @@ async function handleImportFile(input) {
   if (!file) return;
   const result = await handleAccountImport(file);
   if (result.success) {
-    showToastMsg('✅ 账号 "' + result.username + '" 导入成功！请使用原密码登录');
+    showToastMsg('[OK] IMPORT.SUCCESS · 账号 "' + result.username + '" 导入完成');
     updateSidebarUser();
   } else {
     showToastMsg(result.error || '❌ 导入失败');
@@ -246,7 +246,7 @@ async function handleImportFile(input) {
 function handleSidebarExport() {
   const user = getCurrentUser();
   if (!user) {
-    showToastMsg('⚠️ 请先登录后再导出账号');
+    showToastMsg('[WARN] 请先登录后再导出账号');
     return;
   }
   const result = exportFullAccount(user);
@@ -280,7 +280,7 @@ function setupSidebar() {
     pinBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       sidebar.classList.toggle('pinned');
-      pinBtn.textContent = sidebar.classList.contains('pinned') ? '📌' : '📍';
+      pinBtn.textContent = sidebar.classList.contains('pinned') ? '[·]' : '[.]';
     });
   }
 }
@@ -311,7 +311,7 @@ function setupAuthForms() {
     const u = document.getElementById('register-username').value.trim();
     const p = document.getElementById('register-password').value;
     const pc = document.getElementById('register-password-confirm').value;
-    if (p !== pc) { document.getElementById('register-error').textContent = '两次密码不一致'; return; }
+    if (p !== pc) { document.getElementById('register-error').textContent = '[ERROR] 两次密码不一致'; return; }
     const r = await registerUser(u, p);
     if (r.success) { await loginUser(u, p); hideAuthModal(); updateSidebarUser(); updateUI(); this.reset(); document.getElementById('tab-login-btn').click(); }
     else document.getElementById('register-error').textContent = r.error;

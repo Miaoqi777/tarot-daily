@@ -3,64 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>✨ 每日塔罗占卜 — 倾听宇宙的低语</title>
-  <meta name="theme-color" content="#080808">
-  <meta name="description" content="每日塔罗占卜，探索你的恋爱、学业、事业、旅行、社交运势。暗黑奢华金色调，神秘玻璃质感，温柔陪伴每一天。">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
+  <title>命运终端 · TAROT TERMINAL</title>
+  <meta name="description" content="命运终端 — 将日常选择仪式化为神圣算法。A decision terminal that aestheticizes indecision.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
+  <!-- Terminal + Serif fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- Particle Canvas Background -->
-  <canvas id="particles"></canvas>
-
   <!-- ========== Weather Bar ========== -->
   <div class="weather-bar" id="weather-bar">
-    <span class="weather-icon" id="weather-icon">🌤️</span>
+    <span class="weather-icon" id="weather-icon">--</span>
     <span class="weather-temp" id="weather-temp">--°C</span>
     <span class="weather-desc" id="weather-desc">加载中...</span>
-    <span class="weather-city" id="weather-city" title="点击切换城市">📍 定位中...</span>
+    <span class="weather-city" id="weather-city" title="点击切换城市">[ 定位中... ]</span>
   </div>
 
   <!-- ========== Floating Sidebar ========== -->
   <aside class="sidebar glass" id="sidebar">
-    <div class="sidebar-pin-btn" id="sidebar-pin" title="固定侧边栏">📌</div>
+    <div class="sidebar-pin-btn" id="sidebar-pin" title="固定侧边栏">[·]</div>
     <div class="sidebar-handle"></div>
     <nav class="sidebar-nav">
       <button class="sidebar-item active" data-page="home" onclick="showHomePage()">
-        <span class="sidebar-icon">🔮</span>
-        <span class="sidebar-label">每日占卜</span>
+        <span class="sidebar-icon">◆</span>
+        <span class="sidebar-label">ORACLE</span>
       </button>
       <button class="sidebar-item" data-page="encyclopedia" onclick="window.location.href='encyclopedia.html'">
-        <span class="sidebar-icon">📖</span>
-        <span class="sidebar-label">塔罗百科</span>
+        <span class="sidebar-icon">[?]</span>
+        <span class="sidebar-label">ARCHIVE</span>
       </button>
       <button class="sidebar-item" data-page="history" onclick="window.location.href='history.html'">
-        <span class="sidebar-icon">📊</span>
-        <span class="sidebar-label">运势分析</span>
+        <span class="sidebar-icon">[=]</span>
+        <span class="sidebar-label">ANALYTICS</span>
       </button>
       <div class="sidebar-divider"></div>
       <button class="sidebar-item" id="sidebar-mood-btn" onclick="openMoodPanel()">
-        <span class="sidebar-icon">💝</span>
-        <span class="sidebar-label">今日心情</span>
+        <span class="sidebar-icon">♥</span>
+        <span class="sidebar-label">STATE</span>
       </button>
       <button class="sidebar-item" id="sidebar-noise-btn" onclick="toggleWhiteNoise()">
-        <span class="sidebar-icon">🎵</span>
-        <span class="sidebar-label">白噪音</span>
+        <span class="sidebar-icon">♪</span>
+        <span class="sidebar-label">AMBIENT</span>
       </button>
     </nav>
     <div class="sidebar-divider"></div>
     <div class="sidebar-user" id="sidebar-user">
-      <div class="sidebar-user-avatar">👤</div>
+      <div class="sidebar-user-avatar">?</div>
       <span id="sidebar-username">未登录</span>
     </div>
     <button class="sidebar-item" id="sidebar-auth-btn" onclick="showAuthModal()">
-      <span class="sidebar-icon">🔑</span>
-      <span class="sidebar-label" id="sidebar-auth-label">登录 / 注册</span>
+      <span class="sidebar-icon">[>]</span>
+      <span class="sidebar-label" id="sidebar-auth-label">AUTH</span>
     </button>
     <button class="sidebar-item" id="sidebar-export-btn" onclick="handleSidebarExport()" style="display:none;">
-      <span class="sidebar-icon">📤</span>
-      <span class="sidebar-label">导出账号</span>
+      <span class="sidebar-icon">[^]</span>
+      <span class="sidebar-label">EXPORT</span>
     </button>
   </aside>
 
@@ -71,34 +71,34 @@
     <div class="intro-overlay" id="intro-overlay">
       <div class="intro-stars" id="intro-stars"></div>
       <div class="intro-content">
-        <div class="intro-logo">🔮</div>
-        <h1 class="intro-title">✨ 每日塔罗占卜</h1>
+        <div class="intro-logo">◆</div>
+        <h1 class="intro-title">命运终端</h1>
         <p class="intro-subtitle">
-          倾听宇宙的低语<br>
-          探索你的恋爱、学业、事业、旅行与社交运势<br>
-          每一天都是新的开始，每一张牌都是独特的指引
+          INPUT QUERY · 输入你的不确定性<br>
+          将日常的选择困难，仪式化为一次神圣的算法占卜<br>
+          每一次犹豫都值得被认真对待，每一张牌都是宇宙的回响
         </p>
-        <p class="intro-hint">✨ 点击任意位置开始你的占卜之旅 ✨</p>
+        <p class="intro-hint">◆ 点击任意位置 · 初始化协议</p>
       </div>
     </div>
 
     <!-- Spread Type Selector -->
     <section class="spread-section" id="spread-section">
       <div class="section-header">
-        <h2 class="section-title">🎴 选择你的占卜主题</h2>
-        <p class="section-subtitle">用心感受，选择一个你最关心的领域</p>
+        <h2 class="section-title">QUERY.TYPE</h2>
+        <p class="section-subtitle">选择一个你关心的领域，定义本次协议类型</p>
       </div>
       <div class="spread-selector" id="spread-selector">
         <!-- Dynamically filled -->
       </div>
       <div class="spread-sub-section" id="spread-sub-section">
-        <p class="spread-sub-title">📐 选择牌阵类型</p>
+        <p class="spread-sub-title">[SELECT PROTOCOL] 选择牌阵类型</p>
         <div class="spread-sub-selector" id="spread-sub-selector">
           <!-- Dynamically filled -->
         </div>
         <div class="arcana-toggle" id="arcana-toggle" style="margin-top:14px;">
           <label class="toggle-label">
-            <span>🎴 包含小阿卡纳（56张）</span>
+            <span>[MINOR] 包含小阿卡纳（56张）</span>
             <div class="toggle-switch" id="toggle-minor-arcana" onclick="toggleMinorArcana()">
               <div class="toggle-knob"></div>
             </div>
@@ -107,9 +107,9 @@
       </div>
       <div class="shuffle-area" id="shuffle-area" style="display:none;">
         <button class="btn-shuffle" id="btn-shuffle" onclick="startShuffle()">
-          🃏 开始洗牌
+          ◆ 启动洗牌协议
         </button>
-        <p class="section-subtitle" style="margin-top:10px;">点击洗牌后，选择 <span id="card-count-display">3</span> 张牌</p>
+        <p class="section-subtitle" style="margin-top:10px;">[PROTOCOL] 选择 <span id="card-count-display">3</span> 个命运变量</p>
       </div>
     </section>
 
@@ -117,7 +117,7 @@
     <div class="card-grid-container" id="card-grid-container" style="display:none;">
       <div class="selection-info">
         <span class="selection-counter glass" id="selection-counter">
-          已选 <span class="current" id="selected-count">0</span> / <span class="total" id="required-count">3</span> 张
+          [ SLOT.<span class="current" id="selected-count">0</span> / <span class="total" id="required-count">3</span> ]
         </span>
       </div>
       <div class="card-grid" id="card-grid">
@@ -128,16 +128,16 @@
     <!-- Confirmation Popup -->
     <div class="popup-overlay hidden" id="confirm-popup">
       <div class="popup-card glass-strong">
-        <h3 class="popup-title">✨ 确认你的选择</h3>
+        <h3 class="popup-title">CONFIRM SELECTION · 确认协议</h3>
         <div class="popup-cards-preview" id="popup-preview">
           <!-- Preview cards -->
         </div>
-        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:8px;">
-          即将开始正式占卜，请确认你已跟随直觉选好了牌
+        <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:8px;font-family:var(--font-mono);">
+          协议初始化中 · 确认命运变量
         </p>
         <div class="popup-actions">
-          <button class="btn-cancel" onclick="cancelSelection()">🔄 重新选择</button>
-          <button class="btn-confirm" onclick="confirmReading()">✨ 确认占卜</button>
+          <button class="btn-cancel" onclick="cancelSelection()">⟲ 重置变量</button>
+          <button class="btn-confirm" onclick="confirmReading()">◆ 执行神谕</button>
         </div>
       </div>
     </div>
@@ -161,7 +161,7 @@
 
       <!-- Song Recommendation -->
       <div class="song-recommendation glass-card hidden" id="song-recommendation">
-        <div class="song-icon" id="song-emoji">🎵</div>
+        <div class="song-icon" id="song-emoji">♪</div>
         <div class="song-info">
           <h4 id="song-title"></h4>
           <p class="song-artist" id="song-artist"></p>
@@ -170,22 +170,22 @@
       </div>
 
       <div class="result-actions">
-        <button class="btn-action primary" onclick="resetDivination()">🔮 再来一次</button>
-        <button class="btn-action secondary" onclick="copyDivinationResult()">📋 一键复制结果</button>
-        <button class="btn-action secondary" onclick="window.location.href='encyclopedia.html'">📖 查看塔罗百科</button>
-        <button class="btn-action secondary" onclick="openMoodPanel()">💝 记录今日心情</button>
+        <button class="btn-action primary" onclick="resetDivination()">⟲ 重新测算</button>
+        <button class="btn-action secondary" onclick="copyDivinationResult()">[>] 协议导出</button>
+        <button class="btn-action secondary" onclick="window.location.href='encyclopedia.html'">[?] 卡牌索引</button>
+        <button class="btn-action secondary" onclick="openMoodPanel()">♥ 记录状态</button>
       </div>
     </section>
 
     <!-- Mood Panel -->
     <section class="mood-section hidden" id="mood-section">
-      <h3 class="mood-title">💝 今天的心情如何？</h3>
+      <h3 class="mood-title">STATE.LOG · 状态录入</h3>
       <div class="mood-grid" id="mood-grid">
         <!-- Dynamically filled -->
       </div>
-      <textarea class="mood-note glass" id="mood-note" rows="3" placeholder="写下一句想对自己说的话...（可选）"></textarea>
-      <button class="btn-action primary mood-submit" onclick="submitMood()">💾 保存心情</button>
-      <p id="mood-msg" style="text-align:center;margin-top:8px;font-size:0.85rem;color:var(--accent-dark);"></p>
+      <textarea class="mood-note glass" id="mood-note" rows="3" placeholder="[NOTE] 写下一句想对自己说的话..."></textarea>
+      <button class="btn-action primary mood-submit" onclick="submitMood()">[↓] 写入日志</button>
+      <p id="mood-msg" style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--amber-400);font-family:var(--font-mono);"></p>
     </section>
 
   </main>
@@ -194,68 +194,68 @@
   <div class="auth-overlay hidden" id="auth-overlay">
     <div class="auth-card glass-strong">
       <button class="auth-close" onclick="hideAuthModal()">✕</button>
-      <div class="auth-card-logo">🔮</div>
-      <div class="auth-card-title">欢迎来到 <span style="color:var(--accent-dark);">每日塔罗</span></div>
+      <div class="auth-card-logo">◆</div>
+      <div class="auth-card-title">SYS.AUTH · <span style="color:var(--amber-400);">身份验证</span></div>
       <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login" id="tab-login-btn">🔑 登录</button>
-        <button class="auth-tab" data-tab="register" id="tab-register-btn">📝 注册</button>
+        <button class="auth-tab active" data-tab="login" id="tab-login-btn">[LOGIN]</button>
+        <button class="auth-tab" data-tab="register" id="tab-register-btn">[REGISTER]</button>
       </div>
       <form class="auth-form active" data-tab="login" id="login-form">
         <div class="auth-field">
-          <label>用户名</label>
+          <label>USERNAME:</label>
           <input type="text" id="login-username" placeholder="输入用户名" required autocomplete="username">
         </div>
         <div class="auth-field">
-          <label>密码</label>
+          <label>PASSWORD:</label>
           <div class="pw-field">
             <input type="password" id="login-password" placeholder="输入密码" required autocomplete="current-password">
-            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button>
+            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button>
           </div>
         </div>
         <div class="auth-error" id="login-error"></div>
-        <button type="submit" class="auth-submit">登录</button>
+        <button type="submit" class="auth-submit">◆ 登录</button>
       </form>
       <form class="auth-form" data-tab="register" id="register-form">
         <div class="auth-field">
-          <label>用户名</label>
+          <label>USERNAME:</label>
           <input type="text" id="register-username" placeholder="2-20个字符，中文/英文/数字" required autocomplete="username">
         </div>
         <div class="auth-field">
-          <label>密码</label>
+          <label>PASSWORD:</label>
           <div class="pw-field">
             <input type="password" id="register-password" placeholder="至少6位" required autocomplete="new-password">
-            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button>
+            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button>
           </div>
         </div>
         <div class="auth-field">
-          <label>确认密码</label>
+          <label>CONFIRM:</label>
           <div class="pw-field">
             <input type="password" id="register-password-confirm" placeholder="再次输入密码" required autocomplete="new-password">
-            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button>
+            <button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button>
           </div>
         </div>
         <div class="auth-error" id="register-error"></div>
-        <button type="submit" class="auth-submit">注册</button>
+        <button type="submit" class="auth-submit">◆ 注册</button>
       </form>
-      <p class="auth-hint">☁️ 账号数据通过 Supabase 云端同步，全设备通用</p>
-      <p class="auth-hint" style="margin-top:4px;font-size:0.75rem;">
-        <a href="#" onclick="triggerAccountImport();return false;" style="color:var(--accent);text-decoration:underline;">📥 从其他设备导入账号</a>
+      <p class="auth-hint">[SYNC] 账号数据通过 Supabase 云端同步，全设备通用</p>
+      <p class="auth-hint" style="margin-top:4px;font-size:0.7rem;">
+        <a href="#" onclick="triggerAccountImport();return false;" style="color:var(--amber-400);text-decoration:underline;">[<] 从其他设备导入账号</a>
       </p>
     </div>
   </div>
 
   <!-- ========== White Noise Panel ========== -->
   <div class="white-noise-panel" id="white-noise-panel">
-    <button class="wn-toggle glass" id="wn-toggle" onclick="toggleWhiteNoise()" title="白噪音陪伴">🎵</button>
+    <button class="wn-toggle glass" id="wn-toggle" onclick="toggleWhiteNoise()" title="环境音">♪</button>
     <div class="wn-expanded glass" id="wn-expanded">
-      <button class="wn-option active" data-sound="rain" onclick="selectNoiseSound('rain', this)">🌧️ 雨声</button>
-      <button class="wn-option" data-sound="wind" onclick="selectNoiseSound('wind', this)">🍃 风声</button>
-      <button class="wn-option" data-sound="ocean" onclick="selectNoiseSound('ocean', this)">🌊 海浪</button>
-      <button class="wn-option" data-sound="forest" onclick="selectNoiseSound('forest', this)">🌴 雨林</button>
+      <button class="wn-option active" data-sound="rain" onclick="selectNoiseSound('rain', this)">rain.wav</button>
+      <button class="wn-option" data-sound="wind" onclick="selectNoiseSound('wind', this)">wind.wav</button>
+      <button class="wn-option" data-sound="ocean" onclick="selectNoiseSound('ocean', this)">ocean.wav</button>
+      <button class="wn-option" data-sound="forest" onclick="selectNoiseSound('forest', this)">forest.wav</button>
       <div class="wn-volume">
-        <span>🔈</span>
+        <span>[-]</span>
         <input type="range" id="wn-volume" min="0" max="100" value="40" oninput="setNoiseVolume(this.value)">
-        <span>🔊</span>
+        <span>[+]</span>
       </div>
     </div>
   </div>
@@ -267,7 +267,6 @@
   <div class="emoji-float-container" id="emoji-container"></div>
 
   <!-- ========== Scripts ========== -->
-  <script src="js/particles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/cards.js"></script>

@@ -3,86 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📖 塔罗百科 — 78张塔罗牌完整解读</title>
-  <meta name="theme-color" content="#080808">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <title>卡牌索引 · CARD INDEX</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>[?]</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- Particle Canvas Background -->
-  <canvas id="particles"></canvas>
-
   <!-- Weather Bar -->
   <div class="weather-bar" id="weather-bar">
-    <span class="weather-icon" id="weather-icon">🌤️</span>
+    <span class="weather-icon" id="weather-icon">--</span>
     <span class="weather-temp" id="weather-temp">--°C</span>
     <span class="weather-desc" id="weather-desc">加载中...</span>
-    <span class="weather-city" id="weather-city">📍 定位中...</span>
+    <span class="weather-city" id="weather-city">[ 定位中... ]</span>
   </div>
 
   <!-- Sidebar -->
   <aside class="sidebar glass" id="sidebar">
-    <div class="sidebar-pin-btn" id="sidebar-pin" title="固定侧边栏">📌</div>
+    <div class="sidebar-pin-btn" id="sidebar-pin" title="固定侧边栏">[·]</div>
     <div class="sidebar-handle"></div>
     <nav class="sidebar-nav">
       <button class="sidebar-item" onclick="window.location.href='index.html'">
-        <span class="sidebar-icon">🔮</span>
-        <span class="sidebar-label">每日占卜</span>
+        <span class="sidebar-icon">◆</span>
+        <span class="sidebar-label">ORACLE</span>
       </button>
       <button class="sidebar-item active">
-        <span class="sidebar-icon">📖</span>
-        <span class="sidebar-label">塔罗百科</span>
+        <span class="sidebar-icon">[?]</span>
+        <span class="sidebar-label">ARCHIVE</span>
       </button>
       <button class="sidebar-item" onclick="window.location.href='history.html'">
-        <span class="sidebar-icon">📊</span>
-        <span class="sidebar-label">运势分析</span>
+        <span class="sidebar-icon">[=]</span>
+        <span class="sidebar-label">ANALYTICS</span>
       </button>
       <div class="sidebar-divider"></div>
       <button class="sidebar-item" onclick="openMoodFromSidebar()">
-        <span class="sidebar-icon">💝</span>
-        <span class="sidebar-label">今日心情</span>
+        <span class="sidebar-icon">♥</span>
+        <span class="sidebar-label">STATE</span>
       </button>
       <button class="sidebar-item" id="sidebar-noise-btn" onclick="toggleWhiteNoise()">
-        <span class="sidebar-icon">🎵</span>
-        <span class="sidebar-label">白噪音</span>
+        <span class="sidebar-icon">♪</span>
+        <span class="sidebar-label">AMBIENT</span>
       </button>
     </nav>
     <div class="sidebar-divider"></div>
     <div class="sidebar-user" id="sidebar-user">
-      <div class="sidebar-user-avatar">👤</div>
+      <div class="sidebar-user-avatar">?</div>
       <span id="sidebar-username">未登录</span>
     </div>
     <button class="sidebar-item" id="sidebar-auth-btn" onclick="handleSidebarAuth()">
-      <span class="sidebar-icon">🔑</span>
-      <span class="sidebar-label" id="sidebar-auth-label">登录 / 注册</span>
+      <span class="sidebar-icon">[>]</span>
+      <span class="sidebar-label" id="sidebar-auth-label">AUTH</span>
     </button>
     <button class="sidebar-item" id="sidebar-export-btn" onclick="handleSidebarExport()" style="display:none;">
-      <span class="sidebar-icon">📤</span>
-      <span class="sidebar-label">导出账号</span>
+      <span class="sidebar-icon">[^]</span>
+      <span class="sidebar-label">EXPORT</span>
     </button>
   </aside>
 
   <!-- Main Content -->
   <main class="encyclopedia-page">
     <div class="encyclopedia-header">
-      <h1 class="section-title">📖 塔罗<span style="color:var(--accent-dark);">百科</span></h1>
-      <p class="section-subtitle">探索78张标准韦特塔罗的奥秘</p>
+      <h1 class="section-title">CARD.INDEX · <span style="color:var(--amber-400);">卡牌索引</span></h1>
+      <p class="section-subtitle">78张标准韦特塔罗数据档案</p>
     </div>
 
     <!-- Search -->
     <input type="text" class="encyclopedia-search glass" id="encyclo-search"
-           placeholder="🔍 搜索牌名、关键词...（支持中文、英文）" oninput="filterAndRender()">
+           placeholder="SEARCH 搜索牌名、关键词..." oninput="filterAndRender()">
 
     <!-- Filters -->
     <div class="encyclopedia-filters" id="encyclo-filters">
-      <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">🃏 全部</button>
-      <button class="filter-btn" data-filter="major" onclick="setFilter('major', this)">🌟 大阿卡纳</button>
-      <button class="filter-btn" data-filter="minor" onclick="setFilter('minor', this)">🎴 小阿卡纳</button>
-      <button class="filter-btn" data-filter="wands" onclick="setFilter('wands', this)">🪄 权杖</button>
-      <button class="filter-btn" data-filter="cups" onclick="setFilter('cups', this)">🏆 圣杯</button>
-      <button class="filter-btn" data-filter="swords" onclick="setFilter('swords', this)">⚔️ 宝剑</button>
-      <button class="filter-btn" data-filter="pentacles" onclick="setFilter('pentacles', this)">🪙 星币</button>
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">[ALL]</button>
+      <button class="filter-btn" data-filter="major" onclick="setFilter('major', this)">[MAJOR]</button>
+      <button class="filter-btn" data-filter="minor" onclick="setFilter('minor', this)">[MINOR]</button>
+      <button class="filter-btn" data-filter="wands" onclick="setFilter('wands', this)">[WANDS]</button>
+      <button class="filter-btn" data-filter="cups" onclick="setFilter('cups', this)">[CUPS]</button>
+      <button class="filter-btn" data-filter="swords" onclick="setFilter('swords', this)">[SWORDS]</button>
+      <button class="filter-btn" data-filter="pentacles" onclick="setFilter('pentacles', this)">[PENTACLES]</button>
     </div>
 
     <!-- Card Grid -->
@@ -100,51 +99,50 @@
   <div class="auth-overlay hidden" id="auth-overlay">
     <div class="auth-card glass-strong">
       <button class="auth-close" onclick="hideAuthModal()">✕</button>
-      <div class="auth-card-logo">🔮</div>
-      <div class="auth-card-title">欢迎来到 <span style="color:var(--accent-dark);">每日塔罗</span></div>
+      <div class="auth-card-logo">◆</div>
+      <div class="auth-card-title">SYS.AUTH · <span style="color:var(--amber-400);">身份验证</span></div>
       <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login" id="tab-login-btn">🔑 登录</button>
-        <button class="auth-tab" data-tab="register" id="tab-register-btn">📝 注册</button>
+        <button class="auth-tab active" data-tab="login" id="tab-login-btn">[LOGIN]</button>
+        <button class="auth-tab" data-tab="register" id="tab-register-btn">[REGISTER]</button>
       </div>
       <form class="auth-form active" data-tab="login" id="login-form">
-        <div class="auth-field"><label>用户名</label><input type="text" id="login-username" placeholder="输入用户名" required></div>
-        <div class="auth-field"><label>密码</label><div class="pw-field"><input type="password" id="login-password" placeholder="输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button></div>
+        <div class="auth-field"><label>USERNAME:</label><input type="text" id="login-username" placeholder="输入用户名" required></div>
+        <div class="auth-field"><label>PASSWORD:</label><div class="pw-field"><input type="password" id="login-password" placeholder="输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button></div>
         <div class="auth-error" id="login-error"></div>
-        <button type="submit" class="auth-submit">登录</button>
+        <button type="submit" class="auth-submit">◆ 登录</button>
       </form>
       <form class="auth-form" data-tab="register" id="register-form">
-        <div class="auth-field"><label>用户名</label><input type="text" id="register-username" placeholder="2-20个字符" required></div>
-        <div class="auth-field"><label>密码</label><div class="pw-field"><input type="password" id="register-password" placeholder="至少6位" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button></div>
-        <div class="auth-field"><label>确认密码</label><div class="pw-field"><input type="password" id="register-password-confirm" placeholder="再次输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button></div></div>
+        <div class="auth-field"><label>USERNAME:</label><input type="text" id="register-username" placeholder="2-20个字符" required></div>
+        <div class="auth-field"><label>PASSWORD:</label><div class="pw-field"><input type="password" id="register-password" placeholder="至少6位" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button></div>
+        <div class="auth-field"><label>CONFIRM:</label><div class="pw-field"><input type="password" id="register-password-confirm" placeholder="再次输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button></div></div>
         <div class="auth-error" id="register-error"></div>
-        <button type="submit" class="auth-submit">注册</button>
+        <button type="submit" class="auth-submit">◆ 注册</button>
       </form>
-      <p class="auth-hint">☁️ 账号数据通过 Supabase 云端同步，全设备通用</p>
-      <p class="auth-hint" style="margin-top:4px;font-size:0.75rem;">
-        <a href="#" onclick="triggerAccountImport();return false;" style="color:var(--accent);text-decoration:underline;">📥 从其他设备导入账号</a>
+      <p class="auth-hint">[SYNC] 账号数据通过 Supabase 云端同步，全设备通用</p>
+      <p class="auth-hint" style="margin-top:4px;font-size:0.7rem;">
+        <a href="#" onclick="triggerAccountImport();return false;" style="color:var(--amber-400);text-decoration:underline;">[<] 从其他设备导入账号</a>
       </p>
     </div>
   </div>
 
   <!-- White Noise Panel -->
   <div class="white-noise-panel" id="white-noise-panel">
-    <button class="wn-toggle glass" id="wn-toggle" onclick="toggleWhiteNoise()">🎵</button>
+    <button class="wn-toggle glass" id="wn-toggle" onclick="toggleWhiteNoise()">♪</button>
     <div class="wn-expanded glass" id="wn-expanded">
-      <button class="wn-option active" data-sound="rain" onclick="selectNoiseSound('rain',this)">🌧️ 雨声</button>
-      <button class="wn-option" data-sound="wind" onclick="selectNoiseSound('wind',this)">🍃 风声</button>
-      <button class="wn-option" data-sound="ocean" onclick="selectNoiseSound('ocean',this)">🌊 海浪</button>
-      <button class="wn-option" data-sound="forest" onclick="selectNoiseSound('forest',this)">🌴 雨林</button>
-      <div class="wn-volume"><span>🔈</span><input type="range" id="wn-volume" min="0" max="100" value="40" oninput="setNoiseVolume(this.value)"><span>🔊</span></div>
+      <button class="wn-option active" data-sound="rain" onclick="selectNoiseSound('rain',this)">rain.wav</button>
+      <button class="wn-option" data-sound="wind" onclick="selectNoiseSound('wind',this)">wind.wav</button>
+      <button class="wn-option" data-sound="ocean" onclick="selectNoiseSound('ocean',this)">ocean.wav</button>
+      <button class="wn-option" data-sound="forest" onclick="selectNoiseSound('forest',this)">forest.wav</button>
+      <div class="wn-volume"><span>[-]</span><input type="range" id="wn-volume" min="0" max="100" value="40" oninput="setNoiseVolume(this.value)"><span>[+]</span></div>
     </div>
   </div>
 
-  <!-- Hidden File Input for Account Import -->
+  <!-- Hidden File Input -->
   <input type="file" id="account-import-file" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
   <!-- Emoji Float -->
   <div class="emoji-float-container" id="emoji-container"></div>
 
-  <script src="js/particles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/white-noise.js"></script>

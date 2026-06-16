@@ -20,7 +20,7 @@ async function initWeather() {
 
   const lastCity = getLastCity();
   if (lastCity) {
-    document.getElementById('weather-city').textContent = '📍 ' + lastCity;
+    document.getElementById('weather-city').textContent = '[ ' + lastCity + ' ]';
   }
 
   const timeout8s = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 8000));
@@ -199,7 +199,7 @@ function renderWeather(data) {
   document.getElementById('weather-icon').textContent = data.icon;
   document.getElementById('weather-temp').textContent = data.temp + '°C';
   document.getElementById('weather-desc').textContent = data.desc;
-  document.getElementById('weather-city').textContent = '📍 ' + data.city;
+  document.getElementById('weather-city').textContent = '[ ' + data.city + ' ]';
   document.getElementById('weather-city').title = '点击切换城市';
 
   // City change handler (bind once)
@@ -209,7 +209,7 @@ function renderWeather(data) {
     cityEl.addEventListener('click', async () => {
       const newCity = prompt('请输入城市名称（例如：北京、上海、东京）：', data.city || '');
       if (!newCity || !newCity.trim()) return;
-      cityEl.textContent = '📍 查询中...';
+      cityEl.textContent = '[ 查询中... ]';
       try {
         const url = `https://wttr.in/${encodeURIComponent(newCity.trim())}?format=j1`;
         const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
@@ -229,7 +229,7 @@ function renderWeather(data) {
         renderWeather(nd);
       } catch (e) {
         alert('查询失败，请检查城市名称是否正确。');
-        cityEl.textContent = '📍 ' + data.city;
+        cityEl.textContent = '[ ' + data.city + ' ]';
       }
     });
   }
@@ -237,10 +237,10 @@ function renderWeather(data) {
 
 function renderFallbackWeather() {
   const city = getLastCity() || '选择城市';
-  document.getElementById('weather-icon').textContent = '🌤️';
+  document.getElementById('weather-icon').textContent = '--';
   document.getElementById('weather-temp').textContent = '--°C';
-  document.getElementById('weather-desc').textContent = '暂未获取';
-  document.getElementById('weather-city').textContent = '📍 ' + city;
+  document.getElementById('weather-desc').textContent = '无数据';
+  document.getElementById('weather-city').textContent = '[ ' + city + ' ]';
   document.getElementById('weather-city').title = '点击手动查询城市天气';
 }
 
@@ -248,6 +248,6 @@ function renderFallbackWeather() {
 document.addEventListener('DOMContentLoaded', () => {
   const c = getLastCity();
   if (c) {
-    document.getElementById('weather-city').textContent = '📍 ' + c;
+    document.getElementById('weather-city').textContent = '[ ' + c + ' ]';
   }
 });

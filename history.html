@@ -3,79 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📊 运势分析 — 每周/月/季/年运势回顾</title>
-  <meta name="theme-color" content="#080808">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <title>数据面板 · DATA ANALYTICS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>[=]</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- Particle Canvas Background -->
-  <canvas id="particles"></canvas>
-
   <!-- Weather Bar -->
   <div class="weather-bar" id="weather-bar">
-    <span class="weather-icon" id="weather-icon">🌤️</span>
+    <span class="weather-icon" id="weather-icon">--</span>
     <span class="weather-temp" id="weather-temp">--°C</span>
     <span class="weather-desc" id="weather-desc">加载中...</span>
-    <span class="weather-city" id="weather-city">📍 定位中...</span>
+    <span class="weather-city" id="weather-city">[ 定位中... ]</span>
   </div>
 
   <!-- Sidebar -->
   <aside class="sidebar glass" id="sidebar">
-    <div class="sidebar-pin-btn" id="sidebar-pin" title="固定侧边栏">📌</div>
+    <div class="sidebar-pin-btn" id="sidebar-pin" title="固定侧边栏">[·]</div>
     <div class="sidebar-handle"></div>
     <nav class="sidebar-nav">
       <button class="sidebar-item" onclick="window.location.href='index.html'">
-        <span class="sidebar-icon">🔮</span>
-        <span class="sidebar-label">每日占卜</span>
+        <span class="sidebar-icon">◆</span>
+        <span class="sidebar-label">ORACLE</span>
       </button>
       <button class="sidebar-item" onclick="window.location.href='encyclopedia.html'">
-        <span class="sidebar-icon">📖</span>
-        <span class="sidebar-label">塔罗百科</span>
+        <span class="sidebar-icon">[?]</span>
+        <span class="sidebar-label">ARCHIVE</span>
       </button>
       <button class="sidebar-item active">
-        <span class="sidebar-icon">📊</span>
-        <span class="sidebar-label">运势分析</span>
+        <span class="sidebar-icon">[=]</span>
+        <span class="sidebar-label">ANALYTICS</span>
       </button>
       <div class="sidebar-divider"></div>
       <button class="sidebar-item" onclick="openMoodFromSidebar()">
-        <span class="sidebar-icon">💝</span>
-        <span class="sidebar-label">今日心情</span>
+        <span class="sidebar-icon">♥</span>
+        <span class="sidebar-label">STATE</span>
       </button>
       <button class="sidebar-item" id="sidebar-noise-btn" onclick="toggleWhiteNoise()">
-        <span class="sidebar-icon">🎵</span>
-        <span class="sidebar-label">白噪音</span>
+        <span class="sidebar-icon">♪</span>
+        <span class="sidebar-label">AMBIENT</span>
       </button>
     </nav>
     <div class="sidebar-divider"></div>
     <div class="sidebar-user" id="sidebar-user">
-      <div class="sidebar-user-avatar">👤</div>
+      <div class="sidebar-user-avatar">?</div>
       <span id="sidebar-username">未登录</span>
     </div>
     <button class="sidebar-item" id="sidebar-auth-btn" onclick="handleSidebarAuth()">
-      <span class="sidebar-icon">🔑</span>
-      <span class="sidebar-label" id="sidebar-auth-label">登录 / 注册</span>
+      <span class="sidebar-icon">[>]</span>
+      <span class="sidebar-label" id="sidebar-auth-label">AUTH</span>
     </button>
     <button class="sidebar-item" id="sidebar-export-btn" onclick="handleSidebarExport()" style="display:none;">
-      <span class="sidebar-icon">📤</span>
-      <span class="sidebar-label">导出账号</span>
+      <span class="sidebar-icon">[^]</span>
+      <span class="sidebar-label">EXPORT</span>
     </button>
   </aside>
 
   <!-- Main Content -->
   <main class="history-page">
     <div class="history-header">
-      <h1 class="section-title">📊 运势<span style="color:var(--accent-dark);">分析</span></h1>
-      <p class="section-subtitle" id="history-subtitle">登录后可查看你的运势回顾</p>
+      <h1 class="section-title">DATA.ANALYTICS · <span style="color:var(--amber-400);">数据面板</span></h1>
+      <p class="section-subtitle" id="history-subtitle">登录后可查看运势分析数据</p>
     </div>
 
     <!-- Period Tabs -->
     <div class="period-tabs" id="period-tabs">
-      <button class="period-tab active" data-period="weekly" onclick="switchPeriod('weekly', this)">📅 本周</button>
-      <button class="period-tab" data-period="monthly" onclick="switchPeriod('monthly', this)">🗓️ 本月</button>
-      <button class="period-tab" data-period="quarterly" onclick="switchPeriod('quarterly', this)">📆 本季</button>
-      <button class="period-tab" data-period="yearly" onclick="switchPeriod('yearly', this)">📋 全年</button>
+      <button class="period-tab active" data-period="weekly" onclick="switchPeriod('weekly', this)">[WEEK]</button>
+      <button class="period-tab" data-period="monthly" onclick="switchPeriod('monthly', this)">[MONTH]</button>
+      <button class="period-tab" data-period="quarterly" onclick="switchPeriod('quarterly', this)">[QTR]</button>
+      <button class="period-tab" data-period="yearly" onclick="switchPeriod('yearly', this)">[YEAR]</button>
     </div>
 
     <!-- Analysis Stats -->
@@ -84,26 +83,26 @@
     </div>
 
     <!-- Mood Calendar -->
-    <h3 style="margin-bottom:12px;">💝 心情日历</h3>
+    <h3 style="margin-bottom:12px;font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;">STATE.CALENDAR · 心情日历</h3>
     <div class="mood-calendar" id="mood-calendar">
       <!-- Filled dynamically -->
     </div>
 
     <!-- Fortune History -->
-    <h3 style="margin:30px 0 12px;">📜 占卜记录</h3>
+    <h3 style="margin:30px 0 12px;font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;">ORACLE.RECORDS · 占卜记录</h3>
     <div class="history-records" id="history-records">
       <!-- Filled dynamically -->
     </div>
 
     <!-- Export -->
     <button class="btn-action secondary export-btn" id="export-btn" onclick="handleExport()" style="display:none;">
-      💾 导出全部数据 (JSON)
+      [↓] 导出全部数据 (JSON)
     </button>
 
     <!-- Login prompt -->
     <div class="text-center mt-20" id="login-prompt" style="padding:40px;">
-      <p style="color:var(--text-muted);margin-bottom:16px;">🔒 登录后查看运势分析与历史记录</p>
-      <button class="btn-action primary" onclick="showAuthModal()">🔑 去登录</button>
+      <p style="color:var(--text-muted);margin-bottom:16px;font-family:var(--font-mono);">[LOCKED] 登录后查看运势分析与历史记录</p>
+      <button class="btn-action primary" onclick="showAuthModal()">[>] 身份验证</button>
     </div>
   </main>
 
@@ -111,51 +110,50 @@
   <div class="auth-overlay hidden" id="auth-overlay">
     <div class="auth-card glass-strong">
       <button class="auth-close" onclick="hideAuthModal()">✕</button>
-      <div class="auth-card-logo">🔮</div>
-      <div class="auth-card-title">欢迎来到 <span style="color:var(--accent-dark);">每日塔罗</span></div>
+      <div class="auth-card-logo">◆</div>
+      <div class="auth-card-title">SYS.AUTH · <span style="color:var(--amber-400);">身份验证</span></div>
       <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login" id="tab-login-btn">🔑 登录</button>
-        <button class="auth-tab" data-tab="register" id="tab-register-btn">📝 注册</button>
+        <button class="auth-tab active" data-tab="login" id="tab-login-btn">[LOGIN]</button>
+        <button class="auth-tab" data-tab="register" id="tab-register-btn">[REGISTER]</button>
       </div>
       <form class="auth-form active" data-tab="login" id="login-form">
-        <div class="auth-field"><label>用户名</label><input type="text" id="login-username" placeholder="输入用户名" required></div>
-        <div class="auth-field"><label>密码</label><div class="pw-field"><input type="password" id="login-password" placeholder="输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button></div></div>
+        <div class="auth-field"><label>USERNAME:</label><input type="text" id="login-username" placeholder="输入用户名" required></div>
+        <div class="auth-field"><label>PASSWORD:</label><div class="pw-field"><input type="password" id="login-password" placeholder="输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button></div></div>
         <div class="auth-error" id="login-error"></div>
-        <button type="submit" class="auth-submit">登录</button>
+        <button type="submit" class="auth-submit">◆ 登录</button>
       </form>
       <form class="auth-form" data-tab="register" id="register-form">
-        <div class="auth-field"><label>用户名</label><input type="text" id="register-username" placeholder="2-20个字符" required></div>
-        <div class="auth-field"><label>密码</label><div class="pw-field"><input type="password" id="register-password" placeholder="至少6位" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button></div></div>
-        <div class="auth-field"><label>确认密码</label><div class="pw-field"><input type="password" id="register-password-confirm" placeholder="再次输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">👁️</button></div></div>
+        <div class="auth-field"><label>USERNAME:</label><input type="text" id="register-username" placeholder="2-20个字符" required></div>
+        <div class="auth-field"><label>PASSWORD:</label><div class="pw-field"><input type="password" id="register-password" placeholder="至少6位" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button></div></div>
+        <div class="auth-field"><label>CONFIRM:</label><div class="pw-field"><input type="password" id="register-password-confirm" placeholder="再次输入密码" required><button type="button" class="pw-eye" onclick="togglePw(this)" tabindex="-1">⊙</button></div></div>
         <div class="auth-error" id="register-error"></div>
-        <button type="submit" class="auth-submit">注册</button>
+        <button type="submit" class="auth-submit">◆ 注册</button>
       </form>
-      <p class="auth-hint">☁️ 账号数据通过 Supabase 云端同步，全设备通用</p>
-      <p class="auth-hint" style="margin-top:4px;font-size:0.75rem;">
-        <a href="#" onclick="triggerAccountImport();return false;" style="color:var(--accent);text-decoration:underline;">📥 从其他设备导入账号</a>
+      <p class="auth-hint">[SYNC] 账号数据通过 Supabase 云端同步，全设备通用</p>
+      <p class="auth-hint" style="margin-top:4px;font-size:0.7rem;">
+        <a href="#" onclick="triggerAccountImport();return false;" style="color:var(--amber-400);text-decoration:underline;">[<] 从其他设备导入账号</a>
       </p>
     </div>
   </div>
 
   <!-- White Noise Panel -->
   <div class="white-noise-panel" id="white-noise-panel">
-    <button class="wn-toggle glass" id="wn-toggle" onclick="toggleWhiteNoise()">🎵</button>
+    <button class="wn-toggle glass" id="wn-toggle" onclick="toggleWhiteNoise()">♪</button>
     <div class="wn-expanded glass" id="wn-expanded">
-      <button class="wn-option active" data-sound="rain" onclick="selectNoiseSound('rain',this)">🌧️ 雨声</button>
-      <button class="wn-option" data-sound="wind" onclick="selectNoiseSound('wind',this)">🍃 风声</button>
-      <button class="wn-option" data-sound="ocean" onclick="selectNoiseSound('ocean',this)">🌊 海浪</button>
-      <button class="wn-option" data-sound="forest" onclick="selectNoiseSound('forest',this)">🌴 雨林</button>
-      <div class="wn-volume"><span>🔈</span><input type="range" id="wn-volume" min="0" max="100" value="40" oninput="setNoiseVolume(this.value)"><span>🔊</span></div>
+      <button class="wn-option active" data-sound="rain" onclick="selectNoiseSound('rain',this)">rain.wav</button>
+      <button class="wn-option" data-sound="wind" onclick="selectNoiseSound('wind',this)">wind.wav</button>
+      <button class="wn-option" data-sound="ocean" onclick="selectNoiseSound('ocean',this)">ocean.wav</button>
+      <button class="wn-option" data-sound="forest" onclick="selectNoiseSound('forest',this)">forest.wav</button>
+      <div class="wn-volume"><span>[-]</span><input type="range" id="wn-volume" min="0" max="100" value="40" oninput="setNoiseVolume(this.value)"><span>[+]</span></div>
     </div>
   </div>
 
-  <!-- Hidden File Input for Account Import -->
+  <!-- Hidden File Input -->
   <input type="file" id="account-import-file" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
   <!-- Emoji Float -->
   <div class="emoji-float-container" id="emoji-container"></div>
 
-  <script src="js/particles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/white-noise.js"></script>
