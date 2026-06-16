@@ -159,7 +159,7 @@ async function startShuffle() {
   grid.innerHTML = state.gridCards.map((card, i) => `
     <div class="card-cell" data-index="${i}" onclick="selectCard(${i}, this)">
       <div class="card-face">
-        <div class="card-back"></div>
+        <div class="card-back">◆</div>
         <div class="card-front">
           <span class="card-emoji">${card.emoji}</span>
           <span class="card-mini-name">${card.name_zh}</span>
