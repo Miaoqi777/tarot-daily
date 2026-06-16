@@ -264,57 +264,40 @@ async function startShuffle() {
   updateSelectionCounter();
   gridContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  // Animate: pile → fan spread
-  await fanSpreadAnimation(1000);
+  // Animate: cards bloom to fan positions
+  await fanSpreadAnimation(700);
 
   state.isShuffling = false;
   document.getElementById('btn-shuffle').disabled = false;
   document.getElementById('btn-shuffle').textContent = '⟲ 重新洗牌';
 }
 
-// Fan spread animation: cards fly from center to fan positions
+// Fan spread animation: cards bloom outward from center with smooth ease-out
 function fanSpreadAnimation(duration) {
   return new Promise(resolve => {
     const cells = document.querySelectorAll('.card-cell');
     const startTime = performance.now();
-    const spreadDelay = duration * 0.15; // Short pile phase
 
     function animate(now) {
       const elapsed = now - startTime;
+      const p = Math.min(1, elapsed / duration);
+      // Clean cubic ease-out — no bounce, no delay, just smooth
+      const eased = 1 - Math.pow(1 - p, 3);
 
-      cells.forEach((cell, i) => {
-        const targetX = parseFloat(cell.dataset.x) || 0;
-        const targetY = parseFloat(cell.dataset.y) || 0;
-        const targetRot = parseFloat(cell.dataset.rot) || 0;
-        const zIdx = parseInt(cell.style.zIndex) || 1;
+      cells.forEach(cell => {
+        const tx = parseFloat(cell.dataset.x) || 0;
+        const ty = parseFloat(cell.dataset.y) || 0;
+        const rot = parseFloat(cell.dataset.rot) || 0;
 
-        if (elapsed < spreadDelay) {
-          // Brief pile phase
-          cell.style.transform = 'translateX(0px) translateY(0px) rotate(0deg) scale(0.3)';
-          cell.style.opacity = '0.3';
-        } else {
-          const spreadElapsed = elapsed - spreadDelay;
-          const spreadDuration = duration - spreadDelay;
-          const p = Math.min(1, spreadElapsed / spreadDuration);
-          // Ease-out back for satisfying snap
-          const eased = 1 - Math.pow(1 - p, 3);
-          const bounce = p < 1 ? Math.sin(p * Math.PI * 2) * (1 - p) * 0.3 : 0;
-
-          const x = targetX * (eased + bounce);
-          const y = targetY * (eased + bounce);
-          const rot = targetRot * (eased + bounce);
-          const scale = 0.3 + 0.7 * eased;
-
-          cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(${scale})`;
-          cell.style.opacity = Math.min(1, 0.3 + 0.7 * eased);
-          cell.style.zIndex = zIdx;
-        }
+        cell.style.transform =
+          `translateX(${tx * eased}px) translateY(${ty * eased}px) rotate(${rot * eased}deg) scale(${0.3 + 0.7 * eased})`;
+        cell.style.opacity = Math.min(1, 0.3 + 0.7 * eased);
       });
 
       if (elapsed < duration) {
         requestAnimationFrame(animate);
       } else {
-        // Final settle — set exact fan positions
+        // Final settle
         cells.forEach(cell => {
           const tx = parseFloat(cell.dataset.x) || 0;
           const ty = parseFloat(cell.dataset.y) || 0;
