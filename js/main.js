@@ -183,11 +183,13 @@ async function startShuffle() {
     <div class="card-cell" data-index="${i}" data-x="${pos.x}" data-y="${pos.y}" data-rot="${pos.rotation}"
          style="transform: translateX(0px) translateY(0px) rotate(0deg) scale(0.3); opacity: 0; z-index: ${pos.zIdx};"
          onclick="selectCard(${i}, this)">
-      <div class="card-face">
-        <div class="card-back">${getIconSVG('diamond', 'svg-icon')}</div>
-        <div class="card-front">
-          <span class="card-emoji">${symbolToSVG(card.emoji, 'svg-icon card-mini-svg')}</span>
-          <span class="card-mini-name">${card.name_zh}</span>
+      <div class="card-inner">
+        <div class="card-face">
+          <div class="card-back">${getIconSVG('diamond', 'svg-icon')}</div>
+          <div class="card-front">
+            <span class="card-emoji">${symbolToSVG(card.emoji, 'svg-icon card-mini-svg')}</span>
+            <span class="card-mini-name">${card.name_zh}</span>
+          </div>
         </div>
       </div>
     </div>

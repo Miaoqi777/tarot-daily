@@ -759,6 +759,7 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── Fan Card Cell ── */
+/* ── Fan Card Cell (outer: fan position anchor) ── */
 .card-cell {
   position: absolute;
   bottom: -180px;
@@ -767,14 +768,21 @@ img { max-width: 100%; display: block; }
   aspect-ratio: 0.65;
   cursor: pointer;
   transform-origin: bottom center;
-  transition: bottom 0.18s ease,
-              z-index 0s;
-  will-change: transform;
   z-index: 1;
 }
 
+/* ── Card Inner (hover lift, separate from fan transform) ── */
+.card-inner {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.18s ease;
+}
+
+.card-cell:hover .card-inner {
+  transform: translateY(-95px);
+}
+
 .card-cell:hover {
-  bottom: -85px;
   z-index: 999 !important;
 }
 
@@ -784,8 +792,11 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── Selected card stays lifted ── */
+.card-cell.selected .card-inner {
+  transform: translateY(-95px);
+}
+
 .card-cell.selected {
-  bottom: -85px;
   z-index: 998 !important;
 }
 
@@ -2136,9 +2147,9 @@ img { max-width: 100%; display: block; }
     width: 70px;
     bottom: -150px;
   }
-  .card-cell:hover,
-  .card-cell.selected {
-    bottom: -70px;
+  .card-cell:hover .card-inner,
+  .card-cell.selected .card-inner {
+    transform: translateY(-80px);
   }
 
   .spread-selector {
@@ -2236,9 +2247,9 @@ img { max-width: 100%; display: block; }
     width: 55px;
     bottom: -120px;
   }
-  .card-cell:hover,
-  .card-cell.selected {
-    bottom: -55px;
+  .card-cell:hover .card-inner,
+  .card-cell.selected .card-inner {
+    transform: translateY(-65px);
   }
 
   .card-cell .card-back { font-size: 0.7rem; }
