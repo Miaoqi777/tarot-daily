@@ -774,7 +774,6 @@ img { max-width: 100%; display: block; }
 }
 
 .card-cell:hover {
-  transform: translateY(-95px) scale(1.18) rotate(0deg) !important;
   z-index: 999 !important;
 }
 
@@ -783,9 +782,17 @@ img { max-width: 100%; display: block; }
   box-shadow: 0 0 20px var(--amber-glow), 0 0 40px var(--amber-glow);
 }
 
+.card-cell.lifted {
+  z-index: 998 !important;
+}
+
+.card-cell.lifted .card-face {
+  border-color: var(--amber-400);
+  box-shadow: 0 0 24px var(--amber-glow), 0 0 48px var(--amber-glow);
+}
+
 /* ── Selected card stays lifted ── */
 .card-cell.selected {
-  transform: translateY(-95px) scale(1.18) rotate(0deg) !important;
   z-index: 998 !important;
 }
 
