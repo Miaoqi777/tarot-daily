@@ -98,7 +98,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
       },
-      body: JSON.stringify({ model: MODEL, messages, temperature: 0.8, max_tokens: 2048 }),
+      body: JSON.stringify({ model: MODEL, messages, temperature: 0.8, max_tokens: 4096 }),
     });
 
     if (!response.ok) {

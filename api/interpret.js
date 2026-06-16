@@ -140,7 +140,7 @@ export default async function handler(request) {
         model: MODEL,
         messages,
         temperature: 0.8,
-        max_tokens: 2048,
+        max_tokens: 4096,
       }),
     });
 

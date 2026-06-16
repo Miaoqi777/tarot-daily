@@ -1269,7 +1269,7 @@ img { max-width: 100%; display: block; }
 }
 
 .result-card {
-  width: 180px;
+  width: 220px;
   padding: 20px;
   border-radius: var(--radius-md);
   text-align: center;
@@ -1357,17 +1357,22 @@ img { max-width: 100%; display: block; }
 }
 
 .result-summary h3 {
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
-  letter-spacing: 0.1em;
-  margin-bottom: 10px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
   color: var(--amber-400);
-  text-transform: uppercase;
 }
 
 .result-summary p {
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+.result-summary-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.8;
 }
 
 /* ---------- Song Recommendation ---------- */

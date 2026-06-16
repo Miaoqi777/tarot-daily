@@ -310,16 +310,17 @@ function convertAIResponseToResult(aiResponse, drawnCards, spreadDef) {
   else if (reversalCount <= 1) overallMood = 'calm';
   else if (reversalCount >= cards.length / 2) overallMood = 'anxious';
 
-  // 组装 summary（AI 风格，不使用模板协议语言）
+  // 组装 summary（新格式优先，旧格式向后兼容）
   let summary = '';
-  if (aiResponse.overview) {
-    summary += `◆ AI.ORACLE · 智能解读引擎\n\n${aiResponse.overview}`;
-  }
-  if (aiResponse.theme_insight) {
-    summary += `\n\n[THEME.INSIGHT] ${aiResponse.theme_insight}`;
-  }
-  if (aiResponse.advice) {
-    summary += `\n\n[AI.ADVICE] ${aiResponse.advice}`;
+  if (aiResponse.full_text) {
+    // 新格式：直接使用 AI 生成的完整解读文本
+    summary = aiResponse.full_text;
+  } else if (aiResponse.overview) {
+    // 旧格式向后兼容：去掉赛博终端标记，干净输出
+    summary = aiResponse.overview;
+    if (aiResponse.advice) {
+      summary += '\n\n给你的建议：\n' + aiResponse.advice;
+    }
   }
 
   return {
@@ -332,6 +333,7 @@ function convertAIResponseToResult(aiResponse, drawnCards, spreadDef) {
     spreadName: spreadDef ? spreadDef.name_zh : '',
     spreadId: spreadDef ? spreadDef.id : '',
     _aiGenerated: true,
+    _aiFullText: aiResponse.full_text || summary,
     _aiOverview: aiResponse.overview || '',
     _aiAdvice: aiResponse.advice || '',
     _aiThemeInsight: aiResponse.theme_insight || '',
@@ -350,40 +352,35 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function generateSummary(result, mood, element, spreadDef) {
   const parts = [];
   const spreadId = (spreadDef && spreadDef.id) || '';
-  const cardNames = result.map(r => (r.isReversed ? 'REV.' : 'UPR.') + r.name_zh).join(' | ');
   const spreadName = spreadDef ? spreadDef.name_zh : '';
 
   // ---- Opening ----
   const openings = [
-    `◆ ORACLE_INIT · ${spreadName}协议执行完成 · 已锁定变量 ${cardNames} · 开始解码——`,
-    `◆ SESSION.START · ${spreadName}牌阵数据读取完毕 · 命运变量 ${cardNames} · 以下是神谕输出——`,
-    `◆ PROTOCOL.COMPLETE · ${spreadName}矩阵已展开 · 捕获信号 ${cardNames} · 解析如下——`,
-    `◆ QUERY.RESOLVED · ${spreadName}神谕引擎返回结果 · 输入 ${cardNames} · 现在解读——`
+    `${spreadName}解读\n\n为你抽出的牌面已展开，以下是逐张牌的详细解析——`,
+    `${spreadName}\n\n牌已就位。让我们一起来看看这些牌想对你说什么——`,
+    `「${spreadName}」解读\n\n你面前的这几张牌，每一张都在回应你心里的问题。下面逐一展开——`
   ];
   parts.push(pick(openings));
 
   // ---- Card-by-card position analysis ----
-  const revLabels_u = ['UPRIGHT · 正位信号', 'POSITIVE · 光明面', 'LIGHT.SIDE · 正面指引', 'FORWARD · 顺势能量'];
-  const revLabels_r = ['REVERSED · 逆位信号', 'SHADOW · 暗面提示', 'CAUTION · 需留意', 'PAUSE · 缓行信号'];
   result.forEach((c, i) => {
-    const revLabel = c.isReversed ? pick(revLabels_r) : pick(revLabels_u);
-    const status = c.isReversed ? '[REV]' : '[UPR]';
-    const txt = c.interpretation.length > 90 ? c.interpretation.slice(0, 90) + '…' : c.interpretation;
-    parts.push(`${status} ${c.positionName} · ${c.name_zh} —— ${revLabel}：${txt}`);
+    const status = c.isReversed ? '逆位' : '正位';
+    const txt = c.interpretation.length > 120 ? c.interpretation.slice(0, 120) + '…' : c.interpretation;
+    parts.push(`${c.positionName} · ${c.name_zh}（${status}）\n${txt}`);
   });
 
   // ---- Major Arcana insight ----
   const majorCards = result.filter(r => r.arcana === 'major');
   if (majorCards.length >= 2) {
     const majorMsgs = [
-      `[MAJOR.SIGNAL] ${majorCards.length}张大阿卡纳同时出现——不是偶然。这些牌触及深层的命运课题，请仔细审视它们在各自位置上的共振——线索之间，有看不见的线相连。`,
-      `[ARCANA.BOOST] ${majorCards.length}张大牌汇聚——你正站在命运的重要节点。每一个位置都是拼图的一块，合拢后才能看见完整的画面。`
+      `${majorCards.length}张大阿卡纳同时出现在这次解读中——这不是偶然。这些大牌触及的是你人生中比较深层的主题，请把注意力放在它们各自的位置上，线索之间，有看不见的线相连。`,
+      `${majorCards.length}张大牌汇聚在一起——你正站在一个重要的节点上。每一个位置都是拼图的一块，合拢之后，你会看见完整的画面。`
     ];
     parts.push(pick(majorMsgs));
   } else if (majorCards.length === 1) {
     const singleMsgs = [
-      `[KEY.CARD] 大阿卡纳「${majorCards[0].name_zh}」是本次神谕的核心信号。请将注意力集中在「${majorCards[0].positionName}」的位置——那是整场解读的锚点。`,
-      `[FOCAL.POINT] 大牌「${majorCards[0].name_zh}」在「${majorCards[0].positionName}」处亮起——这可能是你今天最需要听见的频率。`
+      `大阿卡纳「${majorCards[0].name_zh}」是这次解读的核心线索——请把注意力放在「${majorCards[0].positionName}」的位置上，那可能是你今天最需要听见的声音。`,
+      `大牌「${majorCards[0].name_zh}」在「${majorCards[0].positionName}」处亮起——这不是随机的，它指向你当下最值得关注的面向。`
     ];
     parts.push(pick(singleMsgs));
   }
@@ -392,22 +389,14 @@ function generateSummary(result, mood, element, spreadDef) {
   const revCount = result.filter(r => r.isReversed).length;
   if (revCount === 0) {
     const allUpMsgs = [
-      '[ALL.UPRIGHT] 全部正位——阻力最小的路径已显现。顺着当前的流向走下去，你会抵达预期的坐标。',
-      '[CLEAR.SIGNAL] 正位全开——能量场清澈明亮。你的选择与内在方向高度一致。珍惜这份顺畅。'
+      '全部正位——阻力最小的路径已经显现。顺着当前的流向走下去，你会抵达预期的坐标。',
+      '正位全开，牌面清澈明亮。你的选择与内在方向高度一致，珍惜这份顺畅。'
     ];
-    parts.push(pick(allUpMsgs));
+    parts.push(allUpMsgs[0]); // Use first consistently for determinism
   } else if (revCount === 1) {
-    const oneRevMsgs = [
-      '[1.REVERSED] 仅一张逆位——一个小路标，提醒你在某个方向多看一步。不必过度解读，当作善意的校准信号。',
-      '[MINOR.REV] 一张逆位藏在正位的光芒中——不是阻碍，而是一个温柔的「慢一点」提示。多一分觉察，绕开不必要的坑。'
-    ];
-    parts.push(pick(oneRevMsgs));
+    parts.push('仅一张逆位——这是一个小小的路标，提醒你在某个方向多看一步。不必过度解读，当作善意的校准信号就好。');
   } else {
-    const multiRevMsgs = [
-      `[${revCount}.REVERSED] ${revCount}张逆位——当前节奏可能需要重新校准。逆位不是厄运，而是邀请你换个坐标系看问题。最大的智慧是知道何时转向。`,
-      `[MULTI.REV] ${revCount}张牌以逆位出现——它们不是警告，而是照亮那些被忽略的角落。慢下来，向内看，答案一直在那里。`
-    ];
-    parts.push(pick(multiRevMsgs));
+    parts.push(`${revCount}张逆位——当前节奏可能需要重新校准。逆位不是坏消息，而是邀请你换个角度重新审视。慢下来，向内看，答案一直在那里。`);
   }
 
   // ---- Theme-specific guidance ----
@@ -416,72 +405,78 @@ function generateSummary(result, mood, element, spreadDef) {
   const total = result.length;
 
   if (spreadId.startsWith('love')) {
+    parts.push('针对你的感情领域：');
     if (revs === 0) {
-      parts.push('[LOVE.PROTOCOL] 信号积极。若在关系中——感情升温期，适合主动表达、规划共同未来。若单身——近期遇到心动之人的概率很高，多参与社交，缘分靠近中。建议：大胆向前，不必犹豫。');
+      parts.push('信号积极。若在关系中——感情升温期，适合主动表达、规划共同未来。若单身——近期遇到心动之人的概率很高，多参与社交，缘分正在靠近。大胆向前，不必犹豫。');
     } else if (revs <= total / 2) {
-      parts.push('[LOVE.PROTOCOL] 信号总体向好，有小幅波动。若在纠结——关系仍有价值，但需双方坦诚沟通来校准。若单身——桃花运不错，初次接触多观察，不必急着投入。建议：坚持但不盲目，沟通是密钥。');
+      parts.push('信号总体向好，有小幅波动。若在纠结——关系仍有价值，但需要双方坦诚沟通来校准。若单身——桃花运不错，初次接触多观察，不必急着投入。坚持但不盲目，沟通是关键。');
     } else {
-      parts.push('[LOVE.PROTOCOL] 逆位偏多，需冷静审视。若已感到疲惫或被消耗——给自己一些空间，暂时的退后比盲目坚持更明智。单身者桃花平稳，先专注提升自己，更好的缘分会在合适的时机出现。建议：先爱自己，再谈爱人。');
+      parts.push('逆位偏多，需要冷静审视。若已感到疲惫或被消耗——给自己一些空间，暂时的退后比盲目坚持更明智。单身者先专注提升自己，更好的缘分会在合适的时机出现。先爱自己，再谈爱人。');
     }
   } else if (spreadId.startsWith('study')) {
+    parts.push('针对你的学业领域：');
     if (revs === 0) {
-      parts.push('[STUDY.PROTOCOL] 学业信号强劲。理解力和记忆力处于峰值，适合冲刺考试或攻克难题。备考中——保持当前节奏，结果会超出预期。日常学习——效率极高的阶段，多利用这段时间深入钻研。建议：乘胜追击，投入回报比最高。');
+      parts.push('学业信号强劲。理解力和记忆力处于峰值，适合冲刺考试或攻克难题。保持当前节奏，结果会超出预期。乘胜追击，投入回报比最高。');
     } else if (revs <= total / 2) {
-      parts.push('[STUDY.PROTOCOL] 信号平稳，存在短板需关注。某些知识点上可能有漏洞——查漏补缺的好时机。考试需踏实准备，稳扎稳打比临时突击更有效。可以组队学习，互相督促效率更高。建议：找到薄弱点专项突破。');
+      parts.push('信号平稳，存在短板需要关注。某些知识点可能有漏洞——查漏补缺的好时机。考试需要踏实准备，稳扎稳打比临时突击更有效。找到薄弱点，专项突破。');
     } else {
-      parts.push('[STUDY.PROTOCOL] 逆位偏多，可能面临瓶颈期。若感到迷茫或提不起劲——可能是学习方法需要重新校准的信号。切换学习方式，安排适当休息。考试不建议裸考，从现在开始制定计划慢慢来。建议：换种方式重启，慢一点也没关系。');
+      parts.push('可能面临瓶颈期。若感到迷茫或提不起劲——这可能是学习方法需要调整的信号。切换学习方式，安排适当休息。从现在开始制定计划慢慢来，换种方式重启，慢一点也没关系。');
     }
   } else if (spreadId.startsWith('work')) {
+    parts.push('针对你的事业领域：');
     if (revs === 0) {
-      parts.push('[WORK.PROTOCOL] 事业信号强劲。跳槽、转行、晋升——非常有利的窗口期。大胆面试、谈判、展示价值。创业者可能迎来重要突破。即使暂不动，效率产出也会格外突出，容易被看见。建议：抓住风口，该出手时就出手。');
+      parts.push('事业信号强劲。跳槽、转行、晋升——非常有利的窗口期。大胆面试、谈判、展示你的价值。创业者可能迎来重要突破。即使暂不动，效率产出也会格外突出，容易被看见。抓住风口，该出手时就出手。');
     } else if (revs <= total / 2) {
-      parts.push('[WORK.PROTOCOL] 信号稳中有变。以稳固现有位置为主，重大决策不妨再观察一段。职场人际关系需留意，保持专业和低调。项目推进中多预留缓冲时间。建议：稳字当头，以退为进。');
+      parts.push('信号稳中有变。以稳固现有位置为主，重大决策不妨再观察一段。职场人际关系需要留意，保持专业和低调。项目推进中多预留缓冲时间。稳字当头，以退为进。');
     } else {
-      parts.push('[WORK.PROTOCOL] 逆位偏多，可能遇到阻力或瓶颈。若考虑跳槽——先按兵不动，现在不是最佳窗口。若对工作感到倦怠——找找根源：是工作不适合还是暂时的疲惫？不要冲动裸辞。利用这段时间积累技能和资源。建议：韬光养晦，积蓄力量等风来。');
+      parts.push('可能遇到阻力或瓶颈。若考虑跳槽——先按兵不动，现在不是最佳窗口。若对工作感到倦怠——找找根源：是工作不适合还是暂时的疲惫？不要冲动裸辞。利用这段时间积累技能和资源，积蓄力量等风来。');
     }
   } else if (spreadId.startsWith('travel')) {
+    parts.push('针对你的出行计划：');
     if (revs === 0) {
-      parts.push('[TRAVEL.PROTOCOL] 出行信号极佳。计划中的旅行——放心出发，旅途顺利且可能有惊喜。短途或长途都适合，沿途风景和遇到的人会让你不虚此行。建议：收拾行李出发，好运在路上等你。');
+      parts.push('出行信号极佳。计划中的旅行——放心出发，旅途顺利且可能有惊喜。短途或长途都适合，沿途风景和遇到的人会让你不虚此行。收拾行李出发，好运在路上等你。');
     } else if (revs <= total / 2) {
-      parts.push('[TRAVEL.PROTOCOL] 信号总体不错，有小细节需注意。出行前多做功课——确认交通、住宿、天气。旅途可能有小插曲但不影响整体体验。犹豫要不要去——答案是去，只是需要多做准备。建议：可以出发，Plan B备好。');
+      parts.push('信号总体不错，有小细节需要注意。出行前多做功课——确认交通、住宿、天气。旅途可能有小插曲但不影响整体体验。可以出发，备用方案也准备好。');
     } else {
-      parts.push('[TRAVEL.PROTOCOL] 出行信号偏低，谨慎安排。非去不可的行程——做好万全准备，证件保险备用方案不能少。想放松的话，选择近一点的目的地或推迟计划。这段时间更适合规划而非立即出发。建议：暂缓出行，把期待攒到运势更好时。');
+      parts.push('出行信号偏低，谨慎安排。非去不可的行程——做好万全准备，证件保险备用方案不能少。想放松的话，选择近一点的目的地或推迟计划。这段时间更适合规划而非立即出发。');
     }
   } else if (spreadId.startsWith('social')) {
+    parts.push('针对你的社交领域：');
     if (revs === 0) {
-      parts.push('[SOCIAL.PROTOCOL] 社交信号旺盛。拓展人脉、结交新朋友的黄金期。有聚会或活动——放心参加，你会是受欢迎的人。想修复某段关系——主动迈出第一步的好时机。工作中可能遇到贵人。建议：多出门多交流，好人缘带来好机会。');
+      parts.push('社交信号旺盛。拓展人脉、结交新朋友的黄金期。有聚会或活动——放心参加，你会是受欢迎的人。想修复某段关系——主动迈出第一步的好时机。多出门多交流，好人缘带来好机会。');
     } else if (revs <= total / 2) {
-      parts.push('[SOCIAL.PROTOCOL] 信号平稳，人际中需多一分判断力。对消耗型关系——适当保持距离。可能有人求助或借钱——量力而行，不要勉强自己。真正值得深交的朋友经得起时间考验。建议：有选择地社交，质量比数量重要。');
+      parts.push('信号平稳，人际中需要多一分判断力。对消耗型关系——适当保持距离。有人求助或借钱——量力而行，不要勉强自己。有选择地社交，质量比数量重要。');
     } else {
-      parts.push('[SOCIAL.PROTOCOL] 逆位偏多，人际交往需更谨慎。可能遇到表面友善背后另有目的的人——相信直觉。避免卷入他人八卦或是非，保持中立。适合清理社交圈，远离消耗你能量的关系。建议：谨言慎行，宁缺毋滥。');
+      parts.push('人际交往需要更谨慎。可能遇到表面友善背后另有目的的人——相信你的直觉。避免卷入他人八卦或是非，保持中立。适合清理社交圈，远离消耗你的关系。谨言慎行，宁缺毋滥。');
     }
   } else if (spreadId.startsWith('gaming')) {
+    parts.push('针对你的游戏运势：');
     if (revs === 0) {
-      parts.push('[GAMING.PROTOCOL] 游戏信号上佳。抽卡/开箱运气不错，十连绿灯。竞技游戏中状态和反应在峰值，适合冲分打排位。判断力和手感都比平时更好，队友配合顺畅。建议：放手一搏，抽卡冲分都值得一试。');
+      parts.push('游戏信号上佳。抽卡/开箱运气不错，十连值得一试。竞技游戏中状态和反应在峰值，适合冲分打排位。判断力和手感都比平时更好，放手一搏吧。');
     } else if (revs <= total / 2) {
-      parts.push('[GAMING.PROTOCOL] 信号中等偏上。小氪怡情，不建议大量投入，出金概率一般但不非。竞技状态不错但可能遇到不靠谱队友，保持好心态。排位连输两把就先缓一缓，不要硬怼。建议：适度娱乐，理性消费，心态稳住。');
+      parts.push('信号中等偏上。小氪怡情，不建议大量投入。竞技状态不错但可能遇到不太靠谱的队友，保持好心态。排位连输两把就先缓一缓，不要硬怼。适度娱乐，理性消费，心态稳住。');
     } else {
-      parts.push('[GAMING.PROTOCOL] 信号偏低。抽卡/开箱——建议管住手，出金概率不乐观，等下次UP池。竞技可能遇到连败或队友不给力，今天以娱乐放松为主。控制不住想氪金——先转移注意力，明天再考虑。建议：宜养生游戏，忌上头氪金和排位硬刚。');
+      parts.push('信号偏低。抽卡/开箱——建议管住手，出金概率不乐观，等下次UP池。竞技可能遇到连败，今天以娱乐放松为主。宜养生游戏，忌上头氪金和排位硬刚。');
     }
   }
 
   // ---- Element guidance ----
   const elMessages = {
     fire: [
-      '[ELEMENT.FIRE] 火元素在牌面中跃动——热情和行动力是当下最宝贵的燃料。勇往直前，但别忘了偶尔看看地图。',
-      '[ELEMENT.FIRE] 火能量满满——不是犹豫的时候，想到了就去做。烈火需要风来助燃，也需要水来调温。'
+      '火元素在牌面中跃动——热情和行动力是你当下最宝贵的燃料。想到了就去做，但偶尔也看看地图，别光顾着冲。',
+      '火能量满满——不是犹豫的时候。勇往直前，烈火需要风来助燃，也需要水来调温，保持平衡。'
     ],
     water: [
-      '[ELEMENT.WATER] 水元素在牌面间流淌——情绪和直觉是你此刻最可靠的导航。有些事不用想太明白，感觉对了就对了。',
-      '[ELEMENT.WATER] 水能量浸润着牌阵——倾听内心的潮汐，它比头脑更知道答案在哪。柔软，但并不脆弱。'
+      '水元素在牌面间流淌——情绪和直觉是你此刻最可靠的导航。有些事不用想太明白，感觉对了就对了。柔软，但并不脆弱。',
+      '水能量浸润着牌阵——倾听内心的潮汐，它比头脑更知道答案在哪里。相信你的感受，它们不会骗你。'
     ],
     air: [
-      '[ELEMENT.AIR] 风元素穿过牌面——思想和沟通的力量被唤醒。适合做计划、做决定、做交流。别让思绪飘太远，忘了脚下的路。',
-      '[ELEMENT.AIR] 风能量在牌阵中穿梭——头脑此刻格外清晰。善用这份清明去理清那些纠缠已久的问题。想清楚，然后说清楚。'
+      '风元素穿过牌面——思想和沟通的力量被唤醒。适合做计划、做决定、做交流。头脑此刻格外清晰，善用这份清明。',
+      '风能量在牌阵中穿梭——适合理清那些纠缠已久的问题。想清楚，然后说清楚，别让思绪飘太远。'
     ],
     earth: [
-      '[ELEMENT.EARTH] 土元素稳稳托着牌阵——不需要急。一步一个脚印，你种下的因，会在对的季节结成果。',
-      '[ELEMENT.EARTH] 土能量是牌面的底色——务实、耐心、积累。你正在打造的根基，未来会成为最坚实的依靠。慢，但扎实。'
+      '土元素稳稳托着牌阵——不需要急。一步一个脚印，你种下的因，会在对的季节结成果。慢，但扎实。',
+      '土能量是牌面的底色——务实、耐心、积累。你正在打造的根基，未来会成为最坚实的依靠。'
     ]
   };
   if (elMessages[element]) {
@@ -490,10 +485,10 @@ function generateSummary(result, mood, element, spreadDef) {
 
   // ---- Closing ----
   const closings = [
-    '[SESSION.END] 每一天都是新的画布。神谕为你描了第一笔轮廓，接下来的色彩——由你来决定。',
-    '[SESSION.END] 牌已阅，心已安。塔罗是灯火，照亮眼前几步路；走向远方的双脚，永远属于你自己。',
-    '[SESSION.END] 解读到此为止，但你的故事还在继续。最好的占卜，是你过好当下的每一天。',
-    '[SESSION.END] 无论牌面说了什么——你是自己命运的作者。塔罗只是递了一支笔，怎么写——全在你。'
+    '每一天都是新的画布。塔罗为你描了第一笔轮廓，接下来的色彩——由你来决定。',
+    '牌已阅，心已安。塔罗是灯火，照亮眼前几步路；走向远方的双脚，永远属于你自己。',
+    '解读到此为止，但你的故事还在继续。最好的占卜，是你过好当下的每一天。',
+    '无论牌面说了什么——你是自己命运的作者。塔罗只是递了一支笔，怎么写，全在你。'
   ];
   parts.push(pick(closings));
 

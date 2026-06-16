@@ -605,10 +605,10 @@ function renderResults(result) {
 
   // 结果标题
   const isAI = result._aiGenerated;
-  const summaryTitle = isAI ? 'AI ORACLE OUTPUT' : 'ORACLE OUTPUT';
+  const summaryTitle = isAI ? '◆ 智能深度解读' : '◆ 塔罗解读';
   document.getElementById('result-summary').innerHTML = `
     <h3>${summaryTitle}</h3>
-    <p>${result.summary.replace(/\n/g, '<br>')}</p>
+    <div class="result-summary-text">${result.summary.replace(/\n/g, '<br>')}</div>
   `;
 
   // 预算耗尽提示
@@ -642,23 +642,31 @@ async function copyDivinationResult() {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
   });
 
-  let text = `◆ TAROT TERMINAL · 占卜结果\n`;
-  text += `[DATE] ${today}\n`;
-  text += `[PROTOCOL] ${r.spreadName}\n`;
-  text += `${'─'.repeat(30)}\n\n`;
+  let text = '';
 
-  // Cards
-  r.cards.forEach((c, i) => {
-    text += `[${c.isReversed ? 'REV' : 'UPR'}] ${c.positionName} · ${c.emoji} ${c.name_zh}\n`;
-    text += `${c.interpretation}\n\n`;
-  });
-
-  // Summary
-  text += `${'─'.repeat(30)}\n`;
-  text += `[ORACLE OUTPUT]：\n`;
-  text += r.summary.replace(/<br>/g, '\n').replace(/\n\n/g, '\n');
-  text += `\n\n${'─'.repeat(30)}\n`;
-  text += `◆ TAROT TERMINAL · 命运终端`;
+  // 优先使用新格式 full_text
+  if (r._aiFullText) {
+    text += `${r.spreadName} · ${today}\n`;
+    if (state.userQuestion) {
+      text += `问题：${state.userQuestion}\n`;
+    }
+    text += `${'─'.repeat(30)}\n\n`;
+    text += r._aiFullText;
+    text += `\n\n${'─'.repeat(30)}\n`;
+    text += `命运终端 · TAROT TERMINAL`;
+  } else {
+    // 向后兼容：旧格式
+    text += `${r.spreadName} · ${today}\n`;
+    text += `${'─'.repeat(30)}\n\n`;
+    r.cards.forEach((c, i) => {
+      text += `${c.positionName}｜${c.name_zh}（${c.isReversed ? '逆位' : '正位'}）\n`;
+      text += `${c.interpretation}\n\n`;
+    });
+    text += `${'─'.repeat(30)}\n`;
+    text += r.summary.replace(/<br>/g, '\n').replace(/\n\n/g, '\n');
+    text += `\n\n${'─'.repeat(30)}\n`;
+    text += `命运终端 · TAROT TERMINAL`;
+  }
 
   try {
     await navigator.clipboard.writeText(text);
