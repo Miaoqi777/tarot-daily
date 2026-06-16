@@ -225,8 +225,8 @@ function setupFanHover() {
   const container = document.getElementById('card-fan-container');
   if (!container) return;
 
-  const LIFT_Y = -95;
-  const LIFT_SCALE = 1.18;
+  const LIFT_Y = -25;
+  const LIFT_SCALE = 1.08;
 
   function applyLift(cell) {
     if (cell.classList.contains('selected')) return;
@@ -270,9 +270,9 @@ function setupFanHover() {
 // ── Apply selected lift (called by selectCard) ──
 function applySelectedLift(cell) {
   const x = parseFloat(cell.dataset.x) || 0;
-  const y = (parseFloat(cell.dataset.y) || 0) - 95;
+  const y = (parseFloat(cell.dataset.y) || 0) - 30;
   const rot = parseFloat(cell.dataset.rot) || 0;
-  cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(1.18)`;
+  cell.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(1.12)`;
 }
 
 // ── Restore fan position (called by cancelSelection) ──

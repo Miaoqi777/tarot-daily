@@ -2276,12 +2276,7 @@ img { max-width: 100%; display: block; }
     width: 70px;
     bottom: -150px;
   }
-  .card-cell:hover {
-    transform: translateY(-80px) scale(1.15) rotate(0deg) !important;
-  }
-  .card-cell.selected {
-    transform: translateY(-80px) scale(1.15) rotate(0deg) !important;
-  }
+  /* hover/selected lift handled by JS — no CSS transform override */
 
   .spread-selector {
     gap: 14px;
@@ -2378,12 +2373,7 @@ img { max-width: 100%; display: block; }
     width: 55px;
     bottom: -120px;
   }
-  .card-cell:hover {
-    transform: translateY(-65px) scale(1.12) rotate(0deg) !important;
-  }
-  .card-cell.selected {
-    transform: translateY(-65px) scale(1.12) rotate(0deg) !important;
-  }
+  /* hover/selected lift handled by JS — no CSS transform override */
 
   .card-cell .card-back { font-size: 0.7rem; }
 
