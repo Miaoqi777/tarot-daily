@@ -534,7 +534,7 @@ function resetDivination() {
   document.getElementById('mood-section').classList.add('hidden');
 
   document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
-  document.body.style.background = '';
+  document.body.style.removeProperty('background');
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
