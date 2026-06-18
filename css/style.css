@@ -2716,3 +2716,290 @@ img { max-width: 100%; display: block; }
   height: 20px;
   opacity: 0.5;
 }
+
+/* ============================================================
+   Oracle Orb — 占卜师光球
+   ============================================================ */
+
+.oracle-orb {
+  position: fixed;
+  z-index: 1100;
+  width: 72px;
+  height: 72px;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.8s ease, filter 0.5s ease;
+  filter: drop-shadow(0 0 12px var(--amber-glow));
+}
+
+.oracle-orb.visible {
+  opacity: 1;
+}
+
+/* ── Orb Core ── */
+.orb-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 52%;
+  height: 52%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%,
+    #ffffff 0%,
+    #f8e8b0 8%,
+    #f0d060 18%,
+    #e8b84b 40%,
+    #c49430 65%,
+    rgba(160, 110, 30, 0.4) 100%
+  );
+  box-shadow:
+    0 0 16px rgba(232, 184, 75, 0.6),
+    0 0 40px rgba(212, 168, 67, 0.25),
+    0 0 80px rgba(180, 130, 40, 0.12),
+    inset 0 0 10px rgba(255, 255, 255, 0.35);
+  transition: box-shadow 0.6s ease;
+}
+
+/* ── Orb Glow ── */
+.orb-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(232, 184, 75, 0.25) 0%,
+    rgba(212, 168, 67, 0.08) 40%,
+    transparent 70%
+  );
+  animation: orbGlowPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes orbGlowPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.25);
+    opacity: 1;
+  }
+}
+
+/* ── Orb Particles ── */
+.orb-particles {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  pointer-events: none;
+}
+
+.orb-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f0d878;
+  box-shadow: 0 0 6px rgba(240, 216, 120, 0.8), 0 0 12px rgba(232, 184, 75, 0.4);
+  animation: orbParticleOrbit var(--duration, 4s) linear infinite;
+}
+
+.orb-particle:nth-child(1) {
+  --duration: 4.5s;
+  --radius: 48px;
+  --start-angle: 0deg;
+}
+
+.orb-particle:nth-child(2) {
+  --duration: 6s;
+  --radius: 56px;
+  --start-angle: 120deg;
+}
+
+.orb-particle:nth-child(3) {
+  --duration: 5s;
+  --radius: 44px;
+  --start-angle: 240deg;
+}
+
+@keyframes orbParticleOrbit {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--start-angle, 0deg))
+      translateX(var(--radius, 48px))
+      rotate(calc(-1 * var(--start-angle, 0deg)));
+    opacity: 0.3;
+  }
+  25% { opacity: 0.9; }
+  50% { opacity: 0.4; }
+  75% { opacity: 0.85; }
+  100% {
+    transform:
+      translate(-50%, -50%)
+      rotate(calc(var(--start-angle, 0deg) + 360deg))
+      translateX(var(--radius, 48px))
+      rotate(calc(-1 * var(--start-angle, 0deg) - 360deg));
+    opacity: 0.3;
+  }
+}
+
+/* ── Orb States ── */
+
+/* Speaking */
+.oracle-orb.speaking .orb-core {
+  box-shadow:
+    0 0 24px rgba(232, 184, 75, 0.85),
+    0 0 56px rgba(212, 168, 67, 0.4),
+    0 0 100px rgba(180, 130, 40, 0.2),
+    inset 0 0 16px rgba(255, 255, 255, 0.45);
+}
+
+.oracle-orb.speaking .orb-glow {
+  animation: orbGlowPulse 0.9s ease-in-out infinite;
+}
+
+.oracle-orb.speaking {
+  filter: drop-shadow(0 0 20px rgba(232, 184, 75, 0.5));
+}
+
+/* Demo mode — system takeover */
+.oracle-orb.demo-mode {
+  filter: drop-shadow(0 0 18px rgba(0, 229, 255, 0.4)) drop-shadow(0 0 8px var(--amber-glow));
+}
+
+.oracle-orb.demo-mode .orb-core {
+  box-shadow:
+    0 0 20px rgba(0, 229, 255, 0.45),
+    0 0 16px rgba(232, 184, 75, 0.5),
+    0 0 56px rgba(212, 168, 67, 0.3),
+    0 0 100px rgba(0, 200, 220, 0.15),
+    inset 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.oracle-orb.demo-mode .orb-glow {
+  animation: orbGlowPulse 1.2s ease-in-out infinite;
+}
+
+/* Muted */
+.oracle-orb.muted {
+  filter: drop-shadow(0 0 6px rgba(150, 150, 150, 0.3));
+  opacity: 0.5;
+}
+
+.oracle-orb.muted .orb-core {
+  box-shadow:
+    0 0 8px rgba(150, 150, 150, 0.3),
+    0 0 20px rgba(120, 120, 120, 0.15);
+}
+
+/* Hovered */
+.oracle-orb.hovered .orb-core {
+  box-shadow:
+    0 0 28px rgba(232, 184, 75, 0.9),
+    0 0 64px rgba(212, 168, 67, 0.45),
+    0 0 120px rgba(180, 130, 40, 0.25),
+    inset 0 0 14px rgba(255, 255, 255, 0.5);
+}
+
+/* ── Subtitle Bubble ── */
+.orb-subtitle-bubble {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 260px;
+  padding: 10px 16px;
+  background: rgba(20, 22, 30, 0.9);
+  border: 1px solid var(--amber-400);
+  border-radius: 6px;
+  color: var(--amber-400);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  text-align: center;
+  white-space: pre-wrap;
+  box-shadow: 0 0 20px rgba(212, 168, 67, 0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.orb-subtitle-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--amber-400);
+}
+
+/* ============================================================
+   Demo Cursor — 伪鼠标光标
+   ============================================================ */
+
+.demo-cursor {
+  position: fixed;
+  z-index: 1500;
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+              top 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.3s ease;
+}
+
+.demo-cursor svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 6px rgba(232, 184, 75, 0.8))
+          drop-shadow(0 0 14px rgba(212, 168, 67, 0.35));
+}
+
+.demo-cursor svg path {
+  fill: #f0d060;
+  stroke: rgba(180, 130, 40, 0.6);
+  stroke-width: 0.5;
+}
+
+/* Click ring */
+.demo-cursor-click-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -4px;
+  margin-top: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(232, 184, 75, 0.8);
+  background: rgba(240, 216, 100, 0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes cursorClickRing {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ── Demo Target Highlight ── */
+.demo-target-highlight {
+  box-shadow: 0 0 24px rgba(232, 184, 75, 0.7),
+              0 0 48px rgba(212, 168, 67, 0.3),
+              0 0 80px rgba(0, 229, 255, 0.15) !important;
+  transition: box-shadow 0.3s ease !important;
+}

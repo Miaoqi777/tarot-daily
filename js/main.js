@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initWeather();
   initWhiteNoise();
   spawnIntroEmojis();
+  initOracle();
 });
 
 // ---------- Intro Overlay ----------
@@ -47,6 +48,8 @@ function setupIntro() {
     overlay.classList.add('dismissed');
     sessionStorage.setItem('tarot-intro-shown', '1');
     setTimeout(() => overlay.remove(), 600);
+    // Oracle guides first step after intro
+    setTimeout(() => guideStep('theme'), 800);
   });
 }
 
@@ -87,6 +90,7 @@ function renderSpreadOptions() {
 }
 
 function selectTheme(themeId, el) {
+  if (window.__oracleDemoLock) return;
   document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
   state.selectedTheme = themeId;
@@ -120,9 +124,13 @@ function selectTheme(themeId, el) {
     state.selectedSpread = spread;
     showShuffleReady();
   }
+
+  // Oracle guides sub-spread selection (non-blocking)
+  setTimeout(() => guideStep('subSpread'), 600);
 }
 
 function selectSubSpread(spreadId, el) {
+  if (window.__oracleDemoLock) return;
   document.querySelectorAll('.spread-sub-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
 
@@ -134,6 +142,7 @@ function selectSubSpread(spreadId, el) {
 }
 
 function toggleMinorArcana() {
+  if (window.__oracleDemoLock) return;
   state.includeMinorArcana = !state.includeMinorArcana;
   const sw = document.getElementById('toggle-minor-arcana');
   if (sw) sw.classList.toggle('on', state.includeMinorArcana);
@@ -141,6 +150,7 @@ function toggleMinorArcana() {
 
 // ── AI Toggle ──
 function toggleAI() {
+  if (window.__oracleDemoLock) return;
   state.aiEnabled = !state.aiEnabled;
   const sw = document.getElementById('toggle-ai-switch');
   const questionBox = document.getElementById('user-question');
@@ -220,6 +230,9 @@ function showShuffleReady() {
   document.getElementById('required-count').textContent = state.selectedSpread.card_count;
   document.getElementById('selected-count').textContent = '0';
   document.getElementById('shuffle-area').style.display = 'block';
+
+  // Oracle guides shuffle step
+  setTimeout(() => guideStep('shuffle'), 500);
 }
 
 // ── Fan hover delegation (preserves rotation) ──
@@ -307,6 +320,7 @@ function calculateFanPositions(count) {
 
 // ---------- Shuffle & Fan Display ----------
 async function startShuffle() {
+  if (window.__oracleDemoLock) return;
   if (state.isShuffling) return;
   if (!state.selectedSpread) {
     alert('[ERROR] 请先选择协议类型');
@@ -351,6 +365,9 @@ async function startShuffle() {
   state.isShuffling = false;
   document.getElementById('btn-shuffle').disabled = false;
   document.getElementById('btn-shuffle').textContent = '⟲ 重新洗牌';
+
+  // Oracle guides card selection
+  setTimeout(() => guideStep('select'), 400);
 }
 
 // Fan spread animation: cards bloom outward from center with smooth ease-out
@@ -396,6 +413,7 @@ function fanSpreadAnimation(duration) {
 
 // ---------- Card Selection ----------
 function selectCard(index, el) {
+  if (window.__oracleDemoLock) return;
   if (state.isShuffling) return;
   if (!state.selectedSpread) return;
 
@@ -419,6 +437,8 @@ function selectCard(index, el) {
   // Check if reached required count
   if (state.selectedCards.length >= state.selectedSpread.card_count) {
     setTimeout(showConfirmation, 400);
+    // Oracle guides confirmation
+    setTimeout(() => guideStep('confirm'), 600);
   }
 }
 
@@ -449,6 +469,7 @@ function showConfirmation() {
 }
 
 function cancelSelection() {
+  if (window.__oracleDemoLock) return;
   document.getElementById('confirm-popup').classList.add('hidden');
   // Deselect all and restore fan positions
   state.selectedCards.forEach(s => {
@@ -464,6 +485,7 @@ function cancelSelection() {
 
 // ---------- Confirm Reading & Curtain ----------
 async function confirmReading() {
+  if (window.__oracleDemoLock) return;
   document.getElementById('confirm-popup').classList.add('hidden');
 
   const user = getCurrentUser();
@@ -1112,6 +1134,11 @@ function sleep(ms) {
 // ---------- Keyboard Shortcuts ----------
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    // During demo, Escape cancels the demo
+    if (window.__oracleDemoLock && typeof cancelDemo === 'function') {
+      cancelDemo();
+      return;
+    }
     hideAuthModal();
     document.getElementById('confirm-popup').classList.add('hidden');
   }
