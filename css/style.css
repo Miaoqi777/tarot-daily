@@ -2905,16 +2905,14 @@ img { max-width: 100%; display: block; }
     inset 0 0 14px rgba(255, 255, 255, 0.5);
 }
 
-/* ── Subtitle Bubble ── */
+/* ── Subtitle Bubble (独立 fixed 定位) ── */
 .orb-subtitle-bubble {
   display: none;
-  position: absolute;
-  bottom: calc(100% + 16px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  z-index: 1105;
   max-width: 400px;
   padding: 10px 16px;
-  background: rgba(20, 22, 30, 0.9);
+  background: rgba(20, 22, 30, 0.92);
   border: 1px solid var(--amber-400);
   border-radius: 6px;
   color: var(--amber-400);
@@ -2923,9 +2921,9 @@ img { max-width: 100%; display: block; }
   line-height: 1.7;
   text-align: center;
   white-space: pre-wrap;
+  word-break: keep-all;
   box-shadow: 0 0 20px rgba(212, 168, 67, 0.2);
   pointer-events: none;
-  z-index: 1;
 }
 
 .orb-subtitle-bubble::after {

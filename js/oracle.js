@@ -116,9 +116,17 @@ function speakOracle(text, opts = {}) {
 // ── Subtitle Bubble ──
 function showSubtitle(text) {
   const el = oracleState.subtitleEl;
+  const orb = oracleState.orbEl;
   if (!el) return;
   el.textContent = text;
   el.style.display = 'block';
+  // Position above orb
+  if (orb) {
+    const orbRect = orb.getBoundingClientRect();
+    el.style.left = (orbRect.left + orbRect.width / 2) + 'px';
+    el.style.top = (orbRect.top - 16) + 'px';
+    el.style.transform = 'translate(-50%, -100%)';
+  }
   clearTimeout(el._hideTimeout);
   el._hideTimeout = setTimeout(() => { el.style.display = 'none'; }, text.length * 90 + 2000);
 }
