@@ -1,13 +1,13 @@
 /* ============================================================
    oracle.js — 占卜师光球向导系统
-   光球漂浮动画 · 语音引导 · 每日演示 · 伪鼠标操控
+   光球漂浮动画 · 语音引导 · 三阶段每日演示 · 伪鼠标操控
    ============================================================ */
 
 // ── Oracle State ──
 const oracleState = {
   demoInProgress: false,
   idleAnimId: null,
-  orbX: 55,          // viewport percentage
+  orbX: 55,
   orbY: 45,
   time: 0,
   voiceMuted: false,
@@ -16,70 +16,62 @@ const oracleState = {
   subtitleEl: null,
 };
 
-// ── Demo Keys (localStorage) ──
+// ── Demo Keys (localStorage, once per day per phase) ──
 const DEMO_KEYS = {
-  theme:     'oracle-demo-theme',
-  subSpread: 'oracle-demo-subspread',
-  shuffle:   'oracle-demo-shuffle',
-  select:    'oracle-demo-select',
-  confirm:   'oracle-demo-confirm',
+  phase1: 'oracle-demo-phase1',
+  phase2: 'oracle-demo-phase2',
+  phase3: 'oracle-demo-phase3',
 };
 
 // ── Guidance Voice Lines ──
 const GUIDANCE = {
-  theme: {
+  phase1: {
     demo: [
-      '观测到新的查询节点。正在演示：查询类型选择。',
-      '观测我的操作。点击你感兴趣的生命领域。',
+      '观测到新的访问者。正在演示：命运协议初始化流程。',
+      '首先，选择与你灵魂共振的查询领域。',
+      '你可以选择是否包含小阿卡纳——五十六张次级牌面，增加神谕的深度与复杂度。',
+      'AI深度解读已开启。你可以用文字或语音向我提出具体问题，让神谕更精准地回应你。',
+      '洗牌协议已启动。牌面将从中心绽放为扇形阵列。',
+      '从阵列中选取牌面，锁定你的命运变量。',
+      '确认按钮在此。当你准备好后，亲手按下它——那是属于你的时刻。',
     ],
-    normal: '请选择与你灵魂共振的查询类型。',
-    afterDemo: '演示完毕。现在，请亲手选择你的查询类型。',
+    normal: '欢迎回来。请选择你的查询领域，开始今日的占卜。',
+    afterDemo: '演示完毕。终端控制权已交还。现在，请亲手开启你的占卜之旅。',
   },
-  subSpread: {
+  phase2: {
     demo: [
-      '协议类型已确认。正在演示：协议深度选择。',
-      '不同的牌阵，对应不同深度的神谕解析。',
+      '检测到身份验证请求。正在演示：账号与记录系统。',
+      '点击此标签，你可以注册新账号——将占卜记录与心情日志保存到云端，跨设备同步。',
+      '点击此标签，你可以登录已有账号，恢复你的历史记录与运势分析。',
+      '当然，你完全可以跳过这一步。不登录也能正常使用全部功能——抽牌、解读、语音、白噪音，一个不少。',
+      '登录只是让每一次心声都能被妥善保管，而非使用的门槛。选择权在你手中。',
     ],
-    normal: '请选择你期望的协议深度。',
-    afterDemo: '演示完毕。请选择你的牌阵协议。',
+    normal: '',
+    afterDemo: '演示完毕。请自由选择：登录、注册，或直接关闭此窗口继续占卜。',
   },
-  shuffle: {
+  phase3: {
     demo: [
-      '牌阵已就绪。正在演示：洗牌协议启动。',
-      '命运之牌将从中心绽放为扇形阵列。',
+      '神谕已生成。正在演示：结果浏览方式。',
+      '简洁模式提供一句话概括，适合快速获取指引。',
+      '详细模式展示逐张牌的全方位解读——牌位含义、正逆位分析、综合总结。',
+      '如果心中仍有疑问，随时可以重新测算——每一次提问，都是与命运的一次全新对话。',
     ],
-    normal: '请启动洗牌协议，让命运之牌展开。',
-    afterDemo: '演示完毕。请亲手启动洗牌协议。',
-  },
-  select: {
-    demo: [
-      '扇形阵列已展开。正在演示：命运之牌选取。',
-      '点击牌面以锁定你的命运变量。',
-    ],
-    normal: '请从扇形阵列中，选取你的命运之牌。',
-    afterDemo: '演示完毕。请选取你的命运之牌。',
-  },
-  confirm: {
-    demo: [
-      '变量已满额。正在演示：神谕确认。',
-      '确认后，命运算法将为你生成解读。',
-    ],
-    normal: '变量已就绪。请确认执行神谕。',
-    afterDemo: '演示完毕。请确认你的命运变量。',
+    normal: '',
+    afterDemo: '最后，请记住：塔罗是映照内心的镜子，而非预知未来的水晶球。你的人生，永远由你自己掌握。',
   },
 };
 
 // ── Daily Demo Check ──
-function isDemoNeeded(stepKey) {
-  const storageKey = DEMO_KEYS[stepKey];
+function isDemoNeeded(phaseKey) {
+  const storageKey = DEMO_KEYS[phaseKey];
   if (!storageKey) return false;
   const stored = localStorage.getItem(storageKey);
   const today = new Date().toISOString().split('T')[0];
   return stored !== today;
 }
 
-function markDemoDone(stepKey) {
-  const storageKey = DEMO_KEYS[stepKey];
+function markDemoDone(phaseKey) {
+  const storageKey = DEMO_KEYS[phaseKey];
   if (!storageKey) return;
   const today = new Date().toISOString().split('T')[0];
   localStorage.setItem(storageKey, today);
@@ -95,7 +87,6 @@ function speakOracle(text, opts = {}) {
   if (oracleState.voiceMuted) return Promise.resolve();
   if (typeof speakResult !== 'function') return Promise.resolve();
 
-  // Show subtitle regardless of TTS
   showSubtitle(text);
 
   return new Promise(resolve => {
@@ -111,14 +102,13 @@ function speakOracle(text, opts = {}) {
         resolve();
       },
     });
-    // If TTS not available, still resolve after estimated reading time
     if (!success) {
       if (oracleState.orbEl) oracleState.orbEl.classList.add('speaking');
       setTimeout(() => {
         if (oracleState.orbEl) oracleState.orbEl.classList.remove('speaking');
         hideSubtitle();
         resolve();
-      }, text.length * 80 + 500); // ~80ms per char reading time
+      }, text.length * 80 + 500);
     }
   });
 }
@@ -129,7 +119,6 @@ function showSubtitle(text) {
   if (!el) return;
   el.textContent = text;
   el.style.display = 'block';
-  // Auto-hide after TTS would finish
   clearTimeout(el._hideTimeout);
   el._hideTimeout = setTimeout(() => { el.style.display = 'none'; }, text.length * 90 + 2000);
 }
@@ -154,18 +143,16 @@ function hideCursor() {
   const cursor = oracleState.cursorEl;
   if (!cursor) return;
   cursor.style.opacity = '0';
-  setTimeout(() => { cursor.style.display = 'none'; }, 300);
+  setTimeout(() => { cursor.style.display = 'none'; }, 200);
 }
 
-function moveCursorTo(el, duration = 500) {
+function moveCursorTo(el, duration = 300) {
   const cursor = oracleState.cursorEl;
   if (!cursor || !el) return Promise.resolve();
 
   const targetRect = el.getBoundingClientRect();
   const cx = targetRect.left + targetRect.width / 2;
   const cy = targetRect.top + targetRect.height / 2;
-
-  // Position cursor slightly offset (like a real hand)
   const offsetX = -8;
   const offsetY = -6;
 
@@ -173,33 +160,30 @@ function moveCursorTo(el, duration = 500) {
   cursor.style.left = (cx + offsetX) + 'px';
   cursor.style.top = (cy + offsetY) + 'px';
 
-  return new Promise(resolve => setTimeout(resolve, duration + 50));
+  return new Promise(resolve => setTimeout(resolve, duration + 30));
 }
 
 function cursorClick() {
   const cursor = oracleState.cursorEl;
   if (!cursor) return Promise.resolve();
 
-  cursor.style.transform = 'scale(0.8)';
+  cursor.style.transform = 'scale(0.75)';
   const ring = cursor.querySelector('.demo-cursor-click-ring');
   if (ring) {
     ring.style.animation = 'none';
-    ring.offsetHeight; // reflow
+    ring.offsetHeight;
     ring.style.animation = 'cursorClickRing 0.5s ease-out forwards';
   }
 
   return new Promise(resolve => {
-    setTimeout(() => {
-      cursor.style.transform = 'scale(1)';
-      resolve();
-    }, 200);
+    setTimeout(() => { cursor.style.transform = 'scale(1)'; resolve(); }, 180);
   });
 }
 
 function highlightTarget(el) {
   if (!el) return;
   el.classList.add('demo-target-highlight');
-  setTimeout(() => el.classList.remove('demo-target-highlight'), 1200);
+  setTimeout(() => el.classList.remove('demo-target-highlight'), 1000);
 }
 
 // ── Demo helper: temporarily lift lock for internal calls ──
@@ -207,7 +191,7 @@ function _demoUnlock(fn) {
   window.__oracleDemoLock = false;
   try {
     const result = fn();
-    window.__oracleDemoLock = true;  // Restore immediately — fn already passed its lock gate
+    window.__oracleDemoLock = true;
     return result;
   } catch (e) {
     window.__oracleDemoLock = true;
@@ -215,32 +199,43 @@ function _demoUnlock(fn) {
   }
 }
 
+// ── Orb Positioning ──
+function _orbToDemoPosition() {
+  stopOrbIdleAnimation();
+  const orb = oracleState.orbEl;
+  if (!orb) return;
+  orb.style.transition = 'left 0.6s ease, top 0.6s ease';
+  orb.style.left = '78%';
+  orb.style.top = '12%';
+  orb.style.transform = 'translate(-50%, -50%)';
+}
+
+function _orbToFloatPosition() {
+  const orb = oracleState.orbEl;
+  if (!orb) return;
+  orb.style.transition = '';
+  orb.style.left = oracleState.orbX + '%';
+  orb.style.top = oracleState.orbY + '%';
+  startOrbIdleAnimation();
+}
+
 // ── Orb Floating Animation ──
 function startOrbIdleAnimation() {
   const orb = oracleState.orbEl;
   if (!orb) return;
+  if (oracleState.idleAnimId) return;
 
   oracleState.time = performance.now() * 0.001;
 
   function animate(now) {
     const t = now * 0.001;
-    const dt = t - oracleState.time;
     oracleState.time = t;
 
-    // Two independent sine waves for organic floating
-    const xFreq1 = 0.13, xFreq2 = 0.07;
-    const yFreq1 = 0.09, yFreq2 = 0.17;
-
-    const x = 50
-      + Math.sin(t * xFreq1) * 22
-      + Math.cos(t * xFreq2 + 1.3) * 14;
-    const y = 50
-      + Math.cos(t * yFreq1 + 0.7) * 18
-      + Math.sin(t * yFreq2) * 12;
+    const x = 50 + Math.sin(t * 0.13) * 22 + Math.cos(t * 0.07 + 1.3) * 14;
+    const y = 50 + Math.cos(t * 0.09 + 0.7) * 18 + Math.sin(t * 0.17) * 12;
 
     oracleState.orbX = x;
     oracleState.orbY = y;
-
     orb.style.left = x + '%';
     orb.style.top = y + '%';
     orb.style.transform = 'translate(-50%, -50%)';
@@ -258,17 +253,23 @@ function stopOrbIdleAnimation() {
   }
 }
 
-// ── Demo Execution Per Step ──
-async function runDemoForStep(stepKey) {
+// ================================================================
+//  三阶段演示编排
+// ================================================================
+
+async function runDemoForPhase(phaseKey) {
   if (oracleState.demoInProgress) return;
   oracleState.demoInProgress = true;
   window.__oracleDemoLock = true;
 
   const orb = oracleState.orbEl;
   if (orb) orb.classList.add('demo-mode');
+  _orbToDemoPosition();
 
-  const guidance = GUIDANCE[stepKey];
-  // Speak demo lines
+  const guidance = GUIDANCE[phaseKey];
+  if (!guidance) { _finishDemo(phaseKey); return; }
+
+  // Speak demo lines (skip first line for phase2/3 — only say it if first line exists)
   for (const line of guidance.demo) {
     await speakOracle(line);
   }
@@ -276,306 +277,223 @@ async function runDemoForStep(stepKey) {
   showCursor();
 
   try {
-    switch (stepKey) {
-      case 'theme': await demoThemeSelection(); break;
-      case 'subSpread': await demoSubSpreadSelection(); break;
-      case 'shuffle': await demoShuffle(); break;
-      case 'select': await demoCardSelection(); break;
-      case 'confirm': await demoConfirm(); break;
+    switch (phaseKey) {
+      case 'phase1': await demoPhase1(); break;
+      case 'phase2': await demoPhase2(); break;
+      case 'phase3': await demoPhase3(); break;
     }
   } catch (e) {
     console.warn('[Oracle] Demo error:', e);
   }
 
   hideCursor();
-  await speakOracle(guidance.afterDemo);
 
-  markDemoDone(stepKey);
+  if (guidance.afterDemo) {
+    await speakOracle(guidance.afterDemo);
+  }
 
+  _finishDemo(phaseKey);
+}
+
+function _finishDemo(phaseKey) {
+  markDemoDone(phaseKey);
+  const orb = oracleState.orbEl;
   if (orb) orb.classList.remove('demo-mode');
   oracleState.demoInProgress = false;
   window.__oracleDemoLock = false;
+  _orbToFloatPosition();
 }
 
-// ── Individual Demo Steps ──
-
-async function demoThemeSelection() {
+// ── Phase 1: 选题 → 小阿卡纳 → AI → 洗牌 → 选牌 → 悬浮确认 ──
+async function demoPhase1() {
+  // 1. Click first theme
   const firstTheme = document.querySelector('.spread-option');
   if (!firstTheme) return;
-
-  await moveCursorTo(firstTheme, 600);
-  await sleep(300);
+  await moveCursorTo(firstTheme, 250);
+  await sleep(200);
   highlightTarget(firstTheme);
   await cursorClick();
-
-  // Actually perform the action (unlock temporarily)
   const themeId = firstTheme.dataset.theme;
   if (themeId && typeof selectTheme === 'function') {
     _demoUnlock(() => selectTheme(themeId, firstTheme));
   }
+  await sleep(1500);
 
-  await sleep(2000);
-
-  // Undo
-  _demoUnlock(() => resetThemeSelection());
-  await sleep(400);
-}
-
-function resetThemeSelection() {
-  if (typeof state !== 'undefined' && state) state.selectedTheme = null;
-  document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
-  const sub = document.getElementById('spread-sub-section');
-  if (sub) sub.classList.remove('visible');
-  const subSelector = document.getElementById('spread-sub-selector');
-  if (subSelector) subSelector.innerHTML = '';
-}
-
-async function demoSubSpreadSelection() {
-  // Need theme selected first to show sub-spreads
-  const firstTheme = document.querySelector('.spread-option');
-  if (!firstTheme) return;
-
-  const themeId = firstTheme.dataset.theme || 'love';
-  if (typeof selectTheme === 'function') {
-    _demoUnlock(() => selectTheme(themeId, firstTheme));
-  }
-  await sleep(500);
-
-  const firstSub = document.querySelector('.spread-sub-option');
-  if (!firstSub) { _demoUnlock(() => resetThemeSelection()); return; }
-
-  await moveCursorTo(firstSub, 600);
-  await sleep(300);
-  highlightTarget(firstSub);
-  await cursorClick();
-
-  const spreadId = firstSub.dataset.spreadId;
-  if (spreadId && typeof selectSubSpread === 'function') {
-    _demoUnlock(() => selectSubSpread(spreadId, firstSub));
+  // 2. Toggle minor arcana
+  const minorToggle = document.getElementById('toggle-minor-arcana');
+  if (minorToggle) {
+    await moveCursorTo(minorToggle, 250);
+    await sleep(200);
+    highlightTarget(minorToggle);
+    await cursorClick();
+    if (typeof toggleMinorArcana === 'function') {
+      _demoUnlock(() => toggleMinorArcana());
+    }
+    await sleep(1200);
   }
 
-  await sleep(2000);
-
-  // Undo
-  _demoUnlock(() => resetSubSpreadSelection());
-  await sleep(400);
-}
-
-function resetSubSpreadSelection() {
-  if (typeof state !== 'undefined' && state) {
-    state.selectedSpread = null;
-    state.selectedTheme = null;
-  }
-  document.querySelectorAll('.spread-sub-option').forEach(o => o.classList.remove('selected'));
-  document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
-  const shuffleArea = document.getElementById('shuffle-area');
-  if (shuffleArea) shuffleArea.style.display = 'none';
-  const sub = document.getElementById('spread-sub-section');
-  if (sub) sub.classList.remove('visible');
-  const subSelector = document.getElementById('spread-sub-selector');
-  if (subSelector) subSelector.innerHTML = '';
-}
-
-async function demoShuffle() {
-  // Set up state: theme + sub-spread selected
-  const firstTheme = document.querySelector('.spread-option');
-  if (!firstTheme) return;
-
-  const themeId = firstTheme.dataset.theme || 'love';
-  if (typeof selectTheme === 'function') _demoUnlock(() => selectTheme(themeId, firstTheme));
-  await sleep(400);
-
-  const firstSub = document.querySelector('.spread-sub-option');
-  if (!firstSub) { _demoUnlock(() => resetThemeSelection()); return; }
-
-  const spreadId = firstSub.dataset.spreadId;
-  if (spreadId && typeof selectSubSpread === 'function') _demoUnlock(() => selectSubSpread(spreadId, firstSub));
-  await sleep(400);
-
-  const shuffleBtn = document.getElementById('btn-shuffle');
-  if (!shuffleBtn) { _demoUnlock(() => resetSubSpreadSelection()); return; }
-
-  await moveCursorTo(shuffleBtn, 600);
-  await sleep(300);
-  highlightTarget(shuffleBtn);
-  await cursorClick();
-
-  if (typeof startShuffle === 'function') {
-    await _demoUnlock(() => startShuffle());
+  // 3. Toggle AI
+  const aiToggle = document.getElementById('toggle-ai-switch');
+  if (aiToggle) {
+    await moveCursorTo(aiToggle, 250);
+    await sleep(200);
+    highlightTarget(aiToggle);
+    await cursorClick();
+    if (typeof toggleAI === 'function') {
+      _demoUnlock(() => toggleAI());
+    }
+    await sleep(1500);
   }
 
-  await sleep(2500);
-
-  // Undo
-  _demoUnlock(() => resetShuffleState());
-  await sleep(400);
-}
-
-function resetShuffleState() {
-  if (typeof state !== 'undefined' && state) {
-    state.isShuffling = false;
-    state.gridCards = [];
-    state.selectedCards = [];
-    state.selectedSpread = null;
-    state.selectedTheme = null;
-  }
-  const gridContainer = document.getElementById('card-grid-container');
-  if (gridContainer) gridContainer.style.display = 'none';
-  const fanContainer = document.getElementById('card-fan-container');
-  if (fanContainer) fanContainer.innerHTML = '';
+  // 4. Shuffle (sub-spread already auto-selected)
   const shuffleBtn = document.getElementById('btn-shuffle');
   if (shuffleBtn) {
-    shuffleBtn.disabled = false;
-    shuffleBtn.textContent = '◆ 启动洗牌协议';
+    await moveCursorTo(shuffleBtn, 250);
+    await sleep(200);
+    highlightTarget(shuffleBtn);
+    await cursorClick();
+    if (typeof startShuffle === 'function') {
+      await _demoUnlock(() => startShuffle());
+    }
+    await sleep(1500);
   }
-  const selectionCounter = document.getElementById('selection-counter');
-  if (selectionCounter) selectionCounter.style.display = 'none';
-  const shuffleArea = document.getElementById('shuffle-area');
-  if (shuffleArea) shuffleArea.style.display = 'none';
-  document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
-  document.querySelectorAll('.spread-sub-option').forEach(o => o.classList.remove('selected'));
-  const sub = document.getElementById('spread-sub-section');
-  if (sub) sub.classList.remove('visible');
-  const subSelector = document.getElementById('spread-sub-selector');
-  if (subSelector) subSelector.innerHTML = '';
-}
 
-async function demoCardSelection() {
-  // Set up: theme → sub-spread → shuffle
-  const firstTheme = document.querySelector('.spread-option');
-  if (!firstTheme) return;
-  const themeId = firstTheme.dataset.theme || 'love';
-  if (typeof selectTheme === 'function') _demoUnlock(() => selectTheme(themeId, firstTheme));
-  await sleep(400);
-  const firstSub = document.querySelector('.spread-sub-option');
-  if (!firstSub) { _demoUnlock(() => resetThemeSelection()); return; }
-  const spreadId = firstSub.dataset.spreadId;
-  if (spreadId && typeof selectSubSpread === 'function') _demoUnlock(() => selectSubSpread(spreadId, firstSub));
-  await sleep(400);
-  if (typeof startShuffle === 'function') await _demoUnlock(() => startShuffle());
-  await sleep(1200);
-
+  // 5. Select cards
   const required = (typeof state !== 'undefined' && state.selectedSpread)
     ? state.selectedSpread.card_count : 3;
-
-  // Click required number of cards
   const cards = document.querySelectorAll('.card-cell');
   for (let i = 0; i < Math.min(required, cards.length); i++) {
     const card = cards[i];
-    await moveCursorTo(card, 500);
-    await sleep(200);
+    await moveCursorTo(card, 220);
+    await sleep(150);
     highlightTarget(card);
     await cursorClick();
-
     if (typeof selectCard === 'function') {
       _demoUnlock(() => selectCard(i, card));
     }
-    await sleep(600);
+    await sleep(500);
   }
 
-  await sleep(2000);
+  await sleep(800);
 
-  // Undo
-  _demoUnlock(() => resetCardSelection());
-  await sleep(400);
-}
-
-function resetCardSelection() {
-  if (typeof state !== 'undefined' && state) {
-    state.selectedCards = [];
-    state.isShuffling = false;
-    state.gridCards = [];
-    state.selectedSpread = null;
-    state.selectedTheme = null;
+  // 6. Hover over confirm button (no click!)
+  const confirmBtn = document.querySelector('#confirm-popup .btn-confirm');
+  if (confirmBtn) {
+    await moveCursorTo(confirmBtn, 300);
+    await sleep(1200);
+    // Cursor stays hovering — the afterDemo speech says "亲手按下它"
   }
-  // Hide confirm popup
-  const popup = document.getElementById('confirm-popup');
-  if (popup) popup.classList.add('hidden');
-  // Deselect all cards
-  document.querySelectorAll('.card-cell').forEach(el => {
-    el.classList.remove('selected');
-    // Restore fan position
-    const x = parseFloat(el.dataset.x) || 0;
-    const y = parseFloat(el.dataset.y) || 0;
-    const rot = parseFloat(el.dataset.rot) || 0;
-    el.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg) scale(1)`;
+
+  await sleep(600);
+
+  // 7. Full reset
+  _demoUnlock(() => {
+    if (typeof resetDivination === 'function') resetDivination();
   });
-  // Hide card grid
-  const gridContainer = document.getElementById('card-grid-container');
-  if (gridContainer) gridContainer.style.display = 'none';
-  const fanContainer = document.getElementById('card-fan-container');
-  if (fanContainer) fanContainer.innerHTML = '';
-  const selectionCounter = document.getElementById('selection-counter');
-  if (selectionCounter) selectionCounter.style.display = 'none';
-  const shuffleArea = document.getElementById('shuffle-area');
-  if (shuffleArea) shuffleArea.style.display = 'none';
-  document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
-  document.querySelectorAll('.spread-sub-option').forEach(o => o.classList.remove('selected'));
-  const sub = document.getElementById('spread-sub-section');
-  if (sub) sub.classList.remove('visible');
-  const subSelector = document.getElementById('spread-sub-selector');
-  if (subSelector) subSelector.innerHTML = '';
+  // Also turn off toggles
+  if (typeof state !== 'undefined' && state) {
+    state.includeMinorArcana = false;
+    state.aiEnabled = false;
+  }
+  const maSw = document.getElementById('toggle-minor-arcana');
+  if (maSw) maSw.classList.remove('on');
+  const aiSw = document.getElementById('toggle-ai-switch');
+  if (aiSw) aiSw.classList.remove('on');
+  const aiStatus = document.getElementById('ai-status-text');
+  if (aiStatus) aiStatus.textContent = '[AI.OFF] 使用本地模板引擎';
+  const questionInput = document.getElementById('user-question');
+  if (questionInput) questionInput.style.display = 'none';
+  const voiceBtn = document.getElementById('btn-voice-input');
+  if (voiceBtn) voiceBtn.style.display = 'none';
+
+  await sleep(400);
 }
 
-async function demoConfirm() {
-  // Set up full flow: theme → sub-spread → shuffle → select all cards
-  const firstTheme = document.querySelector('.spread-option');
-  if (!firstTheme) return;
-  const themeId = firstTheme.dataset.theme || 'love';
-  if (typeof selectTheme === 'function') _demoUnlock(() => selectTheme(themeId, firstTheme));
-  await sleep(400);
-  const firstSub = document.querySelector('.spread-sub-option');
-  if (!firstSub) { _demoUnlock(() => resetThemeSelection()); return; }
-  const spreadId = firstSub.dataset.spreadId;
-  if (spreadId && typeof selectSubSpread === 'function') _demoUnlock(() => selectSubSpread(spreadId, firstSub));
-  await sleep(400);
-  if (typeof startShuffle === 'function') await _demoUnlock(() => startShuffle());
-  await sleep(1200);
+// ── Phase 2: 登录/注册演示 ──
+async function demoPhase2() {
+  const authOverlay = document.getElementById('auth-overlay');
+  if (!authOverlay || authOverlay.classList.contains('hidden')) return;
 
-  const required = (typeof state !== 'undefined' && state.selectedSpread)
-    ? state.selectedSpread.card_count : 3;
-  const cards = document.querySelectorAll('.card-cell');
-  for (let i = 0; i < Math.min(required, cards.length); i++) {
-    if (typeof selectCard === 'function') _demoUnlock(() => selectCard(i, cards[i]));
-    await sleep(400);
+  // 1. Switch to register tab
+  const registerTab = document.getElementById('tab-register-btn');
+  const loginTab = document.getElementById('tab-login-btn');
+  if (registerTab && !registerTab.classList.contains('active')) {
+    await moveCursorTo(registerTab, 250);
+    await sleep(200);
+    highlightTarget(registerTab);
+    await cursorClick();
+    registerTab.click();
+    await sleep(1500);
   }
 
-  await sleep(1000);
-
-  // Show confirm popup if not already visible
-  const popup = document.getElementById('confirm-popup');
-  const confirmBtn = popup ? popup.querySelector('.btn-confirm') : null;
-  if (!confirmBtn) { _demoUnlock(() => resetCardSelection()); return; }
-
-  await moveCursorTo(confirmBtn, 600);
-  await sleep(300);
-  highlightTarget(confirmBtn);
-  await cursorClick();
-
-  // Actually confirm and go through flow
-  if (typeof confirmReading === 'function') {
-    await _demoUnlock(() => confirmReading());
+  // 2. Switch back to login tab
+  if (loginTab && !loginTab.classList.contains('active')) {
+    await moveCursorTo(loginTab, 250);
+    await sleep(200);
+    highlightTarget(loginTab);
+    await cursorClick();
+    loginTab.click();
+    await sleep(1500);
   }
 
-  await sleep(3000);
+  // 3. Hover over close button — explain can skip
+  const closeBtn = authOverlay.querySelector('.auth-close');
+  if (closeBtn) {
+    await moveCursorTo(closeBtn, 300);
+    await sleep(1500);
+  }
 
-  // Undo - full reset
-  if (typeof resetDivination === 'function') {
-    _demoUnlock(() => resetDivination());
+  // 4. Dismiss auth
+  if (typeof hideAuthModal === 'function') {
+    _demoUnlock(() => hideAuthModal());
   }
   await sleep(400);
+}
+
+// ── Phase 3: 简详切换 + 悬浮重新测算 + 结语 ──
+async function demoPhase3() {
+  // 1. Toggle to detailed mode
+  const detailedBtn = document.querySelector('.seg-btn[data-mode="detailed"]');
+  const simpleBtn = document.querySelector('.seg-btn[data-mode="simple"]');
+  if (detailedBtn) {
+    await moveCursorTo(detailedBtn, 250);
+    await sleep(200);
+    highlightTarget(detailedBtn);
+    await cursorClick();
+    if (typeof setAnswerMode === 'function') {
+      _demoUnlock(() => setAnswerMode('detailed'));
+    }
+    await sleep(1500);
+  }
+
+  // 2. Toggle back to simple mode
+  if (simpleBtn) {
+    await moveCursorTo(simpleBtn, 250);
+    await sleep(200);
+    highlightTarget(simpleBtn);
+    await cursorClick();
+    if (typeof setAnswerMode === 'function') {
+      _demoUnlock(() => setAnswerMode('simple'));
+    }
+    await sleep(1500);
+  }
+
+  // 3. Hover over reset button
+  const resetBtn = document.querySelector('.result-actions .btn-action.primary');
+  if (resetBtn) {
+    await moveCursorTo(resetBtn, 300);
+    await sleep(1500);
+  }
 }
 
 // ── Main Guide Function ──
-async function guideStep(stepKey) {
-  // Don't interrupt an ongoing demo
+async function guidePhase(phaseKey) {
   if (oracleState.demoInProgress) return;
 
-  if (isDemoNeeded(stepKey)) {
-    await runDemoForStep(stepKey);
+  if (isDemoNeeded(phaseKey)) {
+    await runDemoForPhase(phaseKey);
   } else {
-    // Just voice guidance
-    const guidance = GUIDANCE[stepKey];
+    const guidance = GUIDANCE[phaseKey];
     if (guidance && guidance.normal) {
       speakOracle(guidance.normal);
     }
@@ -589,12 +507,10 @@ function initOracle() {
   oracleState.subtitleEl = document.getElementById('orb-subtitle');
 
   if (oracleState.orbEl) {
-    // Show orb with delay
     setTimeout(() => {
       oracleState.orbEl.classList.add('visible');
     }, 1500);
 
-    // Click orb to toggle mute
     oracleState.orbEl.addEventListener('click', () => {
       if (oracleState.demoInProgress) return;
       oracleState.voiceMuted = !oracleState.voiceMuted;
@@ -607,7 +523,6 @@ function initOracle() {
       }
     });
 
-    // Hover: pause floating briefly
     oracleState.orbEl.addEventListener('mouseenter', () => {
       oracleState.orbEl.classList.add('hovered');
     });
@@ -616,29 +531,19 @@ function initOracle() {
     });
   }
 
-  // Start floating
   startOrbIdleAnimation();
-
-  console.log('[Oracle] 占卜师光球系统已初始化');
+  console.log('[Oracle] 占卜师光球系统已初始化 · 三阶段演示模式');
 }
 
 // ── Mood-based Orb Color ──
 function setOrbMood(mood) {
   const orb = oracleState.orbEl;
   if (!orb) return;
-
   const moodColors = {
-    excited: '#f0c040',
-    happy: '#e8b84b',
-    calm: '#d4a843',
-    neutral: '#b8913a',
-    anxious: '#6a9ec2',
-    sad: '#557799',
-    tired: '#665588',
+    excited: '#f0c040', happy: '#e8b84b', calm: '#d4a843',
+    neutral: '#b8913a', anxious: '#6a9ec2', sad: '#557799', tired: '#665588',
   };
-
-  const color = moodColors[mood] || 'var(--amber-400, #e8b84b)';
-  orb.style.setProperty('--orb-color', color);
+  orb.style.setProperty('--orb-color', moodColors[mood] || 'var(--amber-400, #e8b84b)');
 }
 
 function showOrb() {
@@ -655,6 +560,7 @@ function cancelDemo() {
   window.__oracleDemoLock = false;
   hideCursor();
   if (oracleState.orbEl) oracleState.orbEl.classList.remove('demo-mode');
-  stopSpeaking();
+  if (typeof stopSpeaking === 'function') stopSpeaking();
   hideSubtitle();
+  _orbToFloatPosition();
 }

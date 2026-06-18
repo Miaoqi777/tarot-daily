@@ -48,8 +48,8 @@ function setupIntro() {
     overlay.classList.add('dismissed');
     sessionStorage.setItem('tarot-intro-shown', '1');
     setTimeout(() => overlay.remove(), 600);
-    // Oracle guides first step after intro
-    setTimeout(() => guideStep('theme'), 800);
+    // Oracle phase1 demo after intro
+    setTimeout(() => guidePhase('phase1'), 800);
   });
 }
 
@@ -124,9 +124,6 @@ function selectTheme(themeId, el) {
     state.selectedSpread = spread;
     showShuffleReady();
   }
-
-  // Oracle guides sub-spread selection (non-blocking)
-  setTimeout(() => guideStep('subSpread'), 600);
 }
 
 function selectSubSpread(spreadId, el) {
@@ -230,9 +227,6 @@ function showShuffleReady() {
   document.getElementById('required-count').textContent = state.selectedSpread.card_count;
   document.getElementById('selected-count').textContent = '0';
   document.getElementById('shuffle-area').style.display = 'block';
-
-  // Oracle guides shuffle step
-  setTimeout(() => guideStep('shuffle'), 500);
 }
 
 // ── Fan hover delegation (preserves rotation) ──
@@ -365,9 +359,6 @@ async function startShuffle() {
   state.isShuffling = false;
   document.getElementById('btn-shuffle').disabled = false;
   document.getElementById('btn-shuffle').textContent = '⟲ 重新洗牌';
-
-  // Oracle guides card selection
-  setTimeout(() => guideStep('select'), 400);
 }
 
 // Fan spread animation: cards bloom outward from center with smooth ease-out
@@ -437,8 +428,6 @@ function selectCard(index, el) {
   // Check if reached required count
   if (state.selectedCards.length >= state.selectedSpread.card_count) {
     setTimeout(showConfirmation, 400);
-    // Oracle guides confirmation
-    setTimeout(() => guideStep('confirm'), 600);
   }
 }
 
@@ -498,6 +487,8 @@ async function confirmReading() {
       doPerformDivination();
     };
     showAuthModal();
+    // Oracle phase2 demo for auth system
+    setTimeout(() => guidePhase('phase2'), 500);
     return;
   }
 
@@ -689,6 +680,9 @@ function renderResults(result) {
 
   // Adjust background based on mood
   updateBackgroundByMood(result.overallMood);
+
+  // Oracle phase3 demo for result browsing
+  setTimeout(() => guidePhase('phase3'), 1500);
 }
 
 // ---------- Copy Result ----------
