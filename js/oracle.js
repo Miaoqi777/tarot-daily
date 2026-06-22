@@ -27,37 +27,37 @@ const DEMO_KEYS = {
 const GUIDANCE = {
   phase1: {
     demo: [
-      '观测到新的访问者。正在演示：命运协议初始化流程。',
-      '首先，选择与你灵魂共振的查询领域。',
-      '你可以选择是否包含小阿卡纳——五十六张次级牌面，可增加神谕的深度。',
-      'AI深度解读已开启。你可以用文字或语音向我提问，让神谕更精准地回应你。',
-      '洗牌协议启动。牌面将从中心绽放为扇形阵列。',
-      '从阵列中选取牌面，锁定你的命运变量。',
-      '确认按钮在此。当你准备好后，亲手按下它——那是属于你的时刻。',
+      '你好，我是你的占卜助手。让我带你快速了解如何使用这个工具。',
+      '首先，选择一个与你当前疑问相关的主题领域。',
+      '你也可以选择是否包含小阿卡纳——共56张牌，能让解读内容更丰富。',
+      'AI解读模式已开启。开启后你可以输入具体问题，或使用语音提问，获得更个性化的回答。',
+      '洗牌按钮在这里。点击后牌面会扇形展开，供你挑选。',
+      '从展开的牌阵中，选择你想要解读的牌。',
+      '确认按钮在这里。当你选定所有牌后，亲手按下它——那一刻属于你自己。',
     ],
-    normal: '欢迎回来。请选择你的查询领域，开始今日的占卜。',
-    afterDemo: '演示完毕。终端控制权已交还。请亲手开启你的占卜之旅。',
+    normal: '欢迎回来。请选择你的查询领域，开始今天的解读。',
+    afterDemo: '演示完毕。现在你可以自己动手，开始你的占卜了。',
   },
   phase2: {
     demo: [
-      '检测到身份验证请求。正在演示：账号与记录系统。',
-      '你可以注册新账号，将占卜记录保存到云端，跨设备同步。',
-      '也可以登录已有账号，恢复你的历史记录与运势分析。',
-      '当然，你完全可以跳过这一步。不登录也能正常使用全部功能。',
-      '登录只是让每一次心声都能被妥善保管，而非使用的门槛。选择权在你手中。',
+      '接下来介绍账号系统。注册后可以保存你的占卜记录。',
+      '点击注册按钮，创建一个新账号。',
+      '也可以登录已有账号，恢复你的历史记录和运势分析。',
+      '当然，你可以跳过这一步。不登录也能正常使用全部功能。',
+      '登录只是让每次占卜记录得以保存和同步，并非使用的门槛。选择权在你手中。',
     ],
     normal: '',
-    afterDemo: '演示完毕。请自由选择：登录、注册，或直接关闭窗口继续占卜。',
+    afterDemo: '演示完毕。你可以选择登录、注册，或直接关闭窗口继续占卜。',
   },
   phase3: {
     demo: [
-      '神谕已生成。正在演示：结果浏览方式。',
-      '简洁模式提供一句话概括，适合快速获取指引。',
-      '详细模式展示逐张牌的全方位解读：牌位含义、正逆位分析、综合总结。',
-      '如果心中仍有疑问，随时可以重新测算——每一次提问，都是与命运的全新对话。',
+      '解读结果已生成。来看看如何浏览。',
+      '简洁模式提供一句话概括，适合快速了解。',
+      '详细模式展示每张牌的完整信息：牌位含义、正逆位解析、综合总结。',
+      '如果还有疑问，随时可以重新测算——每一次提问，都是一次新的开始。',
     ],
     normal: '',
-    afterDemo: '请记住：塔罗是映照内心的镜子，而非预知未来的水晶球。你的人生，由你自己掌握。',
+    afterDemo: '塔罗是一面映照内心的镜子，帮助你更好地了解自己。你的选择，始终由你自己决定。',
   },
 };
 
@@ -113,19 +113,35 @@ function speakOracle(text, opts = {}) {
   });
 }
 
-// ── Subtitle Bubble ──
+// ── Subtitle Bubble (viewport-clamped) ──
 function showSubtitle(text) {
   const el = oracleState.subtitleEl;
   const orb = oracleState.orbEl;
   if (!el) return;
   el.textContent = text;
   el.style.display = 'block';
-  // Position above orb
+  el.classList.remove('below');
+
   if (orb) {
     const orbRect = orb.getBoundingClientRect();
-    el.style.left = (orbRect.left + orbRect.width / 2) + 'px';
-    el.style.top = (orbRect.top - 16) + 'px';
-    el.style.transform = 'translate(-50%, -100%)';
+    const orbCenterX = orbRect.left + orbRect.width / 2;
+    const gap = 16;
+
+    // Horizontal clamp — keep bubble within viewport
+    const bubbleRect = el.getBoundingClientRect();
+    const halfW = bubbleRect.width / 2;
+    const clampedLeft = Math.max(halfW + 8, Math.min(window.innerWidth - halfW - 8, orbCenterX));
+    el.style.left = clampedLeft + 'px';
+
+    // Vertical: position above orb if there's room, otherwise below
+    if (orbRect.top - gap - bubbleRect.height > 0) {
+      el.style.top = (orbRect.top - gap) + 'px';
+      el.style.transform = 'translate(-50%, -100%)';
+    } else {
+      el.style.top = (orbRect.bottom + gap) + 'px';
+      el.style.transform = 'translate(-50%, 0)';
+      el.classList.add('below');
+    }
   }
   clearTimeout(el._hideTimeout);
   el._hideTimeout = setTimeout(() => { el.style.display = 'none'; }, text.length * 90 + 2000);
@@ -214,7 +230,7 @@ function _orbToDemoPosition() {
   if (!orb) return;
   orb.style.transition = 'left 0.6s ease, top 0.6s ease';
   orb.style.left = '78%';
-  orb.style.top = '12%';
+  orb.style.top = '45%';
   orb.style.transform = 'translate(-50%, -50%)';
 }
 
@@ -309,6 +325,9 @@ function _finishDemo(phaseKey) {
   if (orb) orb.classList.remove('demo-mode');
   oracleState.demoInProgress = false;
   window.__oracleDemoLock = false;
+  // Reset orb to a pleasant default position before returning to float
+  oracleState.orbX = 75;
+  oracleState.orbY = 45;
   _orbToFloatPosition();
 }
 
@@ -407,12 +426,14 @@ async function demoPhase1() {
   if (maSw) maSw.classList.remove('on');
   const aiSw = document.getElementById('toggle-ai-switch');
   if (aiSw) aiSw.classList.remove('on');
-  const aiStatus = document.getElementById('ai-status-text');
-  if (aiStatus) aiStatus.textContent = '[AI.OFF] 使用本地模板引擎';
+  if (typeof updateAIStatusUI === 'function') updateAIStatusUI();
   const questionInput = document.getElementById('user-question');
   if (questionInput) questionInput.style.display = 'none';
   const voiceBtn = document.getElementById('btn-voice-input');
   if (voiceBtn) voiceBtn.style.display = 'none';
+  // Reset shuffle button text
+  const shuffleBtnReset = document.getElementById('btn-shuffle');
+  if (shuffleBtnReset) shuffleBtnReset.textContent = '◆ 启动洗牌协议';
 
   await sleep(400);
 }
@@ -570,5 +591,7 @@ function cancelDemo() {
   if (oracleState.orbEl) oracleState.orbEl.classList.remove('demo-mode');
   if (typeof stopSpeaking === 'function') stopSpeaking();
   hideSubtitle();
+  oracleState.orbX = 75;
+  oracleState.orbY = 45;
   _orbToFloatPosition();
 }

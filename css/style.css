@@ -2940,6 +2940,14 @@ img { max-width: 100%; display: block; }
   border-top: 8px solid var(--amber-400);
 }
 
+/* Arrow flips upward when bubble is below the orb */
+.orb-subtitle-bubble.below::after {
+  top: auto;
+  bottom: 100%;
+  border-top: none;
+  border-bottom: 8px solid var(--amber-400);
+}
+
 /* ============================================================
    Demo Cursor — 伪鼠标光标
    ============================================================ */
