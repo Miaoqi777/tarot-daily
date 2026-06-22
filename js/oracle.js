@@ -116,33 +116,11 @@ function speakOracle(text, opts = {}) {
 // ── Subtitle Bubble (viewport-clamped) ──
 function showSubtitle(text) {
   const el = oracleState.subtitleEl;
-  const orb = oracleState.orbEl;
   if (!el) return;
   el.textContent = text;
   el.style.display = 'block';
   el.classList.remove('below');
-
-  if (orb) {
-    const orbRect = orb.getBoundingClientRect();
-    const orbCenterX = orbRect.left + orbRect.width / 2;
-    const gap = 16;
-
-    // Horizontal clamp — keep bubble within viewport
-    const bubbleRect = el.getBoundingClientRect();
-    const halfW = bubbleRect.width / 2;
-    const clampedLeft = Math.max(halfW + 8, Math.min(window.innerWidth - halfW - 8, orbCenterX));
-    el.style.left = clampedLeft + 'px';
-
-    // Vertical: position above orb if there's room, otherwise below
-    if (orbRect.top - gap - bubbleRect.height > 0) {
-      el.style.top = (orbRect.top - gap) + 'px';
-      el.style.transform = 'translate(-50%, -100%)';
-    } else {
-      el.style.top = (orbRect.bottom + gap) + 'px';
-      el.style.transform = 'translate(-50%, 0)';
-      el.classList.add('below');
-    }
-  }
+  _trackSubtitle(); // Initial positioning
   clearTimeout(el._hideTimeout);
   el._hideTimeout = setTimeout(() => { el.style.display = 'none'; }, text.length * 90 + 2000);
 }
@@ -152,6 +130,31 @@ function hideSubtitle() {
   if (!el) return;
   clearTimeout(el._hideTimeout);
   el.style.display = 'none';
+}
+
+// Keep subtitle pinned to the orb's current position
+function _trackSubtitle() {
+  const el = oracleState.subtitleEl;
+  const orb = oracleState.orbEl;
+  if (!el || !orb || el.style.display === 'none') return;
+
+  const orbRect = orb.getBoundingClientRect();
+  const orbCenterX = orbRect.left + orbRect.width / 2;
+  const gap = 16;
+  const bubbleRect = el.getBoundingClientRect();
+  const halfW = bubbleRect.width / 2;
+  const clampedLeft = Math.max(halfW + 8, Math.min(window.innerWidth - halfW - 8, orbCenterX));
+  el.style.left = clampedLeft + 'px';
+
+  if (orbRect.top - gap - bubbleRect.height > 0) {
+    el.style.top = (orbRect.top - gap) + 'px';
+    el.style.transform = 'translate(-50%, -100%)';
+    el.classList.remove('below');
+  } else {
+    el.style.top = (orbRect.bottom + gap) + 'px';
+    el.style.transform = 'translate(-50%, 0)';
+    el.classList.add('below');
+  }
 }
 
 // ── Fake Cursor ──
@@ -264,6 +267,9 @@ function startOrbIdleAnimation() {
     orb.style.top = y + '%';
     orb.style.transform = 'translate(-50%, -50%)';
 
+    // Keep subtitle pinned to the orb while visible
+    _trackSubtitle();
+
     oracleState.idleAnimId = requestAnimationFrame(animate);
   }
 
@@ -289,14 +295,10 @@ async function runDemoForPhase(phaseKey) {
   const orb = oracleState.orbEl;
   if (orb) orb.classList.add('demo-mode');
   _orbToDemoPosition();
+  await sleep(650); // Wait for orb to reach demo position
 
   const guidance = GUIDANCE[phaseKey];
   if (!guidance) { _finishDemo(phaseKey); return; }
-
-  // Speak demo lines (skip first line for phase2/3 — only say it if first line exists)
-  for (const line of guidance.demo) {
-    await speakOracle(line);
-  }
 
   showCursor();
 
@@ -333,7 +335,13 @@ function _finishDemo(phaseKey) {
 
 // ── Phase 1: 选题 → 小阿卡纳 → AI → 洗牌 → 选牌 → 悬浮确认 ──
 async function demoPhase1() {
+  const lines = GUIDANCE.phase1.demo;
+
+  // Intro line — no action
+  await speakOracle(lines[0]);
+
   // 1. Click first theme
+  await speakOracle(lines[1]);
   const firstTheme = document.querySelector('.spread-option');
   if (!firstTheme) return;
   await moveCursorTo(firstTheme, 250);
@@ -344,9 +352,10 @@ async function demoPhase1() {
   if (themeId && typeof selectTheme === 'function') {
     _demoUnlock(() => selectTheme(themeId, firstTheme));
   }
-  await sleep(1500);
+  await sleep(800);
 
   // 2. Toggle minor arcana
+  await speakOracle(lines[2]);
   const minorToggle = document.getElementById('toggle-minor-arcana');
   if (minorToggle) {
     await moveCursorTo(minorToggle, 250);
@@ -356,10 +365,11 @@ async function demoPhase1() {
     if (typeof toggleMinorArcana === 'function') {
       _demoUnlock(() => toggleMinorArcana());
     }
-    await sleep(1200);
+    await sleep(600);
   }
 
   // 3. Toggle AI
+  await speakOracle(lines[3]);
   const aiToggle = document.getElementById('toggle-ai-switch');
   if (aiToggle) {
     await moveCursorTo(aiToggle, 250);
@@ -369,10 +379,11 @@ async function demoPhase1() {
     if (typeof toggleAI === 'function') {
       _demoUnlock(() => toggleAI());
     }
-    await sleep(1500);
+    await sleep(800);
   }
 
-  // 4. Shuffle (sub-spread already auto-selected)
+  // 4. Shuffle
+  await speakOracle(lines[4]);
   const shuffleBtn = document.getElementById('btn-shuffle');
   if (shuffleBtn) {
     await moveCursorTo(shuffleBtn, 250);
@@ -382,10 +393,11 @@ async function demoPhase1() {
     if (typeof startShuffle === 'function') {
       await _demoUnlock(() => startShuffle());
     }
-    await sleep(1500);
+    await sleep(800);
   }
 
   // 5. Select cards
+  await speakOracle(lines[5]);
   const required = (typeof state !== 'undefined' && state.selectedSpread)
     ? state.selectedSpread.card_count : 3;
   const cards = document.querySelectorAll('.card-cell');
@@ -398,26 +410,22 @@ async function demoPhase1() {
     if (typeof selectCard === 'function') {
       _demoUnlock(() => selectCard(i, card));
     }
-    await sleep(500);
+    await sleep(400);
   }
 
-  await sleep(800);
-
-  // 6. Hover over confirm button (no click!)
+  // 6. Hover over confirm button
+  await speakOracle(lines[6]);
   const confirmBtn = document.querySelector('#confirm-popup .btn-confirm');
   if (confirmBtn) {
     await moveCursorTo(confirmBtn, 300);
-    await sleep(1200);
-    // Cursor stays hovering — the afterDemo speech says "亲手按下它"
+    await sleep(1500);
   }
 
-  await sleep(600);
-
   // 7. Full reset
+  await sleep(400);
   _demoUnlock(() => {
     if (typeof resetDivination === 'function') resetDivination();
   });
-  // Also turn off toggles
   if (typeof state !== 'undefined' && state) {
     state.includeMinorArcana = false;
     state.aiEnabled = false;
@@ -431,19 +439,21 @@ async function demoPhase1() {
   if (questionInput) questionInput.style.display = 'none';
   const voiceBtn = document.getElementById('btn-voice-input');
   if (voiceBtn) voiceBtn.style.display = 'none';
-  // Reset shuffle button text
   const shuffleBtnReset = document.getElementById('btn-shuffle');
   if (shuffleBtnReset) shuffleBtnReset.textContent = '◆ 启动洗牌协议';
-
   await sleep(400);
 }
 
 // ── Phase 2: 登录/注册演示 ──
 async function demoPhase2() {
+  const lines = GUIDANCE.phase2.demo;
   const authOverlay = document.getElementById('auth-overlay');
   if (!authOverlay || authOverlay.classList.contains('hidden')) return;
 
+  await speakOracle(lines[0]);
+
   // 1. Switch to register tab
+  await speakOracle(lines[1]);
   const registerTab = document.getElementById('tab-register-btn');
   const loginTab = document.getElementById('tab-login-btn');
   if (registerTab && !registerTab.classList.contains('active')) {
@@ -452,27 +462,30 @@ async function demoPhase2() {
     highlightTarget(registerTab);
     await cursorClick();
     registerTab.click();
-    await sleep(1500);
+    await sleep(800);
   }
 
   // 2. Switch back to login tab
+  await speakOracle(lines[2]);
   if (loginTab && !loginTab.classList.contains('active')) {
     await moveCursorTo(loginTab, 250);
     await sleep(200);
     highlightTarget(loginTab);
     await cursorClick();
     loginTab.click();
-    await sleep(1500);
+    await sleep(800);
   }
 
-  // 3. Hover over close button — explain can skip
+  // 3. Explain can skip
+  await speakOracle(lines[3]);
   const closeBtn = authOverlay.querySelector('.auth-close');
   if (closeBtn) {
     await moveCursorTo(closeBtn, 300);
-    await sleep(1500);
+    await sleep(1200);
   }
 
   // 4. Dismiss auth
+  await speakOracle(lines[4]);
   if (typeof hideAuthModal === 'function') {
     _demoUnlock(() => hideAuthModal());
   }
@@ -481,7 +494,12 @@ async function demoPhase2() {
 
 // ── Phase 3: 简详切换 + 悬浮重新测算 + 结语 ──
 async function demoPhase3() {
+  const lines = GUIDANCE.phase3.demo;
+
+  await speakOracle(lines[0]);
+
   // 1. Toggle to detailed mode
+  await speakOracle(lines[1]);
   const detailedBtn = document.querySelector('.seg-btn[data-mode="detailed"]');
   const simpleBtn = document.querySelector('.seg-btn[data-mode="simple"]');
   if (detailedBtn) {
@@ -492,10 +510,11 @@ async function demoPhase3() {
     if (typeof setAnswerMode === 'function') {
       _demoUnlock(() => setAnswerMode('detailed'));
     }
-    await sleep(1500);
+    await sleep(800);
   }
 
   // 2. Toggle back to simple mode
+  await speakOracle(lines[2]);
   if (simpleBtn) {
     await moveCursorTo(simpleBtn, 250);
     await sleep(200);
@@ -504,15 +523,23 @@ async function demoPhase3() {
     if (typeof setAnswerMode === 'function') {
       _demoUnlock(() => setAnswerMode('simple'));
     }
-    await sleep(1500);
+    await sleep(800);
   }
 
   // 3. Hover over reset button
+  await speakOracle(lines[3]);
   const resetBtn = document.querySelector('.result-actions .btn-action.primary');
   if (resetBtn) {
     await moveCursorTo(resetBtn, 300);
-    await sleep(1500);
+    await sleep(1200);
   }
+
+  // 4. Reset page to initial state
+  await sleep(400);
+  _demoUnlock(() => {
+    if (typeof resetDivination === 'function') resetDivination();
+  });
+  await sleep(400);
 }
 
 // ── Main Guide Function ──
