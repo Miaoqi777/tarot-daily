@@ -344,56 +344,56 @@ async function demoPhase1() {
   await speakOracle(lines[1]);
   const firstTheme = document.querySelector('.spread-option');
   if (!firstTheme) return;
-  await moveCursorTo(firstTheme, 250);
-  await sleep(200);
+  await moveCursorTo(firstTheme, 200);
+  await sleep(80);
   highlightTarget(firstTheme);
   await cursorClick();
   const themeId = firstTheme.dataset.theme;
   if (themeId && typeof selectTheme === 'function') {
     _demoUnlock(() => selectTheme(themeId, firstTheme));
   }
-  await sleep(800);
+  await sleep(300);
 
   // 2. Toggle minor arcana
   await speakOracle(lines[2]);
   const minorToggle = document.getElementById('toggle-minor-arcana');
   if (minorToggle) {
-    await moveCursorTo(minorToggle, 250);
-    await sleep(200);
+    await moveCursorTo(minorToggle, 200);
+    await sleep(80);
     highlightTarget(minorToggle);
     await cursorClick();
     if (typeof toggleMinorArcana === 'function') {
       _demoUnlock(() => toggleMinorArcana());
     }
-    await sleep(600);
+    await sleep(200);
   }
 
   // 3. Toggle AI
   await speakOracle(lines[3]);
   const aiToggle = document.getElementById('toggle-ai-switch');
   if (aiToggle) {
-    await moveCursorTo(aiToggle, 250);
-    await sleep(200);
+    await moveCursorTo(aiToggle, 200);
+    await sleep(80);
     highlightTarget(aiToggle);
     await cursorClick();
     if (typeof toggleAI === 'function') {
       _demoUnlock(() => toggleAI());
     }
-    await sleep(800);
+    await sleep(300);
   }
 
   // 4. Shuffle
   await speakOracle(lines[4]);
   const shuffleBtn = document.getElementById('btn-shuffle');
   if (shuffleBtn) {
-    await moveCursorTo(shuffleBtn, 250);
-    await sleep(200);
+    await moveCursorTo(shuffleBtn, 200);
+    await sleep(80);
     highlightTarget(shuffleBtn);
     await cursorClick();
     if (typeof startShuffle === 'function') {
       await _demoUnlock(() => startShuffle());
     }
-    await sleep(800);
+    await sleep(300);
   }
 
   // 5. Select cards
@@ -403,30 +403,30 @@ async function demoPhase1() {
   const cards = document.querySelectorAll('.card-cell');
   for (let i = 0; i < Math.min(required, cards.length); i++) {
     const card = cards[i];
-    await moveCursorTo(card, 220);
-    await sleep(150);
+    await moveCursorTo(card, 180);
+    await sleep(60);
     highlightTarget(card);
     await cursorClick();
     if (typeof selectCard === 'function') {
       _demoUnlock(() => selectCard(i, card));
     }
-    await sleep(400);
+    await sleep(200);
   }
 
   // 6. Hover over confirm button
   await speakOracle(lines[6]);
   const confirmBtn = document.querySelector('#confirm-popup .btn-confirm');
   if (confirmBtn) {
-    await moveCursorTo(confirmBtn, 300);
-    await sleep(1500);
+    await moveCursorTo(confirmBtn, 250);
+    await sleep(800);
   }
 
   // 7. Full reset — resetDivination() now handles all state + DOM
-  await sleep(400);
+  await sleep(200);
   _demoUnlock(() => {
     if (typeof resetDivination === 'function') resetDivination();
   });
-  await sleep(400);
+  await sleep(200);
 }
 
 // ── Phase 2: 登录/注册演示 ──
@@ -442,31 +442,31 @@ async function demoPhase2() {
   const registerTab = document.getElementById('tab-register-btn');
   const loginTab = document.getElementById('tab-login-btn');
   if (registerTab && !registerTab.classList.contains('active')) {
-    await moveCursorTo(registerTab, 250);
-    await sleep(200);
+    await moveCursorTo(registerTab, 200);
+    await sleep(80);
     highlightTarget(registerTab);
     await cursorClick();
     registerTab.click();
-    await sleep(800);
+    await sleep(300);
   }
 
   // 2. Switch back to login tab
   await speakOracle(lines[2]);
   if (loginTab && !loginTab.classList.contains('active')) {
-    await moveCursorTo(loginTab, 250);
-    await sleep(200);
+    await moveCursorTo(loginTab, 200);
+    await sleep(80);
     highlightTarget(loginTab);
     await cursorClick();
     loginTab.click();
-    await sleep(800);
+    await sleep(300);
   }
 
   // 3. Explain can skip
   await speakOracle(lines[3]);
   const closeBtn = authOverlay.querySelector('.auth-close');
   if (closeBtn) {
-    await moveCursorTo(closeBtn, 300);
-    await sleep(1200);
+    await moveCursorTo(closeBtn, 250);
+    await sleep(600);
   }
 
   // 4. Dismiss auth
@@ -474,7 +474,7 @@ async function demoPhase2() {
   if (typeof hideAuthModal === 'function') {
     _demoUnlock(() => hideAuthModal());
   }
-  await sleep(400);
+  await sleep(200);
 }
 
 // ── Phase 3: 简详切换 + 悬浮重新测算 + 结语 ──
@@ -488,43 +488,43 @@ async function demoPhase3() {
   const detailedBtn = document.querySelector('.seg-btn[data-mode="detailed"]');
   const simpleBtn = document.querySelector('.seg-btn[data-mode="simple"]');
   if (detailedBtn) {
-    await moveCursorTo(detailedBtn, 250);
-    await sleep(200);
+    await moveCursorTo(detailedBtn, 200);
+    await sleep(80);
     highlightTarget(detailedBtn);
     await cursorClick();
     if (typeof setAnswerMode === 'function') {
       _demoUnlock(() => setAnswerMode('detailed'));
     }
-    await sleep(800);
+    await sleep(300);
   }
 
   // 2. Toggle back to simple mode
   await speakOracle(lines[2]);
   if (simpleBtn) {
-    await moveCursorTo(simpleBtn, 250);
-    await sleep(200);
+    await moveCursorTo(simpleBtn, 200);
+    await sleep(80);
     highlightTarget(simpleBtn);
     await cursorClick();
     if (typeof setAnswerMode === 'function') {
       _demoUnlock(() => setAnswerMode('simple'));
     }
-    await sleep(800);
+    await sleep(300);
   }
 
   // 3. Hover over reset button
   await speakOracle(lines[3]);
   const resetBtn = document.querySelector('.result-actions .btn-action.primary');
   if (resetBtn) {
-    await moveCursorTo(resetBtn, 300);
-    await sleep(1200);
+    await moveCursorTo(resetBtn, 250);
+    await sleep(600);
   }
 
   // 4. Reset page to initial state
-  await sleep(400);
+  await sleep(200);
   _demoUnlock(() => {
     if (typeof resetDivination === 'function') resetDivination();
   });
-  await sleep(400);
+  await sleep(200);
 }
 
 // ── Main Guide Function ──
