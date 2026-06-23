@@ -10,7 +10,6 @@ const oracleState = {
   orbX: 55,
   orbY: 45,
   time: 0,
-  voiceMuted: false,
   orbEl: null,
   cursorEl: null,
   subtitleEl: null,
@@ -75,11 +74,6 @@ function markDemoDone(phaseKey) {
   if (!storageKey) return;
   const today = new Date().toISOString().split('T')[0];
   localStorage.setItem(storageKey, today);
-}
-
-// ── TTS Capability ──
-function hasTTS() {
-  return !!(window.speechSynthesis && window.speechSynthesis.getVoices().length > 0);
 }
 
 // ── Speak Oracle (text-only subtitle, no TTS) ──
@@ -556,14 +550,9 @@ function initOracle() {
 
     oracleState.orbEl.addEventListener('click', () => {
       if (oracleState.demoInProgress) return;
-      oracleState.voiceMuted = !oracleState.voiceMuted;
-      if (oracleState.voiceMuted) {
-        oracleState.orbEl.classList.add('muted');
-        showSubtitle('语音已静音 · 点击光球恢复');
-      } else {
-        oracleState.orbEl.classList.remove('muted');
-        hideSubtitle();
-      }
+      // Brief pulse feedback on click
+      oracleState.orbEl.classList.add('hovered');
+      setTimeout(() => oracleState.orbEl.classList.remove('hovered'), 600);
     });
 
     oracleState.orbEl.addEventListener('mouseenter', () => {
@@ -603,7 +592,6 @@ function cancelDemo() {
   window.__oracleDemoLock = false;
   hideCursor();
   if (oracleState.orbEl) oracleState.orbEl.classList.remove('demo-mode');
-  if (typeof stopSpeaking === 'function') stopSpeaking();
   hideSubtitle();
   // Reset page state
   if (typeof resetDivination === 'function') resetDivination();

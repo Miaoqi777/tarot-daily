@@ -2902,18 +2902,6 @@ img { max-width: 100%; display: block; }
   animation: orbGlowPulse 1.2s ease-in-out infinite;
 }
 
-/* Muted */
-.oracle-orb.muted {
-  filter: drop-shadow(0 0 6px rgba(150, 150, 150, 0.3));
-  opacity: 0.5;
-}
-
-.oracle-orb.muted .orb-core {
-  box-shadow:
-    0 0 8px rgba(150, 150, 150, 0.3),
-    0 0 20px rgba(120, 120, 120, 0.15);
-}
-
 /* Hovered */
 .oracle-orb.hovered .orb-core {
   box-shadow:
