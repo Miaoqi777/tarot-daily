@@ -516,10 +516,10 @@ async function demoPhase3() {
     await sleep(800);
   }
 
-  // 4. Reset page to initial state
+  // 4. Switch back to simple mode — keep results visible
   await sleep(300);
   _demoUnlock(() => {
-    if (typeof resetDivination === 'function') resetDivination();
+    if (typeof setAnswerMode === 'function') setAnswerMode('simple');
   });
   await sleep(300);
 }

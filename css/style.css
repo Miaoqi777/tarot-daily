@@ -1228,6 +1228,24 @@ img { max-width: 100%; display: block; }
   );
 }
 
+/* ── Divination Loading Spinner ── */
+.divination-spinner {
+  animation: divinationPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes divinationPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+.divination-loading-text {
+  color: var(--amber-400);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  margin-top: 16px;
+  letter-spacing: 0.15em;
+}
+
 /* ---------- Result Display ---------- */
 .result-section {
   width: 100%;

@@ -497,7 +497,9 @@ async function confirmReading() {
 }
 
 async function doPerformDivination() {
-  hideAuthModal(); // Ensure modal is hidden
+  // Hide the overlay DOM directly — don't call hideAuthModal()
+  // because that writes dismissAuthToday() and blocks future prompts
+  document.getElementById('auth-overlay').classList.add('hidden');
 
   const user = getCurrentUser();
 
@@ -529,8 +531,14 @@ async function doPerformDivination() {
     aiOpts.history = getRecentHistorySummary(user, 5);
   }
 
+  // Show loading overlay while AI generates interpretation
+  showDivinationLoading();
+
   // Generate interpretation (may be async when AI mode is on)
   const result = await generateInterpretation(drawnCards, state.selectedSpread, aiOpts);
+
+  // Hide loading overlay
+  hideDivinationLoading();
   state.divinationResult = result;
 
   // Save fortune only if logged in
@@ -754,6 +762,37 @@ function showSongRecommendation(mood) {
   document.getElementById('song-artist').textContent = `♪ ${song.artist}`;
   document.getElementById('song-reason').textContent = song.reason;
   div.classList.remove('hidden');
+}
+
+// ---------- Divination Loading Overlay ----------
+function showDivinationLoading() {
+  const grid = document.getElementById('card-grid-container');
+  if (!grid) return;
+  const loader = document.createElement('div');
+  loader.id = 'divination-loader';
+  loader.innerHTML = `
+    <div class="divination-spinner">
+      <svg class="svg-icon svg-glow" viewBox="0 0 24 24" width="48" height="48">
+        <rect x="12" y="2" width="14" height="14" transform="rotate(45 12 2)"/>
+      </svg>
+    </div>
+    <p class="divination-loading-text">正在解读...</p>
+  `;
+  loader.style.cssText = `
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(10,10,15,0.7);
+    z-index: 10;
+    border-radius: 8px;
+  `;
+  grid.style.position = 'relative';
+  grid.appendChild(loader);
+}
+
+function hideDivinationLoading() {
+  const loader = document.getElementById('divination-loader');
+  if (loader) loader.remove();
 }
 
 // ---------- Reset ----------
