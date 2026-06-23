@@ -192,11 +192,11 @@ function renderHistoryRecords(fortunes) {
 // ---------- Export ----------
 function handleExport() {
   if (!currentUser) {
-    alert('[AUTH] 请先登录');
+    showAuthModal();
     return;
   }
   exportData(currentUser);
-  alert('[OK] 数据已导出！');
+  showToastMsg('[OK] 数据已导出！');
 }
 
 // ---------- Sidebar & Auth ----------
@@ -246,7 +246,7 @@ async function handleImportFile(input) {
 function handleSidebarExport() {
   const user = getCurrentUser();
   if (!user) {
-    showToastMsg('[WARN] 请先登录后再导出账号');
+    showAuthModal();
     return;
   }
   const result = exportFullAccount(user);
@@ -261,7 +261,7 @@ function showAuthModal() {
 
 function hideAuthModal() {
   document.getElementById('auth-overlay').classList.add('hidden');
-  dismissAuthToday();
+  // Dismissing auth here must not block main page divination prompts.
 }
 
 function openMoodFromSidebar() {

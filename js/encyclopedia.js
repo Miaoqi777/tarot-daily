@@ -204,7 +204,7 @@ async function handleImportFile(input) {
 function handleSidebarExport() {
   const user = getCurrentUser();
   if (!user) {
-    showToastMsg('[!] 请先登录后再导出账号');
+    showAuthModal();
     return;
   }
   const result = exportFullAccount(user);
@@ -219,7 +219,7 @@ function showAuthModal() {
 
 function hideAuthModal() {
   document.getElementById('auth-overlay').classList.add('hidden');
-  dismissAuthToday();
+  // Dismissing auth here must not block main page divination prompts.
 }
 
 function openMoodFromSidebar() {

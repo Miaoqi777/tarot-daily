@@ -486,6 +486,7 @@ async function confirmReading() {
       window._pendingDivination = null;
       doPerformDivination();
     };
+    window._authSource = 'divination';
     showAuthModal();
     // Oracle phase2 demo for auth system
     setTimeout(() => guidePhase('phase2'), 500);
@@ -856,6 +857,7 @@ function openMoodPanel() {
   // Only show auth reminder once per day
   if (!user && !authDismissedToday()) {
     window._pendingAuthAction = null;
+    window._authSource = 'mood';
     showAuthModal();
   }
   // Allow mood panel without login
@@ -904,6 +906,7 @@ async function submitMood() {
   // Allow mood recording without login — just don't save
   if (!user) {
     if (!authDismissedToday()) {
+      window._authSource = 'mood';
       showAuthModal();
     }
     document.getElementById('mood-msg').textContent = '[INFO] 登录后可保存心情记录';
@@ -994,7 +997,9 @@ async function handleImportFile(input) {
 function handleSidebarExport() {
   const user = getCurrentUser();
   if (!user) {
-    showToastMsg('[WARN] 请先登录后再导出账号');
+    window._authSource = 'export';
+    window._pendingAuthAction = 'export';
+    showAuthModal();
     return;
   }
   const result = exportFullAccount(user);
@@ -1012,12 +1017,22 @@ function showAuthModal() {
 
 function hideAuthModal() {
   document.getElementById('auth-overlay').classList.add('hidden');
-  dismissAuthToday();
+  // Only set daily dismiss for divination-triggered auth.
+  // Dismissing from mood/export/sidebar should NOT block future divination prompts.
+  if (!window._authSource || window._authSource === 'divination') {
+    dismissAuthToday();
+  }
+  window._authSource = null;
   // If there's a pending divination, trigger it after modal closes
   if (window._pendingDivination) {
     const fn = window._pendingDivination;
     window._pendingDivination = null;
     setTimeout(fn, 300); // Small delay for modal close animation
+  }
+  // Handle retry-after-login for export
+  if (window._pendingAuthAction === 'export') {
+    window._pendingAuthAction = null;
+    setTimeout(() => handleSidebarExport(), 300);
   }
 }
 
@@ -1026,6 +1041,10 @@ function triggerPendingAction() {
     const fn = window._pendingDivination;
     window._pendingDivination = null;
     setTimeout(fn, 300);
+  }
+  if (window._pendingAuthAction === 'export') {
+    window._pendingAuthAction = null;
+    setTimeout(() => handleSidebarExport(), 300);
   }
 }
 
@@ -1100,6 +1119,7 @@ function setupAuthForms() {
         updateSidebarUser();
       }
     } else {
+      window._authSource = 'sidebar';
       showAuthModal();
     }
   });
