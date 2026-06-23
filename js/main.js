@@ -36,20 +36,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ---------- Intro Overlay ----------
+async function runStartupSequence() {
+  // Phase 1 demo (or skip if already done)
+  await guidePhase('phase1');
+  // After phase1, show auth modal if not logged in and not dismissed today
+  if (!getCurrentUser() && !authDismissedToday()) {
+    window._authSource = 'divination';
+    showAuthModal();
+    // Oracle phase2 demo for auth system
+    setTimeout(() => guidePhase('phase2'), 500);
+  }
+}
+
 function setupIntro() {
   const shown = sessionStorage.getItem('tarot-intro-shown');
   const overlay = document.getElementById('intro-overlay');
   if (shown) {
     overlay.classList.add('dismissed');
     setTimeout(() => overlay.remove(), 600);
+    setTimeout(() => runStartupSequence(), 800);
     return;
   }
   overlay.addEventListener('click', () => {
     overlay.classList.add('dismissed');
     sessionStorage.setItem('tarot-intro-shown', '1');
     setTimeout(() => overlay.remove(), 600);
-    // Oracle phase1 demo after intro
-    setTimeout(() => guidePhase('phase1'), 800);
+    // Oracle phase1 demo after intro, then auth
+    setTimeout(() => runStartupSequence(), 800);
   });
 }
 
