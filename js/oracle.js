@@ -452,20 +452,25 @@ async function demoPhase2() {
     await sleep(400);
   }
 
-  // 3. Explain can skip
+  // 3. Hover over close button — explain can skip
   await speakOracle(lines[3]);
   await sleep(300);
   const closeBtn = authOverlay.querySelector('.auth-close');
   if (closeBtn) {
     await moveCursorTo(closeBtn, 300);
-    await sleep(800);
+    await sleep(1000);
   }
 
-  // 4. Dismiss auth
+  // 4. Return to login tab — leave modal open
   await speakOracle(lines[4]);
   await sleep(300);
-  if (typeof hideAuthModal === 'function') {
-    _demoUnlock(() => hideAuthModal());
+  if (loginTab && !loginTab.classList.contains('active')) {
+    await moveCursorTo(loginTab, 250);
+    await sleep(200);
+    highlightTarget(loginTab);
+    await cursorClick();
+    loginTab.click();
+    await sleep(400);
   }
   await sleep(300);
 }
