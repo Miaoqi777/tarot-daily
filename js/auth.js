@@ -631,17 +631,24 @@ function exportData(username) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// ---------- Daily Auth Dismiss ----------
+// ---------- Auth Dismiss Cooldown (30 min) ----------
 const AUTH_DISMISS_KEY = 'tarot-auth-dismiss-date';
+const AUTH_DISMISS_COOLDOWN_MS = 30 * 60 * 1000; // 30-minute cooldown
 
 function authDismissedToday() {
-  const today = new Date().toISOString().split('T')[0];
-  return localStorage.getItem(AUTH_DISMISS_KEY) === today;
+  const stored = localStorage.getItem(AUTH_DISMISS_KEY);
+  if (!stored) return false;
+  // Support legacy date-string format (YYYY-MM-DD) — treat as dismissed for the rest of that day
+  if (/^\d{4}-\d{2}-\d{2}$/.test(stored)) {
+    const today = new Date().toISOString().split('T')[0];
+    return stored === today;
+  }
+  // New timestamp format — cooldown window
+  return (Date.now() - parseInt(stored, 10)) < AUTH_DISMISS_COOLDOWN_MS;
 }
 
 function dismissAuthToday() {
-  const today = new Date().toISOString().split('T')[0];
-  localStorage.setItem(AUTH_DISMISS_KEY, today);
+  localStorage.setItem(AUTH_DISMISS_KEY, String(Date.now()));
 }
 
 // ---------- Anonymous Divination Track ----------

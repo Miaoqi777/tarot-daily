@@ -11,7 +11,7 @@
 
 const AI_CONFIG = {
   // Vercel Edge Function 代理地址（部署后改为实际 URL）
-  proxyEndpoint: '/api/interpret',
+  proxyEndpoint: 'https://tarot-daily.vercel.app/api/interpret',
   timeout: 35000,
 };
 

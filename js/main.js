@@ -40,7 +40,10 @@ async function runStartupSequence() {
   // Phase 1 demo (or skip if already done)
   await guidePhase('phase1');
   // After phase1, show auth modal if not logged in and not dismissed today
-  if (!getCurrentUser() && !authDismissedToday()) {
+  const user = getCurrentUser();
+  const dismissed = authDismissedToday();
+  console.log('[Auth] runStartupSequence:', { user, dismissed, willShow: !user && !dismissed });
+  if (!user && !dismissed) {
     window._authSource = 'divination';
     showAuthModal();
     // Oracle phase2 demo for auth system
