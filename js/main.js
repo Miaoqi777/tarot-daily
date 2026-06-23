@@ -763,8 +763,11 @@ function resetDivination() {
   state.selectedCards = [];
   state.gridCards = [];
   state.divinationResult = null;
-  state.answerMode = 'simple';  // reset to default
+  state.answerMode = 'simple';
+  state.includeMinorArcana = false;
+  state.aiEnabled = false;
 
+  // Hide all dynamic sections
   document.getElementById('card-grid-container').style.display = 'none';
   document.getElementById('card-fan-container').innerHTML = '';
   document.getElementById('shuffle-area').style.display = 'none';
@@ -772,10 +775,32 @@ function resetDivination() {
   document.getElementById('result-section').classList.add('hidden');
   document.getElementById('song-recommendation').classList.add('hidden');
   document.getElementById('mood-section').classList.add('hidden');
+  document.getElementById('confirm-popup').classList.add('hidden');
 
+  // Deselect spread options
   document.querySelectorAll('.spread-option').forEach(o => o.classList.remove('selected'));
-  document.body.style.background = '';
 
+  // Reset toggle switches
+  const maSw = document.getElementById('toggle-minor-arcana');
+  if (maSw) maSw.classList.remove('on');
+  const aiSw = document.getElementById('toggle-ai-switch');
+  if (aiSw) aiSw.classList.remove('on');
+
+  // Reset AI UI
+  if (typeof updateAIStatusUI === 'function') updateAIStatusUI();
+  const questionInput = document.getElementById('user-question');
+  if (questionInput) questionInput.style.display = 'none';
+  const voiceBtn = document.getElementById('btn-voice-input');
+  if (voiceBtn) voiceBtn.style.display = 'none';
+
+  // Reset shuffle button
+  const shuffleBtn = document.getElementById('btn-shuffle');
+  if (shuffleBtn) {
+    shuffleBtn.textContent = '◆ 启动洗牌协议';
+    shuffleBtn.disabled = false;
+  }
+
+  document.body.style.background = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

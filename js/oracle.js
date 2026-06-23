@@ -421,26 +421,11 @@ async function demoPhase1() {
     await sleep(1500);
   }
 
-  // 7. Full reset
+  // 7. Full reset — resetDivination() now handles all state + DOM
   await sleep(400);
   _demoUnlock(() => {
     if (typeof resetDivination === 'function') resetDivination();
   });
-  if (typeof state !== 'undefined' && state) {
-    state.includeMinorArcana = false;
-    state.aiEnabled = false;
-  }
-  const maSw = document.getElementById('toggle-minor-arcana');
-  if (maSw) maSw.classList.remove('on');
-  const aiSw = document.getElementById('toggle-ai-switch');
-  if (aiSw) aiSw.classList.remove('on');
-  if (typeof updateAIStatusUI === 'function') updateAIStatusUI();
-  const questionInput = document.getElementById('user-question');
-  if (questionInput) questionInput.style.display = 'none';
-  const voiceBtn = document.getElementById('btn-voice-input');
-  if (voiceBtn) voiceBtn.style.display = 'none';
-  const shuffleBtnReset = document.getElementById('btn-shuffle');
-  if (shuffleBtnReset) shuffleBtnReset.textContent = '◆ 启动洗牌协议';
   await sleep(400);
 }
 
@@ -618,6 +603,8 @@ function cancelDemo() {
   if (oracleState.orbEl) oracleState.orbEl.classList.remove('demo-mode');
   if (typeof stopSpeaking === 'function') stopSpeaking();
   hideSubtitle();
+  // Reset page state
+  if (typeof resetDivination === 'function') resetDivination();
   oracleState.orbX = 75;
   oracleState.orbY = 45;
   _orbToFloatPosition();
