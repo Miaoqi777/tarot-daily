@@ -64,7 +64,7 @@ const GUIDANCE = {
 function isDemoNeeded(phaseKey) {
   const storageKey = DEMO_KEYS[phaseKey];
   if (!storageKey) return false;
-  const stored = localStorage.getItem(storageKey);
+  const stored = sessionStorage.getItem(storageKey);
   const today = new Date().toISOString().split('T')[0];
   return stored !== today;
 }
@@ -73,7 +73,7 @@ function markDemoDone(phaseKey) {
   const storageKey = DEMO_KEYS[phaseKey];
   if (!storageKey) return;
   const today = new Date().toISOString().split('T')[0];
-  localStorage.setItem(storageKey, today);
+  sessionStorage.setItem(storageKey, today);
 }
 
 // ── Speak Oracle (text-only subtitle, no TTS) ──
